@@ -112,6 +112,11 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(1013.25,sum.var("P").get().min())
         cdo.unsetReturnArray()
 
+    def test_thickness(self):
+        levels            = "25 100 250 500 875 1400 2100 3000 4000 5000".split(' ')
+        targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
+        self.assertEqual(targetThicknesses, cdo.thicknessOfLevels(input = "-selname,T -stdatm,"+ ','.join(levels)))
+
     if 'thingol' == os.popen('hostname').read().strip():
         def test_verticalLevels(self):
             iconpath          = "/home/ram/src/git/icon/grids"

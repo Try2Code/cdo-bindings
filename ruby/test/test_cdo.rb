@@ -125,6 +125,12 @@ class TestCdo < Test::Unit::TestCase
     test_returnArray
   end
 
+  def test_thickness
+    levels            = "25 100 250 500 875 1400 2100 3000 4000 5000".split
+    targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
+    assert_equal(targetThicknesses, Cdo.thicknessOfLevels(:in => "-selname,T -stdatm,#{levels.join(',')}"))
+  end
+
   if 'thingol' == `hostname`.chomp  then
     def test_verticalLevels
       iconpath = "/home/ram/src/git/icon/grids"
