@@ -16,8 +16,9 @@ require 'pp'
 # CDO calling mechnism
 module Cdo
   State = {
-    :debug => false,
-    :returnArray => false
+    :debug       => false,
+    :returnArray => false,
+    :operators   => []
   }
   @@CDO = ENV['CDO'].nil? ? '/usr/bin/cdo' : ENV['CDO']
 
@@ -117,9 +118,13 @@ module Cdo
   def Cdo.setCdo(cdo)
     puts "Will use #{cdo} instead of #@@CDO" if Cdo.debug
     @@CDO = cdo
+    Cdo.getOperators(true)
   end
 
-  def Cdo.getOperators
+  def Cdo.getOperators(force=false)
+    # Do NOT compute anything, if it is not required
+    return State[:operators] unless (State[:operators].empty? or force)
+
     cmd       = @@CDO + ' 2>&1'
     help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
     if 5 >= help.size
@@ -127,7 +132,7 @@ module Cdo
       pp help if Cdo.debug
       exit
     end
-    (help[help.index("Operators:")+1].split + @@undocumentedOperators).uniq
+    State[:operators] = (help[help.index("Operators:")+1].split + @@undocumentedOperators).uniq
   end
 
   def Cdo.method_missing(sym, *args, &block)

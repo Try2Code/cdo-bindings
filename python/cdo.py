@@ -149,7 +149,8 @@ class Cdo(object):
       self.setReturnArray(False)
 
     def setCDO(self,value):
-      self.CDO = value
+      self.CDO       = value
+      self.operators = self.getOperators()
 
     #==================================================================
     # Addional operators:

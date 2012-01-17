@@ -8,7 +8,7 @@ class CdoTest(unittest.TestCase):
     def testCDO(self):
         print(cdo.CDO)
         self.assertEqual('cdo',cdo.CDO)
-        newCDO="/usr/local/bin/cdo"
+        newCDO="/usr/bin/cdo"
         cdo.setCDO(newCDO)
         self.assertEqual(newCDO,cdo.CDO)
         cdo.setCDO('cdo')
@@ -24,9 +24,6 @@ class CdoTest(unittest.TestCase):
         self.assertIn("for",cdo.operators)
         self.assertIn("mask",cdo.operators)
         self.assertIn("studentt",cdo.operators)
-
-    def testCall(self):
-        print cdo.sinfov(input='/home/ram/data/icon/oce.nc')
 
     def test_getOperators(self):
         for op in ['random','stdatm','info','showlevel','sinfo','remap','geopotheight','mask','topo','thicknessOfLevels']:
@@ -118,6 +115,9 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(targetThicknesses, cdo.thicknessOfLevels(input = "-selname,T -stdatm,"+ ','.join(levels)))
 
     if 'thingol' == os.popen('hostname').read().strip():
+        def testCall(self):
+            print cdo.sinfov(input='/home/ram/data/icon/oce.nc')
+
         def test_verticalLevels(self):
             iconpath          = "/home/ram/src/git/icon/grids"
             # check, if a given input files has vertival layers of a given thickness array
