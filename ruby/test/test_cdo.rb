@@ -124,6 +124,20 @@ class TestCdo < Test::Unit::TestCase
     assert_equal(1013.25,sum.min)
     test_returnArray
   end
+
+  if 'thingol' == `hostname`.chomp  then
+    def test_verticalLevels
+      iconpath = "/home/ram/src/git/icon/grids"
+      # check, if a given input files has vertival layers of a given thickness array
+      targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
+      ifile = [iconpath,"ts_phc_annual-iconR2B04-L10_50-1000m.nc"].join('/')
+      assert_equal(["25 100 250 500 875 1400 2100 3000 4000 5000",
+                   "25 100 250 500 875 1400 2100 3000 4000 5000"],Cdo.showlevel(:in => ifile))
+      thicknesses = Cdo.thicknessOfLevels(:in => ifile)
+      assert_equal(targetThicknesses,thicknesses)
+    end
+  end
+
 end
 
 #  # Calling simple operators

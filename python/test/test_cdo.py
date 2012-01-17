@@ -1,4 +1,4 @@
-import unittest
+import unittest,os
 from cdo import *
 
 cdo = Cdo()
@@ -111,6 +111,17 @@ class CdoTest(unittest.TestCase):
         sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnArray=True)
         self.assertEqual(1013.25,sum.var("P").get().min())
         cdo.unsetReturnArray()
+
+    if 'thingol' == os.popen('hostname').read().strip():
+        def test_verticalLevels(self):
+            iconpath          = "/home/ram/src/git/icon/grids"
+            # check, if a given input files has vertival layers of a given thickness array
+            targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
+            ifile             = '/'.join([iconpath,"ts_phc_annual-iconR2B04-L10_50-1000m.nc"])
+            self.assertEqual(["25 100 250 500 875 1400 2100 3000 4000 5000",
+                              "25 100 250 500 875 1400 2100 3000 4000 5000"],cdo.showlevel(input = ifile))
+            thicknesses = cdo.thicknessOfLevels(input = ifile)
+            self.assertEqual(targetThicknesses,thicknesses)
 
 if __name__ == '__main__':
     unittest.main()
