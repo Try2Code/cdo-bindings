@@ -116,6 +116,8 @@ class TestCdo < Test::Unit::TestCase
     assert_equal(["lon","lat","level","P","T"],vals.var_names)
     assert_equal(276,vals.var("T").get.flatten.mean.floor)
     Cdo.unsetReturnArray
+    vals = Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:out => ofile,:options => "-f nc")
+    assert_equal(ofile,vals)
   end
   def test_simple_returnArray
     ofile0, ofile1 = MyTempfile.path, MyTempfile.path

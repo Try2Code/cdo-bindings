@@ -134,7 +134,6 @@ class Cdo(object):
     def loadCdf(self):
       try:
         import pycdf as cdf
-        self.returnArray = True
         self.cdf         = cdf.CDF
       except ImportError:
         raise ImportError,"Module pycdf is required to return numpy arrays."

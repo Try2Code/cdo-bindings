@@ -75,6 +75,9 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(diff[1].split(' ')[-1],"0.53060")
 
     def test_returnArray(self):
+        ofile = MyTempfile().path()
+        press = cdo.stdatm("0",output=ofile,options="-f nc")
+        self.assertEqual(ofile,press)
         cdo.setReturnArray()
         outfile = 'test.nc'
         press = cdo.stdatm("0",output=outfile,options="-f nc").var("P").get()
@@ -86,6 +89,8 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(1013.25,press.min())
         print("press = "+press.min().__str__())
         cdo.unsetReturnArray()
+        press = cdo.stdatm("0",output=ofile,options="-f nc")
+        self.assertEqual(ofile,press)
 
 
     def test_combine(self):
