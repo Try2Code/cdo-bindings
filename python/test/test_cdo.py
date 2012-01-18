@@ -78,6 +78,10 @@ class CdoTest(unittest.TestCase):
         ofile = MyTempfile().path()
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
+        press = cdo.stdatm("0",options="-f nc",returnArray=True).var("P").get()
+        self.assertEqual(1013.25,press.min())
+        press = cdo.stdatm("0",output=ofile,options="-f nc")
+        self.assertEqual(ofile,press)
         cdo.setReturnArray()
         outfile = 'test.nc'
         press = cdo.stdatm("0",output=outfile,options="-f nc").var("P").get()

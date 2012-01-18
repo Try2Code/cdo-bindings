@@ -124,7 +124,10 @@ class TestCdo < Test::Unit::TestCase
     sum = Cdo.fldsum(:in => Cdo.stdatm(0,:options => "-f nc"),
                :returnArray => true).var("P").get
     assert_equal(1013.25,sum.min)
+    sum = Cdo.fldsum(:in => Cdo.stdatm(0,:options => "-f nc"),:out => ofile0)
+    assert_equal(ofile0,sum)
     test_returnArray
+
   end
 
   def test_thickness
