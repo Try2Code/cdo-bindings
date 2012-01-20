@@ -175,6 +175,11 @@ module Cdo
     }
     delta_levels
   end
+
+  def Cdo.readCdf(iFile)
+    Cdo.loadCdf unless State[:returnArray] 
+    return NetCDF.open(iFile)
+  end
 end
 
 # Helper module for easy temp file handling

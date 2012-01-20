@@ -137,6 +137,12 @@ class CdoTest(unittest.TestCase):
             thicknesses = cdo.thicknessOfLevels(input = ifile)
             self.assertEqual(targetThicknesses,thicknesses)
 
+        def test_readCdf(self):
+            input= "-settunits,days  -setyear,2000 -for,1,4"
+            cdfFile = cdo.copy(options="-f nc",input=input)
+            cdf     = cdo.readCdf(cdfFile)
+            self.assertEqual(['lat','lon','for','time'],cdf.variables().keys())
+
 if __name__ == '__main__':
     unittest.main()
 

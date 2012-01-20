@@ -175,6 +175,14 @@ class Cdo(object):
 
       return delta_levels
 
+    def readCdf(self,iFile):
+      if not self.returnArray:
+        self.loadCdf()
+
+      return self.cdf(iFile)
+
+
+
 # Helper module for easy temp file handling
 class MyTempfile(object):
   def __init__(self):

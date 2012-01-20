@@ -147,6 +147,12 @@ class TestCdo < Test::Unit::TestCase
       thicknesses = Cdo.thicknessOfLevels(:in => ifile)
       assert_equal(targetThicknesses,thicknesses)
     end
+    def test_readCdf
+      input = "-settunits,days  -setyear,2000 -for,1,4"
+      cdfFile = Cdo.copy(:options =>"-f nc",:in=>input)
+      cdf     = Cdo.readCdf(cdfFile)
+      assert_equal(['lon','lat','time','for'],cdf.var_names)
+    end
   end
 
 end
