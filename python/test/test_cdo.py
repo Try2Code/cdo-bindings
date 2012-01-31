@@ -1,11 +1,10 @@
 import unittest,os
 from cdo import *
 
-cdo = Cdo()
-
 class CdoTest(unittest.TestCase):
 
     def testCDO(self):
+        cdo = Cdo()
         print(cdo.CDO)
         self.assertEqual('cdo',cdo.CDO)
         newCDO="/usr/bin/cdo"
@@ -14,18 +13,21 @@ class CdoTest(unittest.TestCase):
         cdo.setCDO('cdo')
 
     def testDbg(self):
+        cdo = Cdo()
         self.assertEqual(False,cdo.debug)
         cdo.debug = True
         self.assertEqual(True,cdo.debug)
         cdo.debug = False
 
     def testOps(self):
+        cdo = Cdo()
         self.assertIn("sinfov",cdo.operators)
         self.assertIn("for",cdo.operators)
         self.assertIn("mask",cdo.operators)
         self.assertIn("studentt",cdo.operators)
 
     def test_getOperators(self):
+        cdo = Cdo()
         for op in ['random','stdatm','info','showlevel','sinfo','remap','geopotheight','mask','topo','thicknessOfLevels']:
             if 'thicknessOfLevels' != op:
                 self.assertIn(op,cdo.operators)
@@ -33,6 +35,7 @@ class CdoTest(unittest.TestCase):
                 self.assertIn(op,dir(cdo))
 
     def test_simple(self):
+        cdo = Cdo()
         s   = cdo.sinfov(input="-topo",options="-f nc")
         s   = cdo.sinfov(input="-remapnn,r36x18 -topo",options="-f nc")
         f   = 'ofile.nc'
@@ -41,6 +44,7 @@ class CdoTest(unittest.TestCase):
         cdo.stdatm("0",output=f,options="-f nc")
 
     def test_info(self):
+        cdo = Cdo()
         levels = cdo.showlevel(input = "-stdatm,0")
         info   = cdo.sinfo(input = "-stdatm,0")
         print(levels)
@@ -48,6 +52,7 @@ class CdoTest(unittest.TestCase):
         self.assertEqual("File format: GRIB",info[0])
 
     def test_bndLevels(self):
+        cdo = Cdo()
         ofile = MyTempfile().path()
         cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,output = ofile,options = "-f nc")
         self.assertEqual([0, 50.0, 150.0, 350.0, 650.0, 1100.0, 1700.0, 2500.0, 3500.0, 4500.0, 5500.0],
@@ -56,6 +61,7 @@ class CdoTest(unittest.TestCase):
                      cdo.thicknessOfLevels(input = ofile))
 
     def test_CDO_options(self):
+        cdo = Cdo()
         names = cdo.showname(input = "-stdatm,0",options = "-f nc")
         self.assertEqual(["P T"],names)
         ofile = MyTempfile().path()
@@ -63,11 +69,13 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(["GRIB SZIP"],cdo.showformat(input = ofile))
 
     def test_chain(self):
+        cdo = Cdo()
         ofile     = MyTempfile().path()
         cdo.setname("veloc", input=" -copy -random,r1x1",output = ofile,options = "-f nc")
         self.assertEqual(["veloc"],cdo.showname(input = ofile))
 
     def test_diff(self):
+        cdo = Cdo()
         diffv = cdo.diffn(input = "-random,r1x1 -random,r1x1")
         self.assertEqual(diffv[1].split(' ')[4],"random")
         self.assertEqual(diffv[1].split(' ')[-1],"0.53060")
@@ -75,6 +83,7 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(diff[1].split(' ')[-1],"0.53060")
 
     def test_returnArray(self):
+        cdo = Cdo()
         ofile = MyTempfile().path()
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
@@ -98,6 +107,7 @@ class CdoTest(unittest.TestCase):
 
 
     def test_combine(self):
+        cdo = Cdo()
         o   = MyTempfile().path()
         stdatm = cdo.stdatm("0",options = "-f nc",output=o)
         self.assertEqual(o,stdatm)
@@ -110,6 +120,7 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(288.0,sum.var("T").get().min())
 
     def test_cdf(self):
+        cdo = Cdo()
         self.assertNotIn("cdf",cdo.__dict__)
         cdo.setReturnArray()
         self.assertIn("cdf",cdo.__dict__)
@@ -119,15 +130,18 @@ class CdoTest(unittest.TestCase):
         cdo.unsetReturnArray()
 
     def test_thickness(self):
+        cdo = Cdo()
         levels            = "25 100 250 500 875 1400 2100 3000 4000 5000".split(' ')
         targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
         self.assertEqual(targetThicknesses, cdo.thicknessOfLevels(input = "-selname,T -stdatm,"+ ','.join(levels)))
 
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):
+            cdo = Cdo()
             print cdo.sinfov(input='/home/ram/data/icon/oce.nc')
 
         def test_verticalLevels(self):
+            cdo = Cdo()
             iconpath          = "/home/ram/src/git/icon/grids"
             # check, if a given input files has vertival layers of a given thickness array
             targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
@@ -138,12 +152,27 @@ class CdoTest(unittest.TestCase):
             self.assertEqual(targetThicknesses,thicknesses)
 
         def test_readCdf(self):
+            cdo = Cdo()
             input= "-settunits,days  -setyear,2000 -for,1,4"
             cdfFile = cdo.copy(options="-f nc",input=input)
             cdf     = cdo.readCdf(cdfFile)
             self.assertEqual(['lat','lon','for','time'],cdf.variables().keys())
 
+        def testTmp(self):
+            cdo = Cdo()
+            import glob
+            tempfilesStart = glob.glob('/tmp/cdoPy*')
+            tempfilesStart.sort()
+            tempfilesEnd   = glob.glob('/tmp/cdoPy**')
+
+            self.assertEqual(tempfilesStart,tempfilesEnd)
+            self.test_combine()
+            tempfilesEnd = glob.glob('/tmp/cdoPy**')
+            tempfilesEnd.sort()
+            self.assertEqual(tempfilesStart,tempfilesEnd)
+
+
 if __name__ == '__main__':
     unittest.main()
 
-# vim:sw=4
+# vim:sw=2

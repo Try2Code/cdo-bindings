@@ -47,7 +47,9 @@ class Cdo(object):
         self.operators   = self.getOperators()
         self.returnArray = False
 
-        self.debug = False
+        self.tempfile    = MyTempfile()
+
+        self.debug       = False
 
     def __getattr__(self, method_name):
         def get(self, *args,**kwargs):
@@ -71,7 +73,7 @@ class Cdo(object):
               io.append(kwargs["output"])
             else:
               if not operatorPrintsOut:
-                kwargs["output"] = MyTempfile().path()
+                kwargs["output"] = self.tempfile.path()
                 io.append(kwargs["output"])
 
             if not kwargs.__contains__("options"):
@@ -185,16 +187,25 @@ class Cdo(object):
 
 # Helper module for easy temp file handling
 class MyTempfile(object):
+  __tempfiles = []
   def __init__(self):
     self.persistent_tempfile = False
+
+  def __del__(self):
+    # remove temporary files
+    for filename in self.__class__.__tempfiles:
+      if os.path.isfile(filename):
+        os.remove(filename)
 
   def setPersist(self,value):
     self.persistent_tempfiles = value
 
   def path(self):
     if not self.persistent_tempfile:
-      t = tempfile.NamedTemporaryFile(delete=False)
-      t.close
+      t = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy')
+      self.__class__.__tempfiles.append(t.name)
+      t.close()
+
       return t.name
     else:
       N =10000000 

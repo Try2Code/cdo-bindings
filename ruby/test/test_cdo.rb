@@ -153,6 +153,14 @@ class TestCdo < Test::Unit::TestCase
       cdf     = Cdo.readCdf(cdfFile)
       assert_equal(['lon','lat','time','for'],cdf.var_names)
     end
+    def test_tmp
+      tempfilesStart = Dir.glob('/tmp/Module*').sort
+      tempfilesEnd   = Dir.glob('/tmp/Module*').sort
+      assert_equal(tempfilesStart,tempfilesEnd)
+      test_combine()
+      tempfilesEnd = Dir.glob('/tmp/Module**')
+      assert_empty(tempfilesStart-tempfilesEnd)
+    end
   end
 
 end
