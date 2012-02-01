@@ -2,13 +2,13 @@
 from setuptools import setup
 
 setup (name   = 'cdo',
-  version     = '1.0.6',
+  version     = '1.0.7rc',
   author      = "Ralf Mueller",
   author_email= "stark.dreamdetective@gmail.com",
   license     = "GPLv2",
   description = """python bindings to CDO""",
   py_modules  = ["cdo"],
-  url = "http://pypi.python.org/pypi/cdo",
+  url         = "https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D",
   classifiers = [
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
