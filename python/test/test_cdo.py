@@ -164,8 +164,9 @@ class CdoTest(unittest.TestCase):
             tempfilesStart = glob.glob('/tmp/cdoPy*')
             tempfilesStart.sort()
             tempfilesEnd   = glob.glob('/tmp/cdoPy**')
-
+            tempfilesEnd.sort()
             self.assertEqual(tempfilesStart,tempfilesEnd)
+
             self.test_combine()
             tempfilesEnd = glob.glob('/tmp/cdoPy**')
             tempfilesEnd.sort()
