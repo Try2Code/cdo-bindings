@@ -20,7 +20,7 @@ module Cdo
     :returnArray => false,
     :operators   => []
   }
-  @@CDO = ENV['CDO'].nil? ? '/usr/bin/cdo' : ENV['CDO']
+  @@CDO = ENV['CDO'].nil? ? 'cdo' : ENV['CDO']
 
   # Since cdo-1.5.4 undocumented operators are given with the -h option. For
   # earlier version, they have to be provided manually
@@ -114,11 +114,15 @@ module Cdo
       puts "Using CDO: #@@CDO"
       puts IO.popen(@@CDO + " -V").readlines
     end
+    return true
   end
   def Cdo.setCdo(cdo)
     puts "Will use #{cdo} instead of #@@CDO" if Cdo.debug
     @@CDO = cdo
     Cdo.getOperators(true)
+  end
+  def Cdo.getCdo
+    @@CDO
   end
 
   def Cdo.getOperators(force=false)

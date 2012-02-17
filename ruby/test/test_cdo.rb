@@ -27,6 +27,16 @@ class TestCdo < Test::Unit::TestCase
     exit
   end
 
+  def test_cdo
+    assert_equal(true,Cdo.checkCdo)
+    assert_equal('/usr/bin/cdo',Cdo.getCdo)
+    newCDO="#{ENV['HOME']}/bin/cdo"
+    if File.exist?(newCDO) then
+      Cdo.setCdo(newCDO)
+      assert_equal(true,Cdo.checkCdo)
+      assert_equal(newCDO,Cdo.getCdo)
+    end
+  end
   def test_getOperators
     %w[for random stdatm info showlevel sinfo remap geopotheight mask topo thicknessOfLevels].each {|op|
       if ["thicknessOfLevels"].include?(op)

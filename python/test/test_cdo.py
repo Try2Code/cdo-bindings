@@ -5,12 +5,12 @@ class CdoTest(unittest.TestCase):
 
     def testCDO(self):
         cdo = Cdo()
-        print(cdo.CDO)
-        self.assertEqual('cdo',cdo.CDO)
+        self.assertEqual('cdo',cdo.getCdo())
         newCDO="/usr/bin/cdo"
-        cdo.setCDO(newCDO)
-        self.assertEqual(newCDO,cdo.CDO)
-        cdo.setCDO('cdo')
+        if os.path.isfile(newCDO):
+            cdo.setCdo(newCDO)
+            self.assertEqual(newCDO,cdo.getCdo())
+            cdo.setCdo('cdo')
 
     def testDbg(self):
         cdo = Cdo()
