@@ -75,6 +75,36 @@ module Cdo
       return ofile
     end
   end
+  def Cdo.getOperators(force=false)
+    # Do NOT compute anything, if it is not required
+    return State[:operators] unless (State[:operators].empty? or force)
+
+    cmd       = @@CDO + ' 2>&1'
+    help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
+    if 5 >= help.size
+      warn "Operators could not get listed by running the CDO binary (#{@@CDO})"
+      pp help if Cdo.debug
+      exit
+    end
+    State[:operators] = (help[help.index("Operators:")+1].split + @@undocumentedOperators).uniq
+  end
+  def Cdo.method_missing(sym, *args, &block)
+    # args is expected to look like [opt1,...,optN,:in => iStream,:out => oStream] where
+    # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
+    puts "Operator #{sym.to_s} is called" if State[:debug]
+    if getOperators.include?(sym.to_s)
+      io = args.find {|a| a.class == Hash}
+      args.delete_if {|a| a.class == Hash}
+      if /(diff|info|show|griddes)/.match(sym)
+        run(" -#{sym.to_s} #{io[:in]} ",$stdout)
+      else
+        opts = args.empty? ? '' : ',' + args.reject {|a| a.class == Hash}.join(',')
+        run(" -#{sym.to_s}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnArray])
+      end
+    else
+      warn "Operator #{sym.to_s} not found"
+    end
+  end
   def Cdo.loadCdf
     begin
       require "numru/netcdf"
@@ -124,37 +154,8 @@ module Cdo
   def Cdo.getCdo
     @@CDO
   end
-
-  def Cdo.getOperators(force=false)
-    # Do NOT compute anything, if it is not required
-    return State[:operators] unless (State[:operators].empty? or force)
-
-    cmd       = @@CDO + ' 2>&1'
-    help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
-    if 5 >= help.size
-      warn "Operators could not get listed by running the CDO binary (#{@@CDO})"
-      pp help if Cdo.debug
-      exit
-    end
-    State[:operators] = (help[help.index("Operators:")+1].split + @@undocumentedOperators).uniq
-  end
-
-  def Cdo.method_missing(sym, *args, &block)
-    # args is expected to look like [opt1,...,optN,:in => iStream,:out => oStream] where
-    # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
-    puts "Operator #{sym.to_s} is called" if State[:debug]
-    if getOperators.include?(sym.to_s)
-      io = args.find {|a| a.class == Hash}
-      args.delete_if {|a| a.class == Hash}
-      if /(diff|info|show|griddes)/.match(sym)
-        run(" -#{sym.to_s} #{io[:in]} ",$stdout)
-      else
-        opts = args.empty? ? '' : ',' + args.reject {|a| a.class == Hash}.join(',')
-        run(" -#{sym.to_s}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnArray])
-      end
-    else
-      warn "Operator #{sym.to_s} not found"
-    end
+  def Cdo.operators
+    State[:operators]
   end
 
   #==================================================================
@@ -199,11 +200,15 @@ module MyTempfile
     unless @@persistent_tempfiles
       t = Tempfile.new(self.class.to_s)
       @@_tempfiles << t
+      @@_tempfiles << t.path
       t.path
     else
       t = "_"+rand(@@N).to_s
       @@_tempfiles << t
       t
     end
+  end
+  def MyTempfile.showFiles
+    @@_tempfiles.each {|f| print(f+" ") if f.kind_of? String}
   end
 end
