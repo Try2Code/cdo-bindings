@@ -5,7 +5,7 @@ require 'pp'
 
 class TestCdo < Test::Unit::TestCase
 
-  DEFAULT_CDO_PATH = '/usr/bin/cdo'
+  DEFAULT_CDO_PATH = 'cdo'
   def setup
     if ENV['CDO'].nil?
       if File.exists?(DEFAULT_CDO_PATH)
@@ -29,7 +29,11 @@ class TestCdo < Test::Unit::TestCase
 
   def test_cdo
     assert_equal(true,Cdo.checkCdo)
-    assert_equal('/usr/bin/cdo',Cdo.getCdo)
+    if ENV['CDO']
+      assert_equal(ENV['CDO'],Cdo.getCdo)
+    else
+      assert_equal(DEFAULT_CDO_PATH,Cdo.getCdo)
+    end
     newCDO="#{ENV['HOME']}/bin/cdo"
     if File.exist?(newCDO) then
       Cdo.setCdo(newCDO)
