@@ -98,7 +98,7 @@ class Cdo(object):
               print retvals[1]
 
             if operatorPrintsOut:
-              r = map(string.strip,retvals[0].split('\n'))
+              r = map(string.strip,retvals[0].split(os.linesep))
               return r[:len(r)-1]
             else:
               if self.returnArray or kwargs["returnArray"]:
@@ -127,7 +127,7 @@ class Cdo(object):
         proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
         ret  = proc.communicate()
         l    = ret[1].find("Operators:")
-        ops  = ret[1][l:-1].split("\n")[1:-1]
+        ops  = ret[1][l:-1].split(os.linesep)[1:-1]
         endI = ops.index('')
         s    = ' '.join(ops[:endI]).strip()
         s    = re.sub("\s+" , " ", s)
