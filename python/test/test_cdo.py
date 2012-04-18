@@ -5,7 +5,6 @@ class CdoTest(unittest.TestCase):
 
     def testCDO(self):
         cdo = Cdo()
-        self.assertEqual('cdo',cdo.getCdo())
         newCDO="/usr/bin/cdo"
         if os.path.isfile(newCDO):
             cdo.setCdo(newCDO)
@@ -43,13 +42,19 @@ class CdoTest(unittest.TestCase):
         s   = cdo.infov(input=f)
         cdo.stdatm("0",output=f,options="-f nc")
 
-    def test_info(self):
+    def test_outputOperators(self):
         cdo = Cdo()
         levels = cdo.showlevel(input = "-stdatm,0")
         info   = cdo.sinfo(input = "-stdatm,0")
-        print(levels)
         self.assertEqual([0,0],map(float,levels))
         self.assertEqual("File format: GRIB",info[0])
+
+        values = cdo.outputkey("value",input="-stdatm,0")
+        self.assertEqual(["1013.25", "288"],values)
+        values = cdo.outputkey("value",input="-stdatm,0,10000")
+        self.assertEqual(["1013.25", "271.913", "288", "240.591"],values)
+        values = cdo.outputkey("level",input="-stdatm,0,10000")
+        self.assertEqual(["0", "10000","0", "10000"],values)
 
     def test_bndLevels(self):
         cdo = Cdo()
@@ -87,18 +92,18 @@ class CdoTest(unittest.TestCase):
         ofile = MyTempfile().path()
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
-        press = cdo.stdatm("0",options="-f nc",returnArray=True).var("P").get()
+        press = cdo.stdatm("0",options="-f nc",returnArray=True).variables["P"][:]
         self.assertEqual(1013.25,press.min())
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
         cdo.setReturnArray()
         outfile = 'test.nc'
-        press = cdo.stdatm("0",output=outfile,options="-f nc").var("P").get()
+        press = cdo.stdatm("0",output=outfile,options="-f nc").variables["P"][:]
         self.assertEqual(1013.25,press.min())
         cdo.unsetReturnArray()
         press = cdo.stdatm("0",output=outfile,options="-f nc")
         self.assertEqual(press,outfile)
-        press = cdo.stdatm("0",output=outfile,options="-f nc",returnArray=True).var("P").get()
+        press = cdo.stdatm("0",output=outfile,options="-f nc",returnArray=True).variables["P"][:]
         self.assertEqual(1013.25,press.min())
         print("press = "+press.min().__str__())
         cdo.unsetReturnArray()
@@ -117,7 +122,7 @@ class CdoTest(unittest.TestCase):
         sum = cdo.fldsum(input = stdatm)
         sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"))
         sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnArray=True)
-        self.assertEqual(288.0,sum.var("T").get().min())
+        self.assertEqual(288.0,sum.variables["T"][:])
 
     def test_cdf(self):
         cdo = Cdo()
@@ -126,7 +131,7 @@ class CdoTest(unittest.TestCase):
         self.assertIn("cdf",cdo.__dict__)
         cdo.setReturnArray(False)
         sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnArray=True)
-        self.assertEqual(1013.25,sum.var("P").get().min())
+        self.assertEqual(1013.25,sum.variables["P"][:])
         cdo.unsetReturnArray()
 
     def test_thickness(self):
@@ -156,7 +161,7 @@ class CdoTest(unittest.TestCase):
             input= "-settunits,days  -setyear,2000 -for,1,4"
             cdfFile = cdo.copy(options="-f nc",input=input)
             cdf     = cdo.readCdf(cdfFile)
-            self.assertEqual(['lat','lon','for','time'],cdf.variables().keys())
+            self.assertEqual(['lat','lon','for','time'],cdf.variables.keys())
 
         def testTmp(self):
             cdo = Cdo()

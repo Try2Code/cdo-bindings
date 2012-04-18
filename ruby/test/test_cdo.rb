@@ -6,26 +6,6 @@ require 'pp'
 class TestCdo < Test::Unit::TestCase
 
   DEFAULT_CDO_PATH = 'cdo'
-  def setup
-    if ENV['CDO'].nil?
-      if File.exists?(DEFAULT_CDO_PATH)
-        Cdo.setCdo(DEFAULT_CDO_PATH)
-      else
-        stop(DEFAULT_CDO_PATH)
-      end
-    else
-      # Check user given path
-      unless File.exists?(ENV['CDO'])
-        stop(ENV['CDO'])
-      else
-        Cdo.setCdo(ENV['CDO'])
-      end
-    end
-  end
-  def stop(path)
-    warn "Could not find CDO binary (#{path})! Abort tests"
-    exit
-  end
 
   def test_cdo
     assert_equal(true,Cdo.checkCdo)
@@ -50,12 +30,19 @@ class TestCdo < Test::Unit::TestCase
       end
     }
   end
-  def test_info
+  def test_outputOperators
     levels = Cdo.showlevel(:in => "-stdatm,0")
     assert_equal([0,0].map(&:to_s),levels)
 
     info = Cdo.sinfo(:in => "-stdatm,0")
     assert_equal("File format: GRIB",info[0])
+
+    values = Cdo.outputkey("value",:in => "-stdatm,0")
+    assert_equal(["1013.25", "288"],values)
+    values = Cdo.outputkey("value",:in => "-stdatm,0,10000")
+    assert_equal(["1013.25", "271.913", "288", "240.591"],values)
+    values = Cdo.outputkey("level",:in => "-stdatm,0,10000")
+    assert_equal(["0", "10000","0", "10000"],values)
   end
   def test_args
     #Cdo.Debug = true

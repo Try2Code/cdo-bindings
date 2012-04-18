@@ -46,6 +46,8 @@ module Cdo
     tstepcount vardes vardup varmul varquot2test varrms vertwind write_e5ml
     writegrid writerandom yearcount]
 
+  @@outputOperatorsPattern = /(diff|info|output|griddes|zaxisdes|show)/
+
   private
   def Cdo.call(cmd)
     if (State[:debug])
@@ -93,10 +95,11 @@ module Cdo
     # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
     puts "Operator #{sym.to_s} is called" if State[:debug]
     if getOperators.include?(sym.to_s)
-      io = args.find {|a| a.class == Hash}
-      args.delete_if {|a| a.class == Hash}
-      if /(diff|info|show|griddes)/.match(sym)
-        run(" -#{sym.to_s} #{io[:in]} ",$stdout)
+      opts = args.empty? ? '' : ',' + args.reject {|a| a.class == Hash}.join(',')
+      io   = args.find {|a| a.class == Hash}
+      args.delete_if   {|a| a.class == Hash}
+      if @@outputOperatorsPattern.match(sym)
+        run(" -#{sym.to_s}#{opts} #{io[:in]} ",$stdout)
       else
         opts = args.empty? ? '' : ',' + args.reject {|a| a.class == Hash}.join(',')
         run(" -#{sym.to_s}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnArray])
@@ -122,6 +125,9 @@ module Cdo
   def Cdo.debug
     State[:debug]
   end
+  def Cdo.version
+    "1.0.8"
+  end
   def Cdo.setReturnArray(value=true)
     if value
       Cdo.loadCdf
@@ -135,9 +141,16 @@ module Cdo
     State[:returnArray]
   end
 
+  def Cdo.hasCdo?(bin=@@CDO)
+    return true if File.exists?(@@CDO) and File.executable?(@@CDO)
+    ENV['PATH'].split(File::PATH_SEPARATOR).each {|path| 
+      return true if File.exists?([path,bin].join(File::SEPARATOR))
+    }
+  end
+
   # test if @@CDO can be used
   def Cdo.checkCdo
-    unless (File.exists?(@@CDO) and File.executable?(@@CDO))
+    unless hasCdo?(@@CDO)
       warn "Testing application #@@CDO is not available!"
       exit 1
     else

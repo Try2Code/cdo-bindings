@@ -51,10 +51,12 @@ class Cdo(object):
 
         self.debug       = False
 
+        self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show)'
+
     def __getattr__(self, method_name):
         def get(self, *args,**kwargs):
             operator          = [method_name]
-            operatorPrintsOut = re.search('(diff|info|show|griddes)',method_name)
+            operatorPrintsOut = re.search(self.outputOperatorsPattern,method_name)
 
             if args.__len__() != 0:
               for arg in args:
@@ -105,7 +107,10 @@ class Cdo(object):
                 if not self.returnArray:
                   self.loadCdf()
 
-                return self.cdf(kwargs["output"])
+                fileobj = self.cdf.netcdf_file(kwargs["output"])
+                retval  = fileobj
+                fileobj.close()
+                return retval
               else:
                 return kwargs["output"]
 
@@ -135,8 +140,8 @@ class Cdo(object):
 
     def loadCdf(self):
       try:
-        import pycdf as cdf
-        self.cdf         = cdf.CDF
+        from scipy.io import netcdf as cdf
+        self.cdf         = cdf
       except ImportError:
         raise ImportError,"Module pycdf is required to return numpy arrays."
 
@@ -184,7 +189,10 @@ class Cdo(object):
       if not self.returnArray:
         self.loadCdf()
 
-      return self.cdf(iFile)
+      fileObj =  self.cdf.netcdf_file(iFile)
+      retval = fileObj
+      fileObj.close()
+      return retval
 
 
 
