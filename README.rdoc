@@ -60,8 +60,8 @@ The Ruby module can be used directly after loading it. For python an instance ha
 
 * Return multi-dimension arrrays
 
-  temperatures = Cdo.fldmin(:in => ifile,:returnArray => true).var('T').get      (ruby version)
-  temperatures = cdo.fldmin(input = ifile,:returnArray = True).variables['T'][:] (python version)
+   temperatures = Cdo.fldmin(:in => ifile,:returnArray => true).var('T').get      (ruby version)
+   temperatures = cdo.fldmin(input = ifile,:returnArray = True).variables['T'][:] (python version)
 
 More examples can be found in test/cdo-examples.rb and on the homepage: https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D
 
