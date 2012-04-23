@@ -10,13 +10,13 @@ binary formats.
 
 === Ruby Installation
 
-Download and install cdo.rb with the following:
+Download and install cdo.rb via rubygems:
 
    gem install cdo
 
 === Python Installation
 
-Download and cdo.py with the following:
+Download and install cdo.py via pypi:
 
    pip install cdo
 
