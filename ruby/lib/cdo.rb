@@ -125,7 +125,7 @@ module Cdo
     State[:debug]
   end
   def Cdo.version
-    "1.0.8"
+    "1.0.9"
   end
   def Cdo.setReturnArray(value=true)
     if value
