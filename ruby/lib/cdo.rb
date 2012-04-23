@@ -71,8 +71,7 @@ module Cdo
     cmd << "#{ofile}"
     call(cmd)
     if returnArray or State[:returnArray]
-      Cdo.loadCdf unless State[:returnArray]
-      return NetCDF.open(ofile)
+      Cdo.readCdf(ofile)
     else
       return ofile
     end
@@ -196,7 +195,7 @@ module Cdo
 
   def Cdo.readCdf(iFile)
     Cdo.loadCdf unless State[:returnArray] 
-    return NetCDF.open(iFile)
+    NetCDF.open(iFile)
   end
 end
 
