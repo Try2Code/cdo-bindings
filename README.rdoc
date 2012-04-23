@@ -22,7 +22,10 @@ Download and cdo.py with the following:
 
 === Requirements
 
-Cdo.{rb,py} requires a working CDO binary, but has not special requirement to Ruby
+Cdo.{rb,py} requires a working CDO binary, but has not special requirement to
+ruby or python. For returning multi-dimensional arrays (numpy for python,
+narray for ruby) addtional netcdf-io modules are needed. These are scipy for
+python and ruby-netcdf for ruby.
 
 == Usage
 
@@ -54,6 +57,11 @@ The Ruby module can be used directly after loading it. For python an instance ha
 
    Cdo.copy(:in => ifile, :out => ofile,:options => "-f nc4") (ruby version)
    cdo.copy(input = ifile, output = ofile,options = "-f nc4") (python version
+
+* Return multi-dimension arrrays
+
+  temperatures = Cdo.fldmin(:in => ifile,:returnArray => true).var('T').get      (ruby version)
+  temperatures = cdo.fldmin(input = ifile,:returnArray = True).variables['T'][:] (python version)
 
 More examples can be found in test/cdo-examples.rb and on the homepage: https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D
 
