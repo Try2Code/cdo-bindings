@@ -1,6 +1,72 @@
-= Language bindings for CDO - Climate Data Operators
+= Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
-cdo.{rb,py} is smart caller for a CDO installation. CDO is a widly used command line analysis tool for geoscientific data.
+This package contains the module Cdo, which implements a ruby/python style access to
+the Climate Data operators CDO. CDO is a command line tool for processing
+gridded data. Its main focus if climate data, but it can by used for other
+purposes to. It accepts input formats GRIB1, GRIB2, NetCDF and several Fortran
+binary formats.
+
+== Installation
+
+=== Ruby Installation
+
+Download and install cdo.rb with the following:
+
+   gem install cdo
+
+=== Python Installation
+
+Download and cdo.py with the following:
+
+   pip install cdo
+
+=== Requirements
+
+Cdo.{rb,py} requires a working CDO binary, but has not special requirement to Ruby
+
+== Usage
+
+=== Run operators
+
+The Ruby module can be used directly after loading it. For python an instance has to created first
+
+   cdo = Cdo()
+
+* File information
+** ruby:
+    
+    Cdo.infov(:in => ifile)
+    Cdo.showlevels(:in => ifile)
+** python:
+    
+    cdo.infov(input=ifile)
+    cdo.showlevels(input=ifile)
+
+* Operators with regular output files
+
+    Cdo.timmin(:in => ifile,:out => ofile)
+
+* Operators with options
+
+    Cdo.remap([gridfile,weightfile],:in => ifile, :out => ofile)
+
+* Set global CDO options
+
+   Cdo.copy(:in => ifile, :out => ofile,:options => "-f nc4")
+
+More examples can be found in test/cdo-examples.rb.
+
+=== Tempfile helpers
+
+Cdo.rb includes a simple tempfile wrapperm, which make live easier, when write your own scripts with Cdo.rb
+
+== Support, Issues, Bugs, ...
+
+Please use the forum or ticket system of CDOs official web page: http://code.zmaw.de/projects/cdo
+
+== License
+
+Cdo.{rb,py} makes use of the GPLv2D License, see COPYING
 
 ---
 
