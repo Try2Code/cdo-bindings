@@ -148,7 +148,7 @@ class Cdo(object):
           self.cdf    = cdf
           self.cdfMod = "netcdf4"
         except:
-          raise ImportError,"scipy or python-netcdf4 is required to return numpy arrays."
+          raise ImportError,"scipy or python-netcdf4 module is required to return numpy arrays."
 
 
     def setReturnArray(self,value=True):
