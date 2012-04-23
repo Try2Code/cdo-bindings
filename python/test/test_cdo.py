@@ -92,7 +92,9 @@ class CdoTest(unittest.TestCase):
         ofile = MyTempfile().path()
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
-        press = cdo.stdatm("0",options="-f nc",returnArray=True).variables["P"][:]
+        a = cdo.readCdf(press)
+        variables = cdo.stdatm("0",options="-f nc",returnArray=True).variables
+        press = cdo.stdatm("0",options="-f nc",returnArray=True).variables['P'][:]
         self.assertEqual(1013.25,press.min())
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
@@ -134,6 +136,11 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(1013.25,sum.variables["P"][:])
         cdo.unsetReturnArray()
 
+    def test_cdf_mod(self):
+        cdo =Cdo()
+        cdo.setReturnArray()
+        print('cdo.cdfMod:' + cdo.cdfMod)
+        self.assertEqual(cdo.cdfMod,"scipy")
     def test_thickness(self):
         cdo = Cdo()
         levels            = "25 100 250 500 875 1400 2100 3000 4000 5000".split(' ')

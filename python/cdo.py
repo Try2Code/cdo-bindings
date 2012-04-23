@@ -53,6 +53,8 @@ class Cdo(object):
 
         self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show)'
 
+        self.cdfMod      = ''
+
     def __getattr__(self, method_name):
         def get(self, *args,**kwargs):
             operator          = [method_name]
@@ -107,10 +109,7 @@ class Cdo(object):
                 if not self.returnArray:
                   self.loadCdf()
 
-                fileobj = self.cdf.netcdf_file(kwargs["output"])
-                retval  = fileobj
-                fileobj.close()
-                return retval
+                return self.readCdf(kwargs["output"])
               else:
                 return kwargs["output"]
 
@@ -140,10 +139,17 @@ class Cdo(object):
 
     def loadCdf(self):
       try:
-        from scipy.io import netcdf as cdf
-        self.cdf         = cdf
-      except ImportError:
-        raise ImportError,"Module pycdf is required to return numpy arrays."
+        import scipy.io.netcdf as cdf
+        self.cdf    = cdf
+        self.cdfMod = "scipy"
+      except:
+        try:
+          import netCDF4 as cdf
+          self.cdf    = cdf
+          self.cdfMod = "netcdf4"
+        except:
+          raise ImportError,"scipy or python-netcdf4 is required to return numpy arrays."
+
 
     def setReturnArray(self,value=True):
       self.returnArray = value
@@ -189,7 +195,13 @@ class Cdo(object):
       if not self.returnArray:
         self.loadCdf()
 
-      fileObj =  self.cdf.netcdf_file(iFile)
+      if ( "scipy" == self.cdfMod):
+        fileObj =  self.cdf.netcdf_file(iFile)
+      elif ( "netcdf4" == self.cdfMod ):
+        fileObj = self.cdf.Dataset(iFile)
+      else:
+        raise ImportError,"Could not import data from file '" + iFile + "'"
+
       retval = fileObj
       fileObj.close()
       return retval
