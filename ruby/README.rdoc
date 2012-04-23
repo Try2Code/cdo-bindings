@@ -43,7 +43,7 @@ More examples can be found in test/cdo-examples.rb.
 
 === Tempfile helpers
 
-Cdo.rb includes a simple tempfile wrapperm, which make live easier, when write your own scripts with Cdo.rb,m
+Cdo.rb includes a simple tempfile wrapperm, which make live easier, when write your own scripts with Cdo.rb
 
 == Support, Issues, Bugs, ...
 

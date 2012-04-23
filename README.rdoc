@@ -1,0 +1,13 @@
+= Language bindings for CDO - Climate Data Operators
+
+cdo.{rb,py} is smart caller for a CDO installation. CDO is a widly used command line analysis tool for geoscientific data.
+
+---
+
+= Other stuff
+
+Author::   Ralf Mueller <stark.dreamdetective@gmail.com>
+Requires:: CDO version 1.5.x
+License::  Copyright 2011-2012 by Ralf Mueller
+           Released under GPLv2 license.  See the COPYING
+           file included in the distribution.

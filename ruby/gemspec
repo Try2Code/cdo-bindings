@@ -4,7 +4,7 @@ require 'cdo'
 
 spec = Gem::Specification.new do |s|
   s.name              = "cdo"
-  s.version           = Cdo.version
+  s.version           = '1.0.9'
   s.platform          = Gem::Platform::RUBY
   s.files             = ["lib/cdo.rb"] + ["gemspec","COPYING","README.rdoc","ChangeLog"]
   s.test_file         = "test/test_cdo.rb"

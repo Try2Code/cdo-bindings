@@ -170,6 +170,9 @@ class Cdo(object):
     #==================================================================
     # Addional operators:
     #------------------------------------------------------------------
+    def module_version(self):
+      '1.0.9'
+
     def boundaryLevels(self,**kwargs):
       ilevels         = map(float,self.showlevel(input = kwargs['input'])[0].split())
       bound_levels    = []
