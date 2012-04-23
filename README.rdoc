@@ -32,14 +32,12 @@ The Ruby module can be used directly after loading it. For python an instance ha
 
    cdo = Cdo()
 
-* File information (ruby)
+* File information
     
-    Cdo.infov(:in => ifile)
+    Cdo.infov(:in => ifile)       (ruby version)
     Cdo.showlevels(:in => ifile)
 
-* File information (python)
-    
-    cdo.infov(input=ifile)
+    cdo.infov(input=ifile)        (python verson)
     cdo.showlevels(input=ifile)
 
 * Operators with regular output files
