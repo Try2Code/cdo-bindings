@@ -67,7 +67,7 @@ More examples can be found in test/cdo-examples.rb and on the homepage: https://
 
 === Tempfile helpers
 
-Cdo.rb includes a simple tempfile wrapperm, which make live easier, when write your own scripts with Cdo.rb
+Cdo.{rb,py} includes a simple tempfile wrapper, which make live easier, when write your own scripts
 
 == Support, Issues, Bugs, ...
 
