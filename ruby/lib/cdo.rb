@@ -92,20 +92,19 @@ module Cdo
   def Cdo.method_missing(sym, *args, &block)
     # args is expected to look like [opt1,...,optN,:in => iStream,:out => oStream] where
     # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
-    operator = sym.to_s
-    puts "Operator #{operator} is called" if State[:debug]
-    if getOperators.include?(operator)
+    puts "Operator #{sym.to_s} is called" if State[:debug]
+    if getOperators.include?(sym.to_s)
       opts = args.empty? ? '' : ',' + args.reject {|a| a.class == Hash}.join(',')
       io   = args.find {|a| a.class == Hash}
       args.delete_if   {|a| a.class == Hash}
-      if @@outputOperatorsPattern.match(operator)
-        run(" -#{operator}#{opts} #{io[:in]} ",$stdout)
+      if @@outputOperatorsPattern.match(sym)
+        run(" -#{sym.to_s}#{opts} #{io[:in]} ",$stdout)
       else
         opts = args.empty? ? '' : ',' + args.reject {|a| a.class == Hash}.join(',')
-        run(" -#{operator}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnArray])
+        run(" -#{sym.to_s}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnArray])
       end
     else
-      warn "Operator #{operator} not found"
+      warn "Operator #{sym.to_s} not found"
     end
   end
   def Cdo.loadCdf
