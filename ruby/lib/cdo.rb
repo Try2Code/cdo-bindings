@@ -167,6 +167,7 @@ module Cdo
     @@CDO
   end
   def Cdo.operators
+    Cdo.getOperators if State[:operators].empty?
     State[:operators]
   end
 

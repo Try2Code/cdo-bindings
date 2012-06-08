@@ -88,6 +88,11 @@ class TestCdo < Test::Unit::TestCase
     assert_equal(diff[1].split(' ')[-1],"0.53060")
   end
 
+  def test_operators
+    assert_includes(Cdo.operators,"infov")
+    assert_includes(Cdo.operators,"showlevel")
+  end
+
   def test_bndLevels
     ofile = MyTempfile.path
     Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:out => ofile,:options => "-f nc")
