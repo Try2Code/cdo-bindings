@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup (name   = 'cdo',
-  version     = '1.0.9',
+  version     = '1.0.10.rc1',
   author      = "Ralf Mueller",
   author_email= "stark.dreamdetective@gmail.com",
   license     = "GPLv2",

@@ -66,7 +66,7 @@ module Cdo
       cmd << " 2>/dev/null"
       return IO.popen(cmd).readlines.map {|l| l.chomp.strip}
     when nil
-      ofile = Tempfile.new("Cdo.rb").path
+      ofile = MyTempfile.path
     end
     cmd << "#{ofile}"
     call(cmd)
@@ -94,7 +94,8 @@ module Cdo
     # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
     puts "Operator #{sym.to_s} is called" if State[:debug]
     if getOperators.include?(sym.to_s)
-      opts = args.empty? ? '' : ',' + args.reject {|a| a.class == Hash}.join(',')
+      operatorArgs = args.reject {|a| a.class == Hash}
+      opts = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
       io   = args.find {|a| a.class == Hash}
       args.delete_if   {|a| a.class == Hash}
       if @@outputOperatorsPattern.match(sym)
@@ -125,7 +126,7 @@ module Cdo
     State[:debug]
   end
   def Cdo.version
-    "1.0.9"
+    "1.0.10rc1"
   end
   def Cdo.setReturnArray(value=true)
     if value

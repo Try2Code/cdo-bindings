@@ -117,6 +117,11 @@ class TestCdo < Test::Unit::TestCase
   def test_tempfile
     ofile0, ofile1 = MyTempfile.path, MyTempfile.path
     assert_not_equal(ofile0,ofile1)
+    # Tempfile should not disappeare even if the GC was started
+    puts ofile0
+    assert(File.exist?(ofile0))
+    GC.start
+    assert(File.exist?(ofile0))
   end
 
   def test_returnArray

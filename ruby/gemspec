@@ -1,10 +1,9 @@
 require 'rubygems'
 $:.unshift File.join(File.dirname(__FILE__),"..","lib")
-require 'cdo'
 
 spec = Gem::Specification.new do |s|
   s.name              = "cdo"
-  s.version           = '1.0.9'
+  s.version           = '1.0.10rc1'
   s.platform          = Gem::Platform::RUBY
   s.files             = ["lib/cdo.rb"] + ["gemspec","COPYING","README.rdoc","ChangeLog"]
   s.test_file         = "test/test_cdo.rb"
