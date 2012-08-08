@@ -27,11 +27,17 @@ class CdoTest(unittest.TestCase):
 
     def test_getOperators(self):
         cdo = Cdo()
-        for op in ['random','stdatm','info','showlevel','sinfo','remap','geopotheight','mask','topo','thicknessOfLevels']:
+        for op in ['random','stdatm','for','cdiwrite','info','showlevel','sinfo','remap','geopotheight','mask','topo','thicknessOfLevels']:
             if 'thicknessOfLevels' != op:
                 self.assertIn(op,cdo.operators)
             else:
                 self.assertIn(op,dir(cdo))
+
+    def test_listAllOperators(self):
+        cdo = Cdo()
+        operators = cdo.operators
+        operators.sort()
+        print "\n".join(operators)
 
     def test_simple(self):
         cdo = Cdo()
@@ -147,22 +153,24 @@ class CdoTest(unittest.TestCase):
         targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
         self.assertEqual(targetThicknesses, cdo.thicknessOfLevels(input = "-selname,T -stdatm,"+ ','.join(levels)))
 
+    def test_showlevels(self):
+        cdo = Cdo()
+        sourceLevels = "25 100 250 500 875 1400 2100 3000 4000 5000".split()
+        self.assertEqual(' '.join(sourceLevels), 
+                        cdo.showlevel(input = "-selname,T " + cdo.stdatm(','.join(sourceLevels),options = "-f nc"))[0]) 
+
+    def test_verticalLevels(self):
+        cdo = Cdo()
+        # check, if a given input files has vertival layers of a given thickness array
+        targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
+        sourceLevels = "25 100 250 500 875 1400 2100 3000 4000 5000".split()
+        thicknesses = cdo.thicknessOfLevels(input = "-selname,T " + cdo.stdatm(','.join(sourceLevels),options = "-f nc")) 
+        self.assertEqual(targetThicknesses,thicknesses)
+
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):
             cdo = Cdo()
             print cdo.sinfov(input='/home/ram/data/icon/oce.nc')
-
-        def test_verticalLevels(self):
-            cdo = Cdo()
-            iconpath          = "/home/ram/src/git/icon/grids"
-            # check, if a given input files has vertival layers of a given thickness array
-            targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
-            ifile             = '/'.join([iconpath,"ts_phc_annual-iconR2B04-L10_50-1000m.nc"])
-            self.assertEqual(["25 100 250 500 875 1400 2100 3000 4000 5000",
-                              "25 100 250 500 875 1400 2100 3000 4000 5000"],cdo.showlevel(input = ifile))
-            thicknesses = cdo.thicknessOfLevels(input = ifile)
-            self.assertEqual(targetThicknesses,thicknesses)
-
         def test_readCdf(self):
             cdo = Cdo()
             input= "-settunits,days  -setyear,2000 -for,1,4"

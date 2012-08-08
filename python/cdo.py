@@ -171,7 +171,15 @@ class Cdo(object):
     # Addional operators:
     #------------------------------------------------------------------
     def module_version(self):
-      '1.0.9'
+      '1.0.10'
+
+    def version(self):
+      # return CDO's version
+      proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      cdo_help   = ret[1]
+      match = re.search("CDO version (\d.*), Copyright",cdo_help)
+      return match.group(1)
 
     def boundaryLevels(self,**kwargs):
       ilevels         = map(float,self.showlevel(input = kwargs['input'])[0].split())
