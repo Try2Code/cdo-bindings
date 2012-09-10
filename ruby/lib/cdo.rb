@@ -130,6 +130,14 @@ module Cdo
       raise
     end
   end
+  def Cdo.parseArgs(args)
+    # splitinto hash-like args and the rest
+    operatorArgs = args.reject {|a| a.class == Hash}
+    io   = args.find {|a| a.class == Hash}
+    io   = {} if io.nil?
+    args.delete_if   {|a| a.class == Hash}
+    return [args,io]
+  end
 
   public
   def Cdo.debug=(value)
@@ -215,6 +223,10 @@ module Cdo
   def Cdo.readCdf(iFile)
     Cdo.loadCdf unless State[:returnArray] 
     NetCDF.open(iFile)
+  end
+
+  def Cdo.selindexlist(args)
+    
   end
 end
 

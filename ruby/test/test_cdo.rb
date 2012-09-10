@@ -172,6 +172,10 @@ class TestCdo < Test::Unit::TestCase
     thicknesses = Cdo.thicknessOfLevels(:in => "-selname,T #{Cdo.stdatm(*sourceLevels,:options => '-f nc')}")
     assert_equal(targetThicknesses,thicknesses)
   end
+
+  def test_parseArgs
+  end
+
   if 'thingol' == `hostname`.chomp  then
     def test_readCdf
       input = "-settunits,days  -setyear,2000 -for,1,4"
@@ -186,6 +190,9 @@ class TestCdo < Test::Unit::TestCase
       test_combine()
       tempfilesEnd = Dir.glob('/tmp/Module**')
       assert_empty(tempfilesStart-tempfilesEnd)
+    end
+    def test_selIndexListFromIcon
+      input = "~/data/icon/oce.nc"
     end
   end
 
