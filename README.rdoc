@@ -31,7 +31,7 @@ python and ruby-netcdf for ruby.
 
 === Run operators
 
-The Ruby module can be used directly after loading it. For python an instance has to created first
+The Ruby module can be used directly after loading it. For python an instance has to be created first
 
    cdo = Cdo()
 
@@ -46,17 +46,22 @@ The Ruby module can be used directly after loading it. For python an instance ha
 * Operators with regular output files
 
     Cdo.timmin(:in => ifile ,:out => ofile) (ruby version)
-    cdo.timmin(input = ifile,output = ofile) (python version
+    cdo.timmin(input = ifile,output = ofile) (python version)
+
+* Use temporary output files
+
+    tminFile = Cdo.timmin(:in => ifile) (ruby version)
+    tminFile = cdo.timmin(input = ifile) (python version)
 
 * Operators with options
 
     Cdo.remap([gridfile,weightfile],:in => ifile, :out => ofile) (ruby version)
-    cdo.remap([gridfile,weightfile],input => ifile, output => ofile) (python version
+    cdo.remap([gridfile,weightfile],input => ifile, output => ofile) (python version)
 
 * Set global CDO options
 
    Cdo.copy(:in => ifile, :out => ofile,:options => "-f nc4") (ruby version)
-   cdo.copy(input = ifile, output = ofile,options = "-f nc4") (python version
+   cdo.copy(input = ifile, output = ofile,options = "-f nc4") (python version)
 
 * Return multi-dimension arrrays
 
