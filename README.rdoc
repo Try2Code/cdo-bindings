@@ -43,7 +43,7 @@ The Ruby module can be used directly after loading it. For python an instance ha
     cdo.infov(input=ifile)        (python verson)
     cdo.showlevels(input=ifile)
 
-* Operators with regular output files
+* Operators with user defined regular output files
 
     Cdo.timmin(:in => ifile ,:out => ofile) (ruby version)
     cdo.timmin(input = ifile,output = ofile) (python version)
