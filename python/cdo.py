@@ -51,7 +51,7 @@ class Cdo(object):
 
         self.debug       = False
 
-        self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show)'
+        self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
         self.cdfMod      = ''
 
@@ -159,6 +159,21 @@ class Cdo(object):
 
     def unsetReturnArray(self):
       self.setReturnArray(False)
+
+    def hasCdo(self,path=self.CDO):
+      if os.path.isfile(path) and os.access(path, os.X_OK):
+        return True
+      return False
+
+    def checkCdo(self):
+      if (self.hasCdo()):
+        call = [self.CDO,' -V']
+        proc = subprocess.Popen(' '.join(call),
+            shell  = True,
+            stderr = subprocess.PIPE,
+            stdout = subprocess.PIPE)
+        retvals = proc.communicate()
+        print retvals
 
     def setCdo(self,value):
       self.CDO       = value

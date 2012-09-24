@@ -16,7 +16,7 @@ require 'pp'
 # CDO calling mechnism
 module Cdo
 
-  VERSION = "1.0.10"
+  VERSION = "1.0.11"
 
   State = {
     :debug       => false,
@@ -51,7 +51,7 @@ module Cdo
     tstepcount vardes vardup varmul varquot2test varrms vertwind write_e5ml
     writegrid writerandom yearcount]
 
-  @@outputOperatorsPattern = /(diff|info|output|griddes|zaxisdes|show)/
+  @@outputOperatorsPattern = /(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)/
 
   private
   def Cdo.getOperators(force=false)
