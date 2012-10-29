@@ -35,6 +35,7 @@ class TestCdo < Test::Unit::TestCase
   end
 
   def test_outputOperators
+    Cdo.debug = false
     levels = Cdo.showlevel(:in => "-stdatm,0")
     assert_equal([0,0].map(&:to_s),levels)
 
