@@ -102,15 +102,11 @@ module Cdo
     end
   end
   def Cdo.method_missing(sym, *args, &block)
-    # args is expected to look like [opt1,...,optN,:in => iStream,:out => oStream] where
+    ## args is expected to look like [opt1,...,optN,:in => iStream,:out => oStream] where
     # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
     puts "Operator #{sym.to_s} is called" if State[:debug]
     if getOperators.include?(sym.to_s)
-      operatorArgs = args.reject {|a| a.class == Hash}
-      opts = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
-      io   = args.find {|a| a.class == Hash}
-      io   = {} if io.nil?
-      args.delete_if   {|a| a.class == Hash}
+      args,io,opts = Cdo.parseArgs(args)
       if @@outputOperatorsPattern.match(sym)
         run(" -#{sym.to_s}#{opts} #{io[:in]} ",$stdout)
       else
@@ -133,10 +129,11 @@ module Cdo
   def Cdo.parseArgs(args)
     # splitinto hash-like args and the rest
     operatorArgs = args.reject {|a| a.class == Hash}
+    opts = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
     io   = args.find {|a| a.class == Hash}
     io   = {} if io.nil?
     args.delete_if   {|a| a.class == Hash}
-    return [args,io]
+    return [args,io,opts]
   end
 
   public
@@ -227,6 +224,9 @@ module Cdo
 
   def Cdo.selindexlist(args)
     
+  end
+
+  def Cdo.plot(args)
   end
 end
 
