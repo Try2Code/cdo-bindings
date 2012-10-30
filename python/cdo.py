@@ -160,7 +160,10 @@ class Cdo(object):
     def unsetReturnArray(self):
       self.setReturnArray(False)
 
-    def hasCdo(self,path=self.CDO):
+    def hasCdo(self,path=None):
+      if path is None:
+        path = self.CDO
+
       if os.path.isfile(path) and os.access(path, os.X_OK):
         return True
       return False
