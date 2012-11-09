@@ -16,11 +16,11 @@ require 'pp'
 # CDO calling mechnism
 module Cdo
 
-  VERSION = "1.0.11"
+  VERSION = "1.1.0"
 
   State = {
     :debug       => false,
-    :returnArray => false,
+    :returnCdf => false,
     :operators   => []
   }
   State[:debug] = true unless ENV['DEBUG'].nil?
@@ -84,7 +84,7 @@ module Cdo
       system(cmd + ' 1>/dev/null 2>&1 ')
     end
   end
-  def Cdo.run(cmd,ofile='',options='',returnArray=false)
+  def Cdo.run(cmd,ofile='',options='',returnCdf=false)
     cmd = "#{@@CDO} -O #{options} #{cmd} "
     case ofile
     when $stdout
@@ -95,7 +95,7 @@ module Cdo
     end
     cmd << "#{ofile}"
     call(cmd)
-    if returnArray or State[:returnArray]
+    if returnCdf or State[:returnCdf]
       Cdo.readCdf(ofile)
     else
       return ofile
@@ -106,12 +106,13 @@ module Cdo
     # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
     puts "Operator #{sym.to_s} is called" if State[:debug]
     if getOperators.include?(sym.to_s)
-      args,io,opts = Cdo.parseArgs(args)
+      io,opts = Cdo.parseArgs(args)
       if @@outputOperatorsPattern.match(sym)
         run(" -#{sym.to_s}#{opts} #{io[:in]} ",$stdout)
       else
-        opts = args.empty? ? '' : ',' + args.reject {|a| a.class == Hash}.join(',')
-        run(" -#{sym.to_s}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnArray])
+        #if opts[:force] or not File.exist?(opts[:out]) then
+          run(" -#{sym.to_s}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnCdf])
+        #end
       end
     else
       warn "Operator #{sym.to_s} not found"
@@ -133,7 +134,7 @@ module Cdo
     io   = args.find {|a| a.class == Hash}
     io   = {} if io.nil?
     args.delete_if   {|a| a.class == Hash}
-    return [args,io,opts]
+    return [io,opts]
   end
 
   public
@@ -150,17 +151,17 @@ module Cdo
     line    = help.find {|v| v =~ regexp}
     version = regexp.match(line)[1]
   end
-  def Cdo.setReturnArray(value=true)
+  def Cdo.setReturnCdf(value=true)
     if value
       Cdo.loadCdf
     end
-    State[:returnArray] = value
+    State[:returnCdf] = value
   end
-  def Cdo.unsetReturnArray
-    setReturnArray(false)
+  def Cdo.unsetReturnCdf
+    setReturnCdf(false)
   end
-  def Cdo.returnArray
-    State[:returnArray]
+  def Cdo.returnCdf
+    State[:returnCdf]
   end
 
   def Cdo.hasCdo?(bin=@@CDO)
@@ -218,7 +219,7 @@ module Cdo
   end
 
   def Cdo.readCdf(iFile)
-    Cdo.loadCdf unless State[:returnArray] 
+    Cdo.loadCdf unless State[:returnCdf] 
     NetCDF.open(iFile)
   end
 
