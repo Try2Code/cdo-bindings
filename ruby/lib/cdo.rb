@@ -101,6 +101,15 @@ module Cdo
       return ofile
     end
   end
+  def Cdo.parseArgs(args)
+    # splitinto hash-like args and the rest
+    operatorArgs = args.reject {|a| a.class == Hash}
+    opts = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
+    io   = args.find {|a| a.class == Hash}
+    io   = {} if io.nil?
+    args.delete_if   {|a| a.class == Hash}
+    return [io,opts]
+  end
   def Cdo.method_missing(sym, *args, &block)
     ## args is expected to look like [opt1,...,optN,:in => iStream,:out => oStream] where
     # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
@@ -126,15 +135,6 @@ module Cdo
       warn "Could not load ruby's netcdf bindings. Please install it."
       raise
     end
-  end
-  def Cdo.parseArgs(args)
-    # splitinto hash-like args and the rest
-    operatorArgs = args.reject {|a| a.class == Hash}
-    opts = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
-    io   = args.find {|a| a.class == Hash}
-    io   = {} if io.nil?
-    args.delete_if   {|a| a.class == Hash}
-    return [io,opts]
   end
 
   public
