@@ -88,10 +88,10 @@ class CdoTest(unittest.TestCase):
     def test_diff(self):
         cdo = Cdo()
         diffv = cdo.diffn(input = "-random,r1x1 -random,r1x1")
-        self.assertEqual(diffv[1].split(' ')[4],"random")
-        self.assertEqual(diffv[1].split(' ')[-1],"0.53060")
+        self.assertEqual(diffv[1].split(' ')[-1],"random")
+        self.assertEqual(diffv[1].split(' ')[-3],"0.53060")
         diff  = cdo.diff(input = "-random,r1x1 -random,r1x1")
-        self.assertEqual(diff[1].split(' ')[-1],"0.53060")
+        self.assertEqual(diff[1].split(' ')[-3],"0.53060")
 
     def test_returnArray(self):
         cdo = Cdo()
