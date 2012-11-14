@@ -53,6 +53,14 @@ class Cdo(object):
 
         self.cdfMod      = ''
 
+    def run(self,call):
+      proc = subprocess.Popen(' '.join(call),
+          shell  = True,
+          stderr = subprocess.PIPE,
+          stdout = subprocess.PIPE)
+      retvals = proc.communicate()
+      return retvals
+
     def __getattr__(self, method_name):
         def get(self, *args,**kwargs):
             operator          = [method_name]
@@ -62,42 +70,46 @@ class Cdo(object):
               for arg in args:
                 operator.append(arg.__str__())
 
-              if self.debug:
-                print "args:"
-                print args
-                print operator
+           #if self.debug:
+           #  print "args:"
+           #  print args
+           #  print operator
 
-            io = []
+            io  = []
+            cmd = ''
+            if not kwargs.__contains__("options"):
+                kwargs["options"] = ""
             if kwargs.__contains__("input"):
               io.append(kwargs["input"])
 
-            if kwargs.__contains__("output"):
+            if not kwargs.__contains__("force"):
+              kwargs["force"] = self.forceOutput
+
+            if operatorPrintsOut:
+              kwargs["output"] = self.tempfile.path()
               io.append(kwargs["output"])
+              cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
+              retvals = self.run(cmd)
             else:
-              if not operatorPrintsOut:
-                kwargs["output"] = self.tempfile.path()
+              if kwargs["force"] or \
+                 (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
+                if not kwargs.__contains__("output"):
+                  kwargs["output"] = self.tempfile.path()
+
                 io.append(kwargs["output"])
 
-            if not kwargs.__contains__("options"):
-              kwargs["options"] = ""
+                cmd    = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
+                retvals = self.run(cmd)
+              else:
+                if self.debug:
+                  print("Use existing file'"+kwargs["output"]+"'")
+
+
+            if self.debug:
+              print 'CALL:'+' '.join(cmd)
 
             if not kwargs.__contains__("returnCdf"):
               kwargs["returnCdf"] = False
-
-            call = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
-
-            if self.debug:
-              print ' '.join(call)
-
-            proc = subprocess.Popen(' '.join(call),
-                                    shell  = True,
-                                    stderr = subprocess.PIPE,
-                                    stdout = subprocess.PIPE)
-            retvals = proc.communicate()
-
-            if self.debug:
-              print retvals[0]
-              print retvals[1]
 
             if operatorPrintsOut:
               r = map(string.strip,retvals[0].split(os.linesep))
