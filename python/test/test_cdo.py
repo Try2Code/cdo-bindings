@@ -1,4 +1,5 @@
 import unittest,os
+from stat import *
 from cdo import *
 
 class CdoTest(unittest.TestCase):
@@ -41,6 +42,7 @@ class CdoTest(unittest.TestCase):
 
     def test_simple(self):
         cdo = Cdo()
+        cdo.debug = True
         s   = cdo.sinfov(input="-topo",options="-f nc")
         s   = cdo.sinfov(input="-remapnn,r36x18 -topo",options="-f nc")
         f   = 'ofile.nc'
@@ -118,6 +120,50 @@ class CdoTest(unittest.TestCase):
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
 
+
+    def test_forceOutput(self):
+        cdo =Cdo()
+        cdo.debug = True
+        outs = []
+        # tempfiles
+        outs.append(cdo.stdatm("0,10,20"))
+        outs.append(cdo.stdatm("0,10,20"))
+        self.assertNotEqual(outs[0],outs[1])
+        outs = []
+
+        # deticated output, force = true
+        ofile = 'test_force'
+        outs.append(cdo.stdatm("0,10,20",output = ofile))
+        mtime0 = os.stat(ofile).st_mtime
+        outs.append(cdo.stdatm("0,10,20",output = ofile))
+        mtime1 = os.stat(ofile).st_mtime
+        self.assertNotEqual(mtime0,mtime1)
+        self.assertEqual(outs[0],outs[1])
+        os.remove(ofile)
+        outs = []
+ 
+        # dedicated output, force = false
+        ofile = 'test_force_false'
+        outs.append(cdo.stdatm("0,10,20",output = ofile,force=False))
+        mtime0 = os.stat(outs[0]).st_mtime
+        outs.append(cdo.stdatm("0,10,20",output = ofile,force=False))
+        mtime1 = os.stat(outs[1]).st_mtime
+        self.assertEqual(mtime0,mtime1)
+        self.assertEqual(outs[0],outs[1])
+        os.remove(ofile)
+        outs = []
+
+        # dedicated output, global force setting
+        ofile = 'test_force_global'
+        cdo.forceOutput = False
+        outs.append(cdo.stdatm("0,10,20",output = ofile))
+        mtime0 = os.stat(outs[0]).st_mtime
+        outs.append(cdo.stdatm("0,10,20",output = ofile))
+        mtime1 = os.stat(outs[1]).st_mtime
+        self.assertEqual(mtime0,mtime1)
+        self.assertEqual(outs[0],outs[1])
+        os.remove(ofile)
+        outs = []
 
     def test_combine(self):
         cdo = Cdo()
