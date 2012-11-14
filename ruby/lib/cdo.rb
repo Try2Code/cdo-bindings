@@ -127,7 +127,7 @@ module Cdo
         run(" -#{sym.to_s}#{opts} #{io[:in]} ",$stdout)
       else
         #if opts[:force] or not File.exist?(opts[:out]) then
-          run(" -#{sym.to_s}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnCdf])
+          run(" -#{sym.to_s}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnCdf],io[:force])
         #end
       end
     else

@@ -155,13 +155,44 @@ class TestCdo < Test::Unit::TestCase
   end
   def test_force
     outs = []
+    # tempfiles
     outs << Cdo.stdatm(0,10,20)
     outs << Cdo.stdatm(0,10,20)
     assert_not_equal(outs[0],outs[1])
+
+    # deticated output, force = true
     outs.clear
     outs << Cdo.stdatm(0,10,20,:out => 'test_force')
+    mtime0 = File.stat(outs[-1]).mtime
     outs << Cdo.stdatm(0,10,20,:out => 'test_force')
+    mtime1 = File.stat(outs[-1]).mtime
+    assert_not_equal(mtime0,mtime1)
     assert_equal(outs[0],outs[1])
+    FileUtils.rm('test_force')
+    outs.clear
+
+    # dedicated output, force = false
+    ofile = 'test_force_false'
+    outs << Cdo.stdatm(0,10,20,:out => ofile,:force => false)
+    mtime0 = File.stat(outs[-1]).mtime
+    outs << Cdo.stdatm(0,10,20,:out => ofile,:force => false)
+    mtime1 = File.stat(outs[-1]).mtime
+    assert_equal(mtime0,mtime1)
+    assert_equal(outs[0],outs[1])
+    FileUtils.rm(ofile)
+    outs.clear
+
+    # dedicated output, global force setting
+    ofile = 'test_force_global'
+    Cdo.forceOutput = false
+    outs << Cdo.stdatm(0,10,20,:out => ofile)
+    mtime0 = File.stat(outs[-1]).mtime
+    outs << Cdo.stdatm(0,10,20,:out => ofile)
+    mtime1 = File.stat(outs[-1]).mtime
+    assert_equal(mtime0,mtime1)
+    assert_equal(outs[0],outs[1])
+    FileUtils.rm(ofile)
+    outs.clear
   end
 
   def test_thickness
