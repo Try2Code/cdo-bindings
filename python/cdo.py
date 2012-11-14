@@ -45,7 +45,7 @@ class Cdo(object):
           self.CDO = 'cdo'
 
         self.operators   = self.getOperators()
-        self.returnArray = False
+        self.returnCdf = False
 
         self.tempfile    = MyTempfile()
 
@@ -83,8 +83,8 @@ class Cdo(object):
             if not kwargs.__contains__("options"):
               kwargs["options"] = ""
 
-            if not kwargs.__contains__("returnArray"):
-              kwargs["returnArray"] = False
+            if not kwargs.__contains__("returnCdf"):
+              kwargs["returnCdf"] = False
 
             call = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
 
@@ -105,8 +105,8 @@ class Cdo(object):
               r = map(string.strip,retvals[0].split(os.linesep))
               return r[:len(r)-1]
             else:
-              if self.returnArray or kwargs["returnArray"]:
-                if not self.returnArray:
+              if self.returnCdf or kwargs["returnCdf"]:
+                if not self.returnCdf:
                   self.loadCdf()
 
                 return self.readCdf(kwargs["output"])
@@ -152,7 +152,7 @@ class Cdo(object):
 
 
     def setReturnArray(self,value=True):
-      self.returnArray = value
+      self.returnCdf = value
       if value:
         self.loadCdf()
 
@@ -221,7 +221,7 @@ class Cdo(object):
       return delta_levels
 
     def readCdf(self,iFile):
-      if not self.returnArray:
+      if not self.returnCdf:
         self.loadCdf()
 
       if ( "scipy" == self.cdfMod):

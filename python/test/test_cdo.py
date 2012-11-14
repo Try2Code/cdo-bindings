@@ -93,14 +93,14 @@ class CdoTest(unittest.TestCase):
         diff  = cdo.diff(input = "-random,r1x1 -random,r1x1")
         self.assertEqual(diff[1].split(' ')[-3],"0.53060")
 
-    def test_returnArray(self):
+    def test_returnCdf(self):
         cdo = Cdo()
         ofile = MyTempfile().path()
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
         a = cdo.readCdf(press)
-        variables = cdo.stdatm("0",options="-f nc",returnArray=True).variables
-        press = cdo.stdatm("0",options="-f nc",returnArray=True).variables['P'][:]
+        variables = cdo.stdatm("0",options="-f nc",returnCdf=True).variables
+        press = cdo.stdatm("0",options="-f nc",returnCdf=True).variables['P'][:]
         self.assertEqual(1013.25,press.min())
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
@@ -111,7 +111,7 @@ class CdoTest(unittest.TestCase):
         cdo.unsetReturnArray()
         press = cdo.stdatm("0",output=outfile,options="-f nc")
         self.assertEqual(press,outfile)
-        press = cdo.stdatm("0",output=outfile,options="-f nc",returnArray=True).variables["P"][:]
+        press = cdo.stdatm("0",output=outfile,options="-f nc",returnCdf=True).variables["P"][:]
         self.assertEqual(1013.25,press.min())
         print("press = "+press.min().__str__())
         cdo.unsetReturnArray()
@@ -129,7 +129,7 @@ class CdoTest(unittest.TestCase):
         sum = cdo.fldsum(input = stdatm,output = o)
         sum = cdo.fldsum(input = stdatm)
         sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"))
-        sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnArray=True)
+        sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
         self.assertEqual(288.0,sum.variables["T"][:])
 
     def test_cdf(self):
@@ -138,7 +138,7 @@ class CdoTest(unittest.TestCase):
         cdo.setReturnArray()
         self.assertIn("cdf",cdo.__dict__)
         cdo.setReturnArray(False)
-        sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnArray=True)
+        sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
         self.assertEqual(1013.25,sum.variables["P"][:])
         cdo.unsetReturnArray()
 
