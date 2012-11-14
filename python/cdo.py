@@ -45,12 +45,10 @@ class Cdo(object):
           self.CDO = 'cdo'
 
         self.operators   = self.getOperators()
-        self.returnCdf = False
-
+        self.returnCdf   = False
         self.tempfile    = MyTempfile()
-
+        self.forceOutput = True
         self.debug       = False
-
         self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
         self.cdfMod      = ''
