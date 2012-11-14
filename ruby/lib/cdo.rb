@@ -21,7 +21,8 @@ module Cdo
   State = {
     :debug       => false,
     :returnCdf => false,
-    :operators   => []
+    :operators   => [],
+    :forceOutput => true
   }
   State[:debug] = true unless ENV['DEBUG'].nil?
 
@@ -84,17 +85,23 @@ module Cdo
       system(cmd + ' 1>/dev/null 2>&1 ')
     end
   end
-  def Cdo.run(cmd,ofile='',options='',returnCdf=false)
+  def Cdo.run(cmd,ofile='',options='',returnCdf=false,force=nil,returnArray=nil)
     cmd = "#{@@CDO} -O #{options} #{cmd} "
     case ofile
     when $stdout
       cmd << " 2>/dev/null"
+      puts cmd if Cdo.debug
       return IO.popen(cmd).readlines.map {|l| l.chomp.strip}
-    when nil
-      ofile = MyTempfile.path
+    else
+      force = State[:forceOutput] if force.nil?
+      if force or not File.exists?(ofile.to_s)
+        ofile = MyTempfile.path if ofile.nil?
+        cmd << "#{ofile}"
+        call(cmd)
+      else
+        warn "Use existing file '#{ofile}'" if Cdo.debug
+      end
     end
-    cmd << "#{ofile}"
-    call(cmd)
     if returnCdf or State[:returnCdf]
       Cdo.readCdf(ofile)
     else
@@ -143,6 +150,12 @@ module Cdo
   end
   def Cdo.debug
     State[:debug]
+  end
+  def Cdo.forceOutput=(value)
+    State[:forceOutput] = value
+  end
+  def Cdo.forceOutput
+    State[:forceOutput]
   end
   def Cdo.version
     cmd     = @@CDO + ' 2>&1'

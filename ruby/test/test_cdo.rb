@@ -35,7 +35,7 @@ class TestCdo < Test::Unit::TestCase
   end
 
   def test_outputOperators
-    Cdo.debug = false
+    Cdo.debug = true
     levels = Cdo.showlevel(:in => "-stdatm,0")
     assert_equal([0,0].map(&:to_s),levels)
 
@@ -83,7 +83,7 @@ class TestCdo < Test::Unit::TestCase
   end
   def test_chain
     ofile     = MyTempfile.path
-    #Cdo.Debug = true
+    Cdo.Debug = true
     Cdo.setname('veloc',:in => " -copy -random,r1x1",:out => ofile,:options => "-f nc")
     assert_equal(["veloc"],Cdo.showname(:in => ofile))
   end
@@ -134,7 +134,7 @@ class TestCdo < Test::Unit::TestCase
 
   def test_returnCdf
     ofile = MyTempfile.path
-    vals = Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:out => ofile,:options => "-f nc")
+    vals = Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:out => ofile,:options => "-f nc",:force => true)
     assert_equal(ofile,vals)
     Cdo.setReturnCdf
     vals = Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:out => ofile,:options => "-f nc")
@@ -152,7 +152,16 @@ class TestCdo < Test::Unit::TestCase
     sum = Cdo.fldsum(:in => Cdo.stdatm(0,:options => "-f nc"),:out => ofile0)
     assert_equal(ofile0,sum)
     test_returnCdf
-
+  end
+  def test_force
+    outs = []
+    outs << Cdo.stdatm(0,10,20)
+    outs << Cdo.stdatm(0,10,20)
+    assert_not_equal(outs[0],outs[1])
+    outs.clear
+    outs << Cdo.stdatm(0,10,20,:out => 'test_force')
+    outs << Cdo.stdatm(0,10,20,:out => 'test_force')
+    assert_equal(outs[0],outs[1])
   end
 
   def test_thickness
