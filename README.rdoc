@@ -79,11 +79,11 @@ Cdo.{rb,py} includes a simple tempfile wrapper, which make live easier, when wri
 Please use the forum or ticket system of CDOs official web page: http://code.zmaw.de/projects/cdo
 
 == Changelog
-
+* 1.1.1:
+   - :returnArray will accept a variable name, for which the multidimesional array wrt missing values is returned
 * 1.1.0: API change:
-*   :returnArray will accept an variable name, for which the multidimesional array is returned, (numpy or narray)
-*   new option :returnCdf : will return the netcdf file handle, which was formerly done vie :returnArray
-*   new options :force : if set to true the cdo call will be run even if the given output file is presen, default: false
+   - new option :returnCdf : will return the netcdf file handle, which was formerly done vie :returnArray
+   - new options :force : if set to true the cdo call will be run even if the given output file is presen, default: false
 
 == License
 
