@@ -89,7 +89,9 @@ class CdoTest(unittest.TestCase):
 
     def test_diff(self):
         cdo = Cdo()
+        cdo.debug = True
         diffv = cdo.diffn(input = "-random,r1x1 -random,r1x1")
+        print diffv
         self.assertEqual(diffv[1].split(' ')[-1],"random")
         self.assertEqual(diffv[1].split(' ')[-3],"0.53060")
         diff  = cdo.diff(input = "-random,r1x1 -random,r1x1")
@@ -131,7 +133,7 @@ class CdoTest(unittest.TestCase):
         self.assertNotEqual(outs[0],outs[1])
         outs = []
 
-        # deticated output, force = true
+        # deticated output, force = true (=defaut setting)
         ofile = 'test_force'
         outs.append(cdo.stdatm("0,10,20",output = ofile))
         mtime0 = os.stat(ofile).st_mtime

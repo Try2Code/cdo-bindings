@@ -86,8 +86,6 @@ class Cdo(object):
               kwargs["force"] = self.forceOutput
 
             if operatorPrintsOut:
-              kwargs["output"] = self.tempfile.path()
-              io.append(kwargs["output"])
               cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
               retvals = self.run(cmd)
             else:
@@ -98,7 +96,7 @@ class Cdo(object):
 
                 io.append(kwargs["output"])
 
-                cmd    = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
+                cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
                 retvals = self.run(cmd)
               else:
                 if self.debug:
