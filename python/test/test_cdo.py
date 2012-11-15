@@ -104,6 +104,7 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(ofile,press)
         a = cdo.readCdf(press)
         variables = cdo.stdatm("0",options="-f nc",returnCdf=True).variables
+        print(variables)
         press = cdo.stdatm("0",options="-f nc",returnCdf=True).variables['P'][:]
         self.assertEqual(1013.25,press.min())
         press = cdo.stdatm("0",output=ofile,options="-f nc")

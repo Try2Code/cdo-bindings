@@ -67,9 +67,8 @@ class TestCdo < Test::Unit::TestCase
     (1...info.size).each {|i| assert_equal(0.0,info[i].split[-1].to_f)}
   end
   def test_operator_options
-    ofile = MyTempfile.path
     targetLevels = [0,10,50,100,200,400,1000]
-    Cdo.stdatm(targetLevels,:out => ofile)
+    ofile = Cdo.stdatm(targetLevels)
     levels = Cdo.showlevel(:in => ofile)
     [0,1].each {|i| assert_equal(targetLevels.map(&:to_s),levels[i].split)}
   end
@@ -208,6 +207,7 @@ class TestCdo < Test::Unit::TestCase
   end
 
   def test_verticalLevels
+    Cdo.debug = true
     targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
     sourceLevels = %W{25 100 250 500 875 1400 2100 3000 4000 5000}
     thicknesses = Cdo.thicknessOfLevels(:in => "-selname,T #{Cdo.stdatm(*sourceLevels,:options => '-f nc')}")
@@ -229,14 +229,6 @@ class TestCdo < Test::Unit::TestCase
       cdfFile = Cdo.copy(:options =>"-f nc",:in=>input)
       cdf     = Cdo.readCdf(cdfFile)
       assert_equal(['lon','lat','time','for'],cdf.var_names)
-    end
-    def test_tmp
-      tempfilesStart = Dir.glob('/tmp/Module*').sort
-      tempfilesEnd   = Dir.glob('/tmp/Module*').sort
-      assert_equal(tempfilesStart,tempfilesEnd)
-      test_combine()
-      tempfilesEnd = Dir.glob('/tmp/Module**')
-      assert_empty(tempfilesStart-tempfilesEnd)
     end
     def test_selIndexListFromIcon
       input = "~/data/icon/oce.nc"
