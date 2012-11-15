@@ -197,7 +197,7 @@ class Cdo(object):
     # Addional operators:
     #------------------------------------------------------------------
     def module_version(self):
-      '1.0.10'
+      '1.1.0'
 
     def version(self):
       # return CDO's version
