@@ -81,6 +81,7 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 == Changelog
 * 1.1.1:
    - :returnArray will accept a variable name, for which the multidimesional array wrt missing values is returned
+   - Ruby uses Python version of keys for setting input and output, :input and :outout instead :in and :out
 * 1.1.0: API change:
    - new option :returnCdf : will return the netcdf file handle, which was formerly done vie :returnArray
    - new options :force : if set to true the cdo call will be run even if the given output file is presen, default: false
