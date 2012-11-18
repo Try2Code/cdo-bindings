@@ -37,35 +37,35 @@ The Ruby module can be used directly after loading it. For python an instance ha
 
 * File information
     
-    Cdo.infov(:in => ifile)       (ruby version)
-    Cdo.showlevels(:in => ifile)
+    Cdo.infov(:input => ifile)       (ruby version)
+    Cdo.showlevels(:input => ifile)
 
     cdo.infov(input=ifile)        (python verson)
     cdo.showlevels(input=ifile)
 
 * Operators with user defined regular output files
 
-    Cdo.timmin(:in => ifile ,:out => ofile) (ruby version)
+    Cdo.timmin(:input => ifile ,:output => ofile) (ruby version)
     cdo.timmin(input = ifile,output = ofile) (python version)
 
 * Use temporary output files
 
-    tminFile = Cdo.timmin(:in => ifile) (ruby version)
+    tminFile = Cdo.timmin(:input => ifile) (ruby version)
     tminFile = cdo.timmin(input = ifile) (python version)
 
 * Operators with options
 
-    Cdo.remap([gridfile,weightfile],:in => ifile, :out => ofile) (ruby version)
+    Cdo.remap([gridfile,weightfile],:input => ifile, :output => ofile) (ruby version)
     cdo.remap([gridfile,weightfile],input => ifile, output => ofile) (python version)
 
 * Set global CDO options
 
-   Cdo.copy(:in => ifile, :out => ofile,:options => "-f nc4") (ruby version)
+   Cdo.copy(:input => ifile, :output => ofile,:options => "-f nc4") (ruby version)
    cdo.copy(input = ifile, output = ofile,options = "-f nc4") (python version)
 
 * Return multi-dimension arrrays
 
-   temperatures = Cdo.fldmin(:in => ifile,:returnArray => true).var('T').get      (ruby version)
+   temperatures = Cdo.fldmin(:input => ifile,:returnArray => true).var('T').get      (ruby version)
    temperatures = cdo.fldmin(input = ifile,:returnArray = True).variables['T'][:] (python version)
 
 More examples can be found in test/cdo-examples.rb and on the homepage: https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D
@@ -81,6 +81,7 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 == Changelog
 * 1.1.1:
    - :returnArray will accept a variable name, for which the multidimesional array wrt missing values is returned
+   - Ruby now uses the same keys like the python interface, i.e. :input and :output instead of :in and :out
 * 1.1.0: API change:
    - new option :returnCdf : will return the netcdf file handle, which was formerly done vie :returnArray
    - new options :force : if set to true the cdo call will be run even if the given output file is presen, default: false

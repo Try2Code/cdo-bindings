@@ -24,20 +24,20 @@ Cdo.rb requires a working CDO binary, but has not special requirement to Ruby
 
 * File information
     
-    Cdo.infov(:in => ifile)
-    Cdo.showlevels(:in => ifile)
+    Cdo.infov(:input => ifile)
+    Cdo.showlevels(:input => ifile)
 
 * Operators with regular output files
 
-    Cdo.timmin(:in => ifile,:out => ofile)
+    Cdo.timmin(:input => ifile,:output => ofile)
 
 * Operators with options
 
-    Cdo.remap([gridfile,weightfile],:in => ifile, :out => ofile)
+    Cdo.remap([gridfile,weightfile],:input => ifile, :output => ofile)
 
 * Set global CDO options
 
-   Cdo.copy(:in => ifile, :out => ofile,:options => "-f nc4")
+   Cdo.copy(:input => ifile, :output => ofile,:options => "-f nc4")
 
 More examples can be found in test/cdo-examples.rb.
 

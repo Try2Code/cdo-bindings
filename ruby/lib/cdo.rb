@@ -118,16 +118,16 @@ module Cdo
     return [io,opts]
   end
   def Cdo.method_missing(sym, *args, &block)
-    ## args is expected to look like [opt1,...,optN,:in => iStream,:out => oStream] where
+    ## args is expected to look like [opt1,...,optN,:input => iStream,:output => oStream] where
     # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
     puts "Operator #{sym.to_s} is called" if State[:debug]
     if getOperators.include?(sym.to_s)
       io,opts = Cdo.parseArgs(args)
       if @@outputOperatorsPattern.match(sym)
-        run(" -#{sym.to_s}#{opts} #{io[:in]} ",$stdout)
+        run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout)
       else
-        #if opts[:force] or not File.exist?(opts[:out]) then
-          run(" -#{sym.to_s}#{opts} #{io[:in]} ",io[:out],io[:options],io[:returnCdf],io[:force])
+        #if opts[:force] or not File.exist?(opts[:output]) then
+          run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force])
         #end
       end
     else
@@ -212,7 +212,7 @@ module Cdo
   # Addional operotors:
   #------------------------------------------------------------------
   def Cdo.boundaryLevels(args)
-    ilevels         = Cdo.showlevel(:in => args[:in])[0].split.map(&:to_f)
+    ilevels         = Cdo.showlevel(:input => args[:input])[0].split.map(&:to_f)
     bound_levels    = Array.new(ilevels.size+1)
     bound_levels[0] = 0
     (1..ilevels.size).each {|i| 
