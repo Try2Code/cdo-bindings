@@ -102,7 +102,17 @@ module Cdo
         warn "Use existing file '#{ofile}'" if Cdo.debug
       end
     end
-    if returnCdf or State[:returnCdf]
+    if not returnArray.nil?
+      filehandle = Cdo.readCdf(ofile)
+      # check, if varname is present
+      if filehandle.var_names.include?(returnArray)
+        # return the data array
+        filehandle.var(returnArray).get()
+      else
+        warn "Cannot find variable '#{returnArray}'"
+        raise ArgumentError
+      end
+    elsif returnCdf or State[:returnCdf]
       Cdo.readCdf(ofile)
     else
       return ofile
@@ -127,7 +137,7 @@ module Cdo
         run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout)
       else
         #if opts[:force] or not File.exist?(opts[:output]) then
-          run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force])
+          run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray])
         #end
       end
     else
@@ -234,6 +244,17 @@ module Cdo
   def Cdo.readCdf(iFile)
     Cdo.loadCdf unless State[:returnCdf] 
     NetCDF.open(iFile)
+  end
+
+  def Cdo.readArray(iFile,varname)
+    filehandle = Cdo.readCdf(iFile)
+    if filehandle.var_names.include?(returnArray)
+      # return the data array
+      filehandle.var(returnArray).get()
+    else
+      warn "Cannot find variable '#{returnArray}'"
+      raise ArgumentError
+    end
   end
 
   def Cdo.selindexlist(args)

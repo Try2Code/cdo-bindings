@@ -223,6 +223,24 @@ class TestCdo < Test::Unit::TestCase
     pp [io,opts]
   end 
 
+  def test_returnArray
+    temperature = Cdo.stdatm(0,:options => '-f nc',:returnCdf => true).var('T').get.flatten[0]
+    assert_raise ArgumentError do
+      Cdo.stdatm(0,:options => '-f nc',:returnArray => 'TT')
+    end
+    temperature = Cdo.stdatm(0,:options => '-f nc',:returnArray => 'T')
+    assert_equal(288.0,temperature.flatten[0])
+    pressure = Cdo.stdatm(0,1000,:options => '-f nc -b F64',:returnArray => 'P')
+    assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
+    if 'thingol' == `hostname`.chomp
+      ifile = '/home/ram/data/examples/EH5_AMIP_1_TSURF_1991-1995.nc'
+      values = Cdo.readCdf(ifile,:returnArray => 'tsurf')
+      pp values
+
+    end
+  end
+
+
   if 'thingol' == `hostname`.chomp  then
     def test_readCdf
       input = "-settunits,days  -setyear,2000 -for,1,4"
@@ -232,6 +250,10 @@ class TestCdo < Test::Unit::TestCase
     end
     def test_selIndexListFromIcon
       input = "~/data/icon/oce.nc"
+    end
+    def test_readArray
+      ifile = '/home/ram/data/examples/EH5_AMIP_1_TSURF_1991-1995.nc'
+      Cdo.readArray(ifile,'tsurf')
     end
   end
 
