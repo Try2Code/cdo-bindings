@@ -103,15 +103,7 @@ module Cdo
       end
     end
     if not returnArray.nil?
-      filehandle = Cdo.readCdf(ofile)
-      # check, if varname is present
-      if filehandle.var_names.include?(returnArray)
-        # return the data array
-        filehandle.var(returnArray).get()
-      else
-        warn "Cannot find variable '#{returnArray}'"
-        raise ArgumentError
-      end
+      Cdo.readArray(ofile,returnArray)
     elsif returnCdf or State[:returnCdf]
       Cdo.readCdf(ofile)
     else
@@ -136,9 +128,7 @@ module Cdo
       if @@outputOperatorsPattern.match(sym)
         run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout)
       else
-        #if opts[:force] or not File.exist?(opts[:output]) then
-          run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray])
-        #end
+        run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray])
       end
     else
       warn "Operator #{sym.to_s} not found"
@@ -248,11 +238,11 @@ module Cdo
 
   def Cdo.readArray(iFile,varname)
     filehandle = Cdo.readCdf(iFile)
-    if filehandle.var_names.include?(returnArray)
+    if filehandle.var_names.include?(varname)
       # return the data array
-      filehandle.var(returnArray).get()
+      filehandle.var(varname).get
     else
-      warn "Cannot find variable '#{returnArray}'"
+      warn "Cannot find variable '#{varname}'"
       raise ArgumentError
     end
   end
