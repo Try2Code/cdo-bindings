@@ -1,4 +1,5 @@
 require 'pp'
+require 'open3'
 
 # Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
 # See COPYING file for copying and redistribution conditions.
@@ -89,9 +90,10 @@ module Cdo
     cmd = "#{@@CDO} -O #{options} #{cmd} "
     case ofile
     when $stdout
-      cmd << " 2>/dev/null"
-      puts cmd if Cdo.debug
-      return IO.popen(cmd).readlines.map {|l| l.chomp.strip}
+      stdin, stdout, stderr, status =  Open3.popen3(cmd)
+      retval = stdout.read.split($/).map {|l| l.chomp.strip}
+      pp stderr.read
+      return retval
     else
       force = State[:forceOutput] if force.nil?
       if force or not File.exists?(ofile.to_s)
