@@ -76,18 +76,17 @@ class TestCdo < Test::Unit::TestCase
     names = Cdo.showname(:input => "-stdatm,0",:options => "-f nc")
     assert_equal(["P T"],names)
 
-    ofile = MyTempfile.path
-    Cdo.topo(:output => ofile,:options => "-z szip")
+    ofile = Cdo.topo(:output => ofile,:options => "-z szip")
     assert_equal(["GRIB SZIP"],Cdo.showformat(:input => ofile))
   end
   def test_chain
-    ofile     = MyTempfile.path
-    Cdo.Debug = true
-    Cdo.setname('veloc',:input => " -copy -random,r1x1",:output => ofile,:options => "-f nc")
+    Cdo.debug = true
+    ofile = Cdo.setname('veloc',:input => " -copy -random,r1x1",:options => "-f nc")
     assert_equal(["veloc"],Cdo.showname(:input => ofile))
   end
 
   def test_diff
+    Cdo.debug = true
     diffv = Cdo.diffn(:input => "-random,r1x1 -random,r1x1")
     assert_equal(diffv[1].split(' ')[-1],"random")
     assert_equal(diffv[1].split(' ')[-3],"0.53060")
@@ -101,8 +100,7 @@ class TestCdo < Test::Unit::TestCase
   end
 
   def test_bndLevels
-    ofile = MyTempfile.path
-    Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
+    ofile = Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:options => "-f nc")
     assert_equal([0, 50.0, 150.0, 350.0, 650.0, 1100.0, 1700.0, 2500.0, 3500.0, 4500.0, 5500.0],
                  Cdo.boundaryLevels(:input => "-selname,T #{ofile}"))
     assert_equal([50.0, 100.0, 200.0, 300.0, 450.0, 600.0, 800.0, 1000.0, 1000.0, 1000.0],
@@ -132,8 +130,8 @@ class TestCdo < Test::Unit::TestCase
   end
 
   def test_returnCdf
-    ofile = MyTempfile.path
-    vals = Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc",:force => true)
+    ofile = rand(0xfffff).to_s + '_test_returnCdf.nc'
+    vals = Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
     assert_equal(ofile,vals)
     Cdo.setReturnCdf
     vals = Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
@@ -142,6 +140,7 @@ class TestCdo < Test::Unit::TestCase
     Cdo.unsetReturnCdf
     vals = Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
     assert_equal(ofile,vals)
+    FileUtils.rm(ofile)
   end
   def test_simple_returnCdf
     ofile0, ofile1 = MyTempfile.path, MyTempfile.path
@@ -232,12 +231,6 @@ class TestCdo < Test::Unit::TestCase
     assert_equal(288.0,temperature.flatten[0])
     pressure = Cdo.stdatm(0,1000,:options => '-f nc -b F64',:returnArray => 'P')
     assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
-    if 'thingol' == `hostname`.chomp
-      ifile = '/home/ram/data/examples/EH5_AMIP_1_TSURF_1991-1995.nc'
-      values = Cdo.readCdf(ifile,:returnArray => 'tsurf')
-      pp values
-
-    end
   end
 
 
@@ -253,7 +246,7 @@ class TestCdo < Test::Unit::TestCase
     end
     def test_readArray
       ifile = '/home/ram/data/examples/EH5_AMIP_1_TSURF_1991-1995.nc'
-      Cdo.readArray(ifile,'tsurf')
+      assert_equal([192, 96, 10],Cdo.readArray(Cdo.seltimestep('1/10',:input => ifile), 'tsurf').shape)
     end
   end
 
