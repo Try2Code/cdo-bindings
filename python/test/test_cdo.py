@@ -38,7 +38,7 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo()
         operators = cdo.operators
         operators.sort()
-        print "\n".join(operators)
+        #print "\n".join(operators)
 
     def test_simple(self):
         cdo = Cdo()

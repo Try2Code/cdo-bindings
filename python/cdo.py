@@ -14,234 +14,231 @@ import os,re,subprocess,tempfile,random,string
 
 class Cdo(object):
 
-    def __init__(self):
-        # Since cdo-1.5.4 undocumented operators are given with the -h option. For
-        # earlier version, they have to be provided manually
-        self.undocumentedOperators = ['anomaly','beta','boxavg','change_e5lsm','change_e5mask',
-            'change_e5slm','chisquare','chvar','cloudlayer','cmd','com','command','complextorect',
-            'covar0','covar0r','daycount','daylogs','del29feb','delday','delete','deltap','deltap_fl',
-            'delvar','diffv','divcoslat','dumplogo','dumplogs','duplicate','eca_r1mm','enlargegrid',
-            'ensrkhistspace','ensrkhisttime','eof3d','eof3dspatial','eof3dtime','export_e5ml',
-            'export_e5res','fc2gp','fc2sp','fillmiss','fisher','fldcovar','fldrms','fourier','fpressure',
-            'gather','gengrid','geopotheight','ggstat','ggstats','globavg','gp2fc','gradsdes',
-            'gridverify','harmonic','hourcount','hpressure','ifs2icon','import_e5ml','import_e5res',
-            'import_obs','imtocomplex','infos','infov','interpolate','intgrid','intgridbil',
-            'intgridtraj','intpoint','isosurface','lmavg','lmean','lmmean','lmstd','log','lsmean',
-            'meandiff2test','mergegrid','mod','moncount','monlogs','mrotuv','mrotuvb','mulcoslat','ncode',
-            'ncopy','nmltest','normal','nvar','outputbounds','outputboundscpt','outputcenter',
-            'outputcenter2','outputcentercpt','outputkey','outputtri','outputvector','outputvrml',
-            'pardup','parmul','pinfo','pinfov','pressure_fl','pressure_hl','read_e5ml','remapcon1',
-            'remapdis1','retocomplex','scalllogo','scatter','seascount','select','selgridname',
-            'seloperator','selvar','selzaxisname','setrcaname','setvar','showvar','sinfov','smemlogo',
-            'snamelogo','sort','sortcode','sortlevel','sortname','sorttaxis','sorttimestamp','sortvar',
-            'sp2fc','specinfo','spectrum','sperclogo','splitvar','stimelogo','studentt','template1',
-            'template2','test','test2','testdata','thinout','timcount','timcovar','tinfo','transxy','trms',
-            'tstepcount','vardes','vardup','varmul','varquot2test','varrms','vertwind','write_e5ml',
-            'writegrid','writerandom','yearcount']
+  def __init__(self):
+    # Since cdo-1.5.4 undocumented operators are given with the -h option. For
+    # earlier version, they have to be provided manually
+    self.undocumentedOperators = ['anomaly','beta','boxavg','change_e5lsm','change_e5mask',
+        'change_e5slm','chisquare','chvar','cloudlayer','cmd','com','command','complextorect',
+        'covar0','covar0r','daycount','daylogs','del29feb','delday','delete','deltap','deltap_fl',
+        'delvar','diffv','divcoslat','dumplogo','dumplogs','duplicate','eca_r1mm','enlargegrid',
+        'ensrkhistspace','ensrkhisttime','eof3d','eof3dspatial','eof3dtime','export_e5ml',
+        'export_e5res','fc2gp','fc2sp','fillmiss','fisher','fldcovar','fldrms','fourier','fpressure',
+        'gather','gengrid','geopotheight','ggstat','ggstats','globavg','gp2fc','gradsdes',
+        'gridverify','harmonic','hourcount','hpressure','ifs2icon','import_e5ml','import_e5res',
+        'import_obs','imtocomplex','infos','infov','interpolate','intgrid','intgridbil',
+        'intgridtraj','intpoint','isosurface','lmavg','lmean','lmmean','lmstd','log','lsmean',
+        'meandiff2test','mergegrid','mod','moncount','monlogs','mrotuv','mrotuvb','mulcoslat','ncode',
+        'ncopy','nmltest','normal','nvar','outputbounds','outputboundscpt','outputcenter',
+        'outputcenter2','outputcentercpt','outputkey','outputtri','outputvector','outputvrml',
+        'pardup','parmul','pinfo','pinfov','pressure_fl','pressure_hl','read_e5ml','remapcon1',
+        'remapdis1','retocomplex','scalllogo','scatter','seascount','select','selgridname',
+        'seloperator','selvar','selzaxisname','setrcaname','setvar','showvar','sinfov','smemlogo',
+        'snamelogo','sort','sortcode','sortlevel','sortname','sorttaxis','sorttimestamp','sortvar',
+        'sp2fc','specinfo','spectrum','sperclogo','splitvar','stimelogo','studentt','template1',
+        'template2','test','test2','testdata','thinout','timcount','timcovar','tinfo','transxy','trms',
+        'tstepcount','vardes','vardup','varmul','varquot2test','varrms','vertwind','write_e5ml',
+        'writegrid','writerandom','yearcount']
 
-        if os.environ.has_key('CDO'):
-          self.CDO = os.environ['CDO']
+    if os.environ.has_key('CDO'):
+      self.CDO = os.environ['CDO']
+    else:
+      self.CDO = 'cdo'
+
+    self.operators   = self.getOperators()
+    self.returnCdf   = False
+    self.tempfile    = MyTempfile()
+    self.forceOutput = True
+    self.debug       = False
+    self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
+
+    self.cdfMod      = ''
+
+  def run(self,call):
+    proc = subprocess.Popen(' '.join(call),
+        shell  = True,
+        stderr = subprocess.PIPE,
+        stdout = subprocess.PIPE)
+    retvals = proc.communicate()
+    return retvals
+
+  def __getattr__(self, method_name):
+    def get(self, *args,**kwargs):
+      operator          = [method_name]
+      operatorPrintsOut = re.search(self.outputOperatorsPattern,method_name)
+
+      if args.__len__() != 0:
+        for arg in args:
+          operator.append(arg.__str__())
+
+     #if self.debug:
+     #  print "args:"
+     #  print args
+     #  print operator
+
+      io  = []
+      cmd = ''
+      if not kwargs.__contains__("options"):
+          kwargs["options"] = ""
+      if kwargs.__contains__("input"):
+        io.append(kwargs["input"])
+
+      if not kwargs.__contains__("force"):
+        kwargs["force"] = self.forceOutput
+
+      if operatorPrintsOut:
+        cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
+        retvals = self.run(cmd)
+      else:
+        if kwargs["force"] or \
+           (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
+          if not kwargs.__contains__("output"):
+            kwargs["output"] = self.tempfile.path()
+
+          io.append(kwargs["output"])
+
+          cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
+          retvals = self.run(cmd)
         else:
-          self.CDO = 'cdo'
+          if self.debug:
+            print("Use existing file'"+kwargs["output"]+"'")
 
-        self.operators   = self.getOperators()
-        self.returnCdf   = False
-        self.tempfile    = MyTempfile()
-        self.forceOutput = True
-        self.debug       = False
-        self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
-        self.cdfMod      = ''
+      if self.debug:
+        print 'CALL:'+' '.join(cmd)
 
-    def run(self,call):
+      if not kwargs.__contains__("returnCdf"):
+        kwargs["returnCdf"] = False
+
+      if operatorPrintsOut:
+        r = map(string.strip,retvals[0].split(os.linesep))
+        return r[:len(r)-1]
+      else:
+        if self.returnCdf or kwargs["returnCdf"]:
+          if not self.returnCdf:
+            self.loadCdf()
+
+          return self.readCdf(kwargs["output"])
+        else:
+          return kwargs["output"]
+
+    if ((method_name in self.__dict__) or (method_name in self.operators)):
+      if self.debug:
+        print("Found method:" + method_name)
+
+      return get.__get__(self)
+    else:
+      # If the method isn't in our dictionary, act normal.
+      print("#=====================================================")
+      print("Cannot find method:" + method_name)
+      raise AttributeError, method_name
+
+  def getOperators(self):
+    proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+    ret  = proc.communicate()
+    l    = ret[1].find("Operators:")
+    ops  = ret[1][l:-1].split(os.linesep)[1:-1]
+    endI = ops.index('')
+    s    = ' '.join(ops[:endI]).strip()
+    s    = re.sub("\s+" , " ", s)
+    return list(set(s.split(" ") + self.undocumentedOperators))
+
+  def loadCdf(self):
+    try:
+      import scipy.io.netcdf as cdf
+      self.cdf    = cdf
+      self.cdfMod = "scipy"
+    except:
+      try:
+        import netCDF4 as cdf
+        self.cdf    = cdf
+        self.cdfMod = "netcdf4"
+      except:
+        raise ImportError,"scipy or python-netcdf4 module is required to return numpy arrays."
+
+
+  def setReturnArray(self,value=True):
+    self.returnCdf = value
+    if value:
+      self.loadCdf()
+
+
+  def unsetReturnArray(self):
+    self.setReturnArray(False)
+
+  def hasCdo(self,path=None):
+    if path is None:
+      path = self.CDO
+
+    if os.path.isfile(path) and os.access(path, os.X_OK):
+      return True
+    return False
+
+  def checkCdo(self):
+    if (self.hasCdo()):
+      call = [self.CDO,' -V']
       proc = subprocess.Popen(' '.join(call),
           shell  = True,
           stderr = subprocess.PIPE,
           stdout = subprocess.PIPE)
       retvals = proc.communicate()
-      return retvals
+      print retvals
 
-    def __getattr__(self, method_name):
-        def get(self, *args,**kwargs):
-            operator          = [method_name]
-            operatorPrintsOut = re.search(self.outputOperatorsPattern,method_name)
+  def setCdo(self,value):
+    self.CDO       = value
+    self.operators = self.getOperators()
 
-            if args.__len__() != 0:
-              for arg in args:
-                operator.append(arg.__str__())
+  def getCdo(self):
+    return self.CDO
 
-           #if self.debug:
-           #  print "args:"
-           #  print args
-           #  print operator
+  #==================================================================
+  # Addional operators:
+  #------------------------------------------------------------------
+  def module_version(self):
+    '1.1.0'
 
-            io  = []
-            cmd = ''
-            if not kwargs.__contains__("options"):
-                kwargs["options"] = ""
-            if kwargs.__contains__("input"):
-              io.append(kwargs["input"])
+  def version(self):
+    # return CDO's version
+    proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+    ret  = proc.communicate()
+    cdo_help   = ret[1]
+    match = re.search("CDO version (\d.*), Copyright",cdo_help)
+    return match.group(1)
 
-            if not kwargs.__contains__("force"):
-              kwargs["force"] = self.forceOutput
+  def boundaryLevels(self,**kwargs):
+    ilevels         = map(float,self.showlevel(input = kwargs['input'])[0].split())
+    bound_levels    = []
+    bound_levels.insert(0,0)
+    for i in range(1,len(ilevels)+1):
+      bound_levels.insert(i,bound_levels[i-1] + 2*(ilevels[i-1]-bound_levels[i-1]))
 
-            if operatorPrintsOut:
-              cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
-              retvals = self.run(cmd)
-            else:
-              if kwargs["force"] or \
-                 (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
-                if not kwargs.__contains__("output"):
-                  kwargs["output"] = self.tempfile.path()
+    return bound_levels
 
-                io.append(kwargs["output"])
+  def thicknessOfLevels(self,**kwargs):
+    bound_levels = self.boundaryLevels(**kwargs)
+    delta_levels    = []
+    for i in range(0,len(bound_levels)):
+      v = bound_levels[i]
+      if 0 == i:
+        continue
 
-                cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
-                retvals = self.run(cmd)
-              else:
-                if self.debug:
-                  print("Use existing file'"+kwargs["output"]+"'")
+      delta_levels.append(v - bound_levels[i-1])
 
+    return delta_levels
 
-            if self.debug:
-              print 'CALL:'+' '.join(cmd)
+  def readCdf(self,iFile):
+    if not self.returnCdf:
+      self.loadCdf()
 
-            if not kwargs.__contains__("returnCdf"):
-              kwargs["returnCdf"] = False
+    if ( "scipy" == self.cdfMod):
+      fileObj =  self.cdf.netcdf_file(iFile)
+    elif ( "netcdf4" == self.cdfMod ):
+      fileObj = self.cdf.Dataset(iFile)
+    else:
+      raise ImportError,"Could not import data from file '" + iFile + "'"
 
-            if operatorPrintsOut:
-              r = map(string.strip,retvals[0].split(os.linesep))
-              return r[:len(r)-1]
-            else:
-              if self.returnCdf or kwargs["returnCdf"]:
-                if not self.returnCdf:
-                  self.loadCdf()
-
-                return self.readCdf(kwargs["output"])
-              else:
-                return kwargs["output"]
-
-          
-
-        
-        if ((method_name in self.__dict__) or (method_name in self.operators)):
-          if self.debug:
-            print("Found method:" + method_name)
-
-          return get.__get__(self)
-        else:
-          # If the method isn't in our dictionary, act normal.
-          print("#=====================================================")
-          print("Cannot find method:" + method_name)
-          raise AttributeError, method_name
-
-    def getOperators(self):
-        proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-        ret  = proc.communicate()
-        l    = ret[1].find("Operators:")
-        ops  = ret[1][l:-1].split(os.linesep)[1:-1]
-        endI = ops.index('')
-        s    = ' '.join(ops[:endI]).strip()
-        s    = re.sub("\s+" , " ", s)
-        return list(set(s.split(" ") + self.undocumentedOperators))
-
-    def loadCdf(self):
-      try:
-        import scipy.io.netcdf as cdf
-        self.cdf    = cdf
-        self.cdfMod = "scipy"
-      except:
-        try:
-          import netCDF4 as cdf
-          self.cdf    = cdf
-          self.cdfMod = "netcdf4"
-        except:
-          raise ImportError,"scipy or python-netcdf4 module is required to return numpy arrays."
-
-
-    def setReturnArray(self,value=True):
-      self.returnCdf = value
-      if value:
-        self.loadCdf()
-
-
-    def unsetReturnArray(self):
-      self.setReturnArray(False)
-
-    def hasCdo(self,path=None):
-      if path is None:
-        path = self.CDO
-
-      if os.path.isfile(path) and os.access(path, os.X_OK):
-        return True
-      return False
-
-    def checkCdo(self):
-      if (self.hasCdo()):
-        call = [self.CDO,' -V']
-        proc = subprocess.Popen(' '.join(call),
-            shell  = True,
-            stderr = subprocess.PIPE,
-            stdout = subprocess.PIPE)
-        retvals = proc.communicate()
-        print retvals
-
-    def setCdo(self,value):
-      self.CDO       = value
-      self.operators = self.getOperators()
-
-    def getCdo(self):
-      return self.CDO
-
-    #==================================================================
-    # Addional operators:
-    #------------------------------------------------------------------
-    def module_version(self):
-      '1.1.0'
-
-    def version(self):
-      # return CDO's version
-      proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-      ret  = proc.communicate()
-      cdo_help   = ret[1]
-      match = re.search("CDO version (\d.*), Copyright",cdo_help)
-      return match.group(1)
-
-    def boundaryLevels(self,**kwargs):
-      ilevels         = map(float,self.showlevel(input = kwargs['input'])[0].split())
-      bound_levels    = []
-      bound_levels.insert(0,0)
-      for i in range(1,len(ilevels)+1):
-        bound_levels.insert(i,bound_levels[i-1] + 2*(ilevels[i-1]-bound_levels[i-1]))
-
-      return bound_levels
-
-    def thicknessOfLevels(self,**kwargs):
-      bound_levels = self.boundaryLevels(**kwargs)
-      delta_levels    = []
-      for i in range(0,len(bound_levels)):
-        v = bound_levels[i]
-        if 0 == i:
-          continue
-
-        delta_levels.append(v - bound_levels[i-1])
-
-      return delta_levels
-
-    def readCdf(self,iFile):
-      if not self.returnCdf:
-        self.loadCdf()
-
-      if ( "scipy" == self.cdfMod):
-        fileObj =  self.cdf.netcdf_file(iFile)
-      elif ( "netcdf4" == self.cdfMod ):
-        fileObj = self.cdf.Dataset(iFile)
-      else:
-        raise ImportError,"Could not import data from file '" + iFile + "'"
-
-      retval = fileObj
-      fileObj.close()
-      return retval
+    retval = fileObj
+    fileObj.close()
+    return retval
 
 
 
