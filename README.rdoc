@@ -79,9 +79,9 @@ Cdo.{rb,py} includes a simple tempfile wrapper, which make live easier, when wri
 Please use the forum or ticket system of CDOs official web page: http://code.zmaw.de/projects/cdo
 
 == Changelog
-* 1.1.1:
-   - :returnArray will accept a variable name, for which the multidimesional array is returned
+* 1.2.0: API change:
    - Ruby now uses the same keys like the python interface, i.e. :input and :output instead of :in and :out
+   - :returnArray will accept a variable name, for which the multidimesional array is returned
 * 1.1.0: API change:
    - new option :returnCdf : will return the netcdf file handle, which was formerly done vie :returnArray
    - new options :force : if set to true the cdo call will be run even if the given output file is presen, default: false
