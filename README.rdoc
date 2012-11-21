@@ -80,7 +80,7 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 
 == Changelog
 * 1.1.1:
-   - :returnArray will accept a variable name, for which the multidimesional array wrt missing values is returned
+   - :returnArray will accept a variable name, for which the multidimesional array is returned
    - Ruby now uses the same keys like the python interface, i.e. :input and :output instead of :in and :out
 * 1.1.0: API change:
    - new option :returnCdf : will return the netcdf file handle, which was formerly done vie :returnArray
