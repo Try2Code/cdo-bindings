@@ -216,6 +216,16 @@ class CdoTest(unittest.TestCase):
         thicknesses = cdo.thicknessOfLevels(input = "-selname,T " + cdo.stdatm(','.join(sourceLevels),options = "-f nc")) 
         self.assertEqual(targetThicknesses,thicknesses)
 
+
+    def test_returnArray(self):
+        cdo = Cdo()
+        temperature = cdo.stdatm(0,options = '-f nc', returnCdf = True).variables['T'][:]
+        self.assertEqual(False, cdo.stdatm(0,options = '-f nc',returnArray = 'TT'))
+        temperature = cdo.stdatm(0,options = '-f nc',returnArray = 'T')
+        self.assertEqual(288.0,temperature.flatten()[0])
+        pressure = cdo.stdatm("0,1000",options = '-f nc -b F64',returnArray = 'P')
+        self.assertEqual("[ 1013.25         898.54345604]",pressure.flatten().__str__())
+
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):
             cdo = Cdo()
@@ -240,7 +250,13 @@ class CdoTest(unittest.TestCase):
             tempfilesEnd = glob.glob('/tmp/cdoPy**')
             tempfilesEnd.sort()
             self.assertEqual(tempfilesStart,tempfilesEnd)
-
+        def test_readArray(self):
+            cdo = Cdo()
+            ifile = '/home/ram/data/examples/EH5_AMIP_1_TSURF_1991-1995.nc'
+            self.assertEqual((10, 96, 192),
+                cdo.readArray(cdo.seltimestep('1/10',
+                  input=ifile),
+                  'tsurf').shape)
 
 if __name__ == '__main__':
     unittest.main()

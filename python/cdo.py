@@ -88,6 +88,8 @@ class Cdo(object):
       if operatorPrintsOut:
         cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
         retvals = self.run(cmd)
+        r       = map(string.strip,retvals[0].split(os.linesep))
+        return r[:len(r)-1]
       else:
         if kwargs["force"] or \
            (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
@@ -109,17 +111,15 @@ class Cdo(object):
       if not kwargs.__contains__("returnCdf"):
         kwargs["returnCdf"] = False
 
-      if operatorPrintsOut:
-        r = map(string.strip,retvals[0].split(os.linesep))
-        return r[:len(r)-1]
-      else:
-        if self.returnCdf or kwargs["returnCdf"]:
-          if not self.returnCdf:
-            self.loadCdf()
+      if not None == kwargs.get("returnArray"):
+        return self.readArray(kwargs["output"],kwargs["returnArray"])
+      elif self.returnCdf or kwargs["returnCdf"]:
+        if not self.returnCdf:
+          self.loadCdf()
 
-          return self.readCdf(kwargs["output"])
-        else:
-          return kwargs["output"]
+        return self.readCdf(kwargs["output"])
+      else:
+        return kwargs["output"]
 
     if ((method_name in self.__dict__) or (method_name in self.operators)):
       if self.debug:
@@ -226,6 +226,7 @@ class Cdo(object):
     return delta_levels
 
   def readCdf(self,iFile):
+    """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:scipy)"""
     if not self.returnCdf:
       self.loadCdf()
 
@@ -239,6 +240,17 @@ class Cdo(object):
     retval = fileObj
     fileObj.close()
     return retval
+
+  def readArray(self,iFile,varname):
+    """Direcly return a numpy array for a given variable name"""
+    filehandle = self.readCdf(iFile)
+    if varname in filehandle.variables:
+      # return the data array
+      return filehandle.variables[varname][:]
+    else:
+      print "Cannot find variable '" + varname +"'"
+      return False
+
 
 
 
