@@ -79,6 +79,8 @@ Cdo.{rb,py} includes a simple tempfile wrapper, which make live easier, when wri
 Please use the forum or ticket system of CDOs official web page: http://code.zmaw.de/projects/cdo
 
 == Changelog
+* 1.2.1:
+   - support MaskedArrays as return values if returnArray is given
 * 1.2.0: API change:
    - Ruby now uses the same keys like the python interface, i.e. :input and :output instead of :in and :out
    - :returnArray will accept a variable name, for which the multidimesional array is returned
