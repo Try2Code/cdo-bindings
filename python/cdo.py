@@ -59,7 +59,18 @@ class Cdo(object):
         stderr = subprocess.PIPE,
         stdout = subprocess.PIPE)
     retvals = proc.communicate()
-    return retvals
+    return {"retvals" : retvals, "returncode" : proc.returncode}
+
+  def hasError(self,method_name,cmd,retvals):
+    if (self.debug):
+      print("RETURNCODE:"+retvals["returncode"].__str__())
+    if ( 0 != retvals["returncode"] ):
+      print("Error in calling operator " + method_name + " with:")
+      print(">>> "+' '.join(cmd)+"<<<")
+      print(retvals["retvals"][1])
+      return True
+    else:
+      return False
 
   def __getattr__(self, method_name):
     def get(self, *args,**kwargs):
@@ -69,11 +80,6 @@ class Cdo(object):
       if args.__len__() != 0:
         for arg in args:
           operator.append(arg.__str__())
-
-     #if self.debug:
-     #  print "args:"
-     #  print args
-     #  print operator
 
       io  = []
       cmd = ''
@@ -88,8 +94,12 @@ class Cdo(object):
       if operatorPrintsOut:
         cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
         retvals = self.run(cmd)
-        r       = map(string.strip,retvals[0].split(os.linesep))
-        return r[:len(r)-1]
+        if ( not self.hasError(method_name,cmd,retvals) ):
+          r = map(string.strip,retvals["retvals"][0].split(os.linesep))
+          return r[:len(r)-1]
+        else:
+          return -1
+          # TODO: raise exception
       else:
         if kwargs["force"] or \
            (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
@@ -100,6 +110,7 @@ class Cdo(object):
 
           cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
           retvals = self.run(cmd)
+          self.hasError(method_name,cmd,retvals)
         else:
           if self.debug:
             print("Use existing file'"+kwargs["output"]+"'")
@@ -116,7 +127,6 @@ class Cdo(object):
       elif self.returnCdf or kwargs["returnCdf"]:
         if not self.returnCdf:
           self.loadCdf()
-
         return self.readCdf(kwargs["output"])
       else:
         return kwargs["output"]
