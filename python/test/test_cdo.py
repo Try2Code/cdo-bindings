@@ -170,12 +170,8 @@ class CdoTest(unittest.TestCase):
         cdo.debug = True
         stdatm  = cdo.stdatm("0",options = "-f nc")
         stdatm_ = cdo.stdatm("0",options = "-f nc")
-        print(stdatm)
-        print(stdatm_)
         print(cdo.diff(input=stdatm + " " + stdatm_))
         sum = cdo.fldsum(input = stdatm)
-        return
-#        self.assertEqual('',cdo.diff(input=stdatm,output=sum))
         sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
         self.assertEqual(288.0,sum.variables["T"][:])
 
