@@ -59,7 +59,7 @@ class Cdo(object):
         stderr = subprocess.PIPE,
         stdout = subprocess.PIPE)
     retvals = proc.communicate()
-    return {"retvals" : retvals, "returncode" : proc.returncode}
+    return {"stdout" : retvals[0],"stderr" : retvals[1], "returncode" : proc.returncode}
 
   def hasError(self,method_name,cmd,retvals):
     if (self.debug):
@@ -67,7 +67,7 @@ class Cdo(object):
     if ( 0 != retvals["returncode"] ):
       print("Error in calling operator " + method_name + " with:")
       print(">>> "+' '.join(cmd)+"<<<")
-      print(retvals["retvals"][1])
+      print(retvals["stderr"])
       return True
     else:
       return False
@@ -95,7 +95,7 @@ class Cdo(object):
         cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
         retvals = self.run(cmd)
         if ( not self.hasError(method_name,cmd,retvals) ):
-          r = map(string.strip,retvals["retvals"][0].split(os.linesep))
+          r = map(string.strip,retvals["stdout"].split(os.linesep))
           return r[:len(r)-1]
         else:
           return -1
