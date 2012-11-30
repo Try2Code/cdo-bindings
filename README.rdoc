@@ -82,7 +82,7 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 * 1.2.1:
    - support MaskedArrays as return values if returnArray is given
    - error handling: return stderr in case of non-zero return value + raise exception
-     sugestions from Estanislao Gonzalez
+     suggestions from Estanislao Gonzalez
    - autocompletion and built-in documentation through help() for interactive use
      contribution from Estanislao Gonzalez
 * 1.2.0: API change:
