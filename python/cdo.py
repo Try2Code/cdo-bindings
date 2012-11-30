@@ -12,6 +12,12 @@ import os,re,subprocess,tempfile,random,string
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+def auto_doc(tool, cdo_self):
+    def desc(func):
+        func.__doc__ = cdo_self.run([cdo_self.CDO, '-h', tool]).get('stdout')
+        return func
+    return desc
+
 class Cdo(object):
 
   def __init__(self):
@@ -53,13 +59,20 @@ class Cdo(object):
 
     self.cdfMod      = ''
 
+  def __dir__(self):
+    res = dir(type(self)) + list(self.__dict__.keys())
+    res.extend(self.operators)
+    return res
+
   def run(self,call):
     proc = subprocess.Popen(' '.join(call),
         shell  = True,
         stderr = subprocess.PIPE,
         stdout = subprocess.PIPE)
     retvals = proc.communicate()
-    return {"stdout" : retvals[0],"stderr" : retvals[1], "returncode" : proc.returncode}
+    return {"stdout"     : retvals[0]
+           ,"stderr"     : retvals[1]
+           ,"returncode" : proc.returncode}
 
   def hasError(self,method_name,cmd,retvals):
     if (self.debug):
@@ -73,6 +86,8 @@ class Cdo(object):
       return False
 
   def __getattr__(self, method_name):
+    @auto_doc(method_name, self)
+
     def get(self, *args,**kwargs):
       operator          = [method_name]
       operatorPrintsOut = re.search(self.outputOperatorsPattern,method_name)
