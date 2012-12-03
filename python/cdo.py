@@ -14,10 +14,20 @@ import numpy as np
 # GNU General Public License for more details.
 
 def auto_doc(tool, cdo_self):
+    """Generate the __doc__ string of the decorated function by calling the cdo help command"""
     def desc(func):
         func.__doc__ = cdo_self.run([cdo_self.CDO, '-h', tool]).get('stdout')
         return func
     return desc
+
+class CDOException(Exception):
+    def __init__(self, stdout, stderr, returncode):
+        super(CDOException, self).__init__()
+        self.stdout = stdout
+        self.stderr = stderr
+        self.returncode = returncode
+    def __str__(self):
+        return self.msg
 
 class Cdo(object):
 
@@ -114,8 +124,7 @@ class Cdo(object):
           r = map(string.strip,retvals["stdout"].split(os.linesep))
           return r[:len(r)-1]
         else:
-          return -1
-          # TODO: raise exception
+          raise CDOException(**retvals)
       else:
         if kwargs["force"] or \
            (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
