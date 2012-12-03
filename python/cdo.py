@@ -135,8 +135,10 @@ class Cdo(object):
 
           cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
           retvals = self.run(cmd)
-          self.hasError(method_name,cmd,retvals)
+          if self.hasError(method_name,cmd,retvals):
+              raise CDOException(**retvals)
         else:
+          #why is the command not run if here? Not clear...
           if self.debug:
             print("Use existing file'"+kwargs["output"]+"'")
 
