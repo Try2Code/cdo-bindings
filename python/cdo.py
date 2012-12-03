@@ -170,6 +170,7 @@ class Cdo(object):
       raise AttributeError, method_name
 
   def getOperators(self):
+    import os
     proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
     ret  = proc.communicate()
     l    = ret[1].find("Operators:")
@@ -268,7 +269,8 @@ class Cdo(object):
       self.loadCdf()
 
     if ( "scipy" == self.cdfMod):
-      fileObj =  self.cdf.netcdf_file(iFile)
+      #making it compatible to older scipy versions
+      fileObj =  self.cdf.netcdf_file(iFile, mode='r')
     elif ( "netcdf4" == self.cdfMod ):
       fileObj = self.cdf.Dataset(iFile)
     else:
@@ -292,7 +294,8 @@ class Cdo(object):
     """Create a masked array based on cdf's FillValue"""
     fileObj =  self.readCdf(iFile)
 
-    data = fileObj.variables[varname].data
+    #.data is not backwards compatible to old scipy versions, [:] is
+    data = fileObj.variables[varname][:]
 
     if hasattr(fileObj.variables[varname],'_FillValue'):
       #return masked array
