@@ -1,4 +1,5 @@
 import os,re,subprocess,tempfile,random,string
+import numpy as np
 
 # Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
 # See COPYING file for copying and redistribution conditions.
@@ -139,6 +140,8 @@ class Cdo(object):
 
       if not None == kwargs.get("returnArray"):
         return self.readArray(kwargs["output"],kwargs["returnArray"])
+      elif not None == kwargs.get("returnMaArray"):
+        return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
       elif self.returnCdf or kwargs["returnCdf"]:
         if not self.returnCdf:
           self.loadCdf()
@@ -276,8 +279,20 @@ class Cdo(object):
       print "Cannot find variable '" + varname +"'"
       return False
 
+  def readMaArray(self,iFile,varname):
+    """Create a masked array based on cdf's FillValue"""
+    fileObj =  self.readCdf(iFile)
 
+    data = fileObj.variables[varname].data
 
+    if hasattr(fileObj.variables[varname],'_FillValue'):
+      #return masked array
+      retval = np.ma.array(data,mask=data == fileObj.variables[varname]._FillValue)
+    else:
+      #generate dummy mask which is always valid
+      retval = np.ma.array(data,mask=data != data )
+
+    return retval
 
 # Helper module for easy temp file handling
 class MyTempfile(object):

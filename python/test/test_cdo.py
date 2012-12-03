@@ -220,6 +220,21 @@ class CdoTest(unittest.TestCase):
         pressure = cdo.stdatm("0,1000",options = '-f nc -b F64',returnArray = 'P')
         self.assertEqual("[ 1013.25         898.54345604]",pressure.flatten().__str__())
 
+    def test_returnMaArray(self):
+        cdo = Cdo()
+        cdo.debug = True
+        bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnMaArray = 'topo')
+        self.assertEqual(-4298.0,bathy[0,0])
+        self.assertEqual(-2669.0,bathy[0,1])
+        ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
+        tb = cdo.subc(-2669.0,input = ta)
+        withMask = cdo.div(input=ta+" "+tb,returnMaArray='topo')
+        self.assertEqual('--',withMask[0,1].__str__())
+        self.assertEqual(False,withMask.mask[0,0])
+        self.assertEqual(False,withMask.mask[1,0])
+        self.assertEqual(False,withMask.mask[1,1])
+        self.assertEqual(True,withMask.mask[0,1])
+
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):
             cdo = Cdo()
@@ -251,6 +266,25 @@ class CdoTest(unittest.TestCase):
                 cdo.readArray(cdo.seltimestep('1/10',
                   input=ifile),
                   'tsurf').shape)
+
+        def test_showMaArray(self):
+            cdo = Cdo()
+            cdo.debug = True
+            import pylab as pl
+            bathy = cdo.setrtomiss(0,10000,
+                input = cdo.topo(options='-f nc'),returnMaArray='topo')
+            pl.imshow(bathy,origin='lower')
+            pl.show()
+            oro = cdo.setrtomiss(-10000,0,
+                input = cdo.topo(options='-f nc'),returnMaArray='topo')
+            pl.imshow(oro,origin='lower')
+            pl.show()
+            random = cdo.setname('test_maArray',
+                                 input = "-setrtomiss,0.4,0.8 -random,r180x90 ",
+                                 returnMaArray='test_maArray',
+                                 options = "-f nc")
+            pl.imshow(random,origin='lower')
+            pl.show()
 
         def test_error(self):
             cdo = Cdo()
