@@ -248,6 +248,13 @@ class CdoTest(unittest.TestCase):
             self.assertTrue(e.returncode != 0)
             self.assertTrue(len(e.stderr) > 1)
             self.assertTrue(hasattr(e, 'stdout'))
+
+        try:
+            cdo.stdatm(0,10,input="",output="")
+        except CDOException as a:
+            self.assertTrue(e.returncode != 0)
+            self.assertTrue(len(e.stderr) > 1)
+            self.assertTrue(hasattr(e, 'stdout'))
         
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):
@@ -300,11 +307,6 @@ class CdoTest(unittest.TestCase):
             pl.imshow(random,origin='lower')
             pl.show()
 
-        def test_error(self):
-            cdo = Cdo()
-            print cdo.stdatm(0,10,input="",output="")
-        
-        
 
 if __name__ == '__main__':
     unittest.main()
