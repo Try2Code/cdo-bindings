@@ -242,6 +242,12 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo()
         self.assertFalse(hasattr(cdo, 'nonExistingMethod'))
         self.failUnlessRaises(CDOException, cdo.max)
+        try:
+            cdo.max()
+        except CDOException as e:
+            self.assertTrue(e.returncode != 0)
+            self.assertTrue(len(e.stderr) > 1)
+            self.assertTrue(hasattr(e, 'stdout'))
         
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):

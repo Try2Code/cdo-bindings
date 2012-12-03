@@ -26,6 +26,7 @@ class CDOException(Exception):
         self.stdout = stdout
         self.stderr = stderr
         self.returncode = returncode
+        self.msg = '(returncode:%s) %s' % (returncode, stderr)
     def __str__(self):
         return self.msg
 
