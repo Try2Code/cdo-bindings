@@ -282,12 +282,6 @@ module Cdo
     end
   end
 
-  def Cdo.selindexlist(args)
-    
-  end
-
-  def Cdo.plot(args)
-  end
 end
 
 # Helper module for easy temp file handling
