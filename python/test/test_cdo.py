@@ -226,6 +226,14 @@ class CdoTest(unittest.TestCase):
     def test_returnMaArray(self):
         cdo = Cdo()
         cdo.debug = True
+        topo = cdo.topo(options='-f nc',returnMaArray='topo')
+        self.assertEqual(-1890.0,round(topo.mean()))
+        bathy = cdo.setrtomiss(0,10000,
+            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+        self.assertEqual(-3386.0,round(bathy.mean()))
+        oro = cdo.setrtomiss(-10000,0,
+            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+        self.assertEqual(1142.0,round(oro.mean()))
         bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnMaArray = 'topo')
         self.assertEqual(-4298.0,bathy[0,0])
         self.assertEqual(-2669.0,bathy[0,1])
@@ -255,7 +263,7 @@ class CdoTest(unittest.TestCase):
             self.assertTrue(e.returncode != 0)
             self.assertTrue(len(e.stderr) > 1)
             self.assertTrue(hasattr(e, 'stdout'))
-        
+
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):
             cdo = Cdo()

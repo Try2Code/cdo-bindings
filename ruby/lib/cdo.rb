@@ -86,7 +86,7 @@ module Cdo
       system(cmd + ' 1>/dev/null 2>&1 ')
     end
   end
-  def Cdo.run(cmd,ofile='',options='',returnCdf=false,force=nil,returnArray=nil)
+  def Cdo.run(cmd,ofile='',options='',returnCdf=false,force=nil,returnArray=nil,returnMaArray=nil)
     cmd = "#{@@CDO} -O #{options} #{cmd} "
     case ofile
     when $stdout
@@ -106,6 +106,8 @@ module Cdo
     end
     if not returnArray.nil?
       Cdo.readArray(ofile,returnArray)
+    elsif not returnMaArray.nil?
+      Cdo.readMaArray(ofile,returnMaArray)
     elsif returnCdf or State[:returnCdf]
       Cdo.readCdf(ofile)
     else
@@ -130,7 +132,7 @@ module Cdo
       if @@outputOperatorsPattern.match(sym)
         run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout)
       else
-        run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray])
+        run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray],io[:returnMaArray])
       end
     else
       warn "Operator #{sym.to_s} not found"
@@ -138,7 +140,7 @@ module Cdo
   end
   def Cdo.loadCdf
     begin
-      require "numru/netcdf"
+      require "numru/netcdf_miss"
       include NumRu
     rescue LoadError
       warn "Could not load ruby's netcdf bindings. Please install it."
@@ -243,6 +245,17 @@ module Cdo
     if filehandle.var_names.include?(varname)
       # return the data array
       filehandle.var(varname).get
+    else
+      warn "Cannot find variable '#{varname}'"
+      raise ArgumentError
+    end
+  end
+
+  def Cdo.readMaArray(iFile,varname)
+    filehandle = Cdo.readCdf(iFile)
+    if filehandle.var_names.include?(varname)
+      # return the data array
+      filehandle.var(varname).get_with_miss
     else
       warn "Cannot find variable '#{varname}'"
       raise ArgumentError

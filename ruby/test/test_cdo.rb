@@ -232,6 +232,27 @@ class TestCdo < Test::Unit::TestCase
     pressure = Cdo.stdatm(0,1000,:options => '-f nc -b F64',:returnArray => 'P')
     assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
   end
+  def test_returnMaArray
+    Cdo.debug = true
+    topo = Cdo.topo(:options => '-f nc',:returnMaArray => 'topo')
+    assert_equal(-1890.0,topo.mean.round)
+    bathy = Cdo.setrtomiss(0,10000,
+        :input => Cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
+    assert_equal(-3386.0,bathy.mean.round)
+    oro = Cdo.setrtomiss(-10000,0,
+        :input => Cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
+    assert_equal(1142.0,oro.mean.round)
+    bathy = Cdo.remapnn('r2x2',:input => Cdo.topo(:options => '-f nc'), :returnMaArray => 'topo')
+    assert_equal(-4298.0,bathy[0,0])
+    assert_equal(-2669.0,bathy[1,0])
+    ta = Cdo.remapnn('r2x2',:input => Cdo.topo(:options => '-f nc'))
+    tb = Cdo.subc(-2669.0,:input => ta)
+    withMask = Cdo.div(:input => ta+" "+tb,:returnMaArray => 'topo')
+    assert(-8.0e+33 > withMask[1,0])
+    assert(0 < withMask[0,0])
+    assert(0 < withMask[0,1])
+    assert(0 < withMask[1,1])
+  end
 
 
   if 'thingol' == `hostname`.chomp  then

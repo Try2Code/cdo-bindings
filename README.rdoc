@@ -82,8 +82,8 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 * 1.2.1:
    - new return option: Masked Arrays
      if the new keyword returnMaArray is given, its value is taken as variable
-     name and a masked array wrt to its FillValues is returned [python]
-     contribution by Alex Loew
+     name and a masked array wrt to its FillValues is returned
+     contribution for python by Alex Loew
    - error handling: return stderr in case of non-zero return value + raise exception
      contribution from Estanislao Gonzalez [python]
    - autocompletion and built-in documentation through help() for interactive use
