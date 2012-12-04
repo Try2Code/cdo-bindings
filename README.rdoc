@@ -85,7 +85,7 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
      name and a masked array wrt to its FillValues is returned
      contribution for python by Alex Loew
    - error handling: return stderr in case of non-zero return value + raise exception
-     contribution from Estanislao Gonzalez [python]
+     contribution for python from Estanislao Gonzalez
    - autocompletion and built-in documentation through help() for interactive use
      contribution from Estanislao Gonzalez [python]
 * 1.2.0: API change:

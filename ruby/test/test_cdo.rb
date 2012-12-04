@@ -254,6 +254,34 @@ class TestCdo < Test::Unit::TestCase
     assert(0 < withMask[1,1])
   end
 
+  def test_errorException
+    Cdo.debug = true
+    # stdout operators get get wrong input
+    assert_raise ArgumentError do
+      Cdo.showname(:input => '-for,d')
+    end
+    # non-existing operator
+    assert_raise ArgumentError do
+      Cdo.neverDefinedOperator()
+    end
+    # standard opertor get mis-spelled value
+    assert_raise ArgumentError do
+      Cdo.remapnn('r-10x10')
+    end
+    # standard operator get unexisting operator as input stream
+    assert_raise ArgumentError do
+      Cdo.remapnn('r10x10',:input => '-99topo')
+    end
+    # missing input stream
+    assert_raise ArgumentError do
+      Cdo.setname('setname')
+    end
+    # missing input stream for stdout-operator
+    assert_raise ArgumentError do
+      Cdo.showname
+    end
+  end
+
 
   if 'thingol' == `hostname`.chomp  then
     def test_readCdf
