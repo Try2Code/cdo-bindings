@@ -281,7 +281,18 @@ module Cdo
       raise ArgumentError,"Cannot find variable '#{varname}'"
     end
   end
-
+  def Cdo.help(operator=nil)
+    if operator.nil?
+      puts Cdo.call([@@CDO,'-h'].join(' '))[:stderr]
+    else
+      operator = operator.to_s unless String == operator.class
+      if Cdo.operators.include?(operator)
+        puts Cdo.call([@@CDO,'-h',operator].join(' '))[:stdout]
+      else
+        puts "Unknown operator #{operator}"
+      end
+    end
+  end
 end
 
 # Helper module for easy temp file handling

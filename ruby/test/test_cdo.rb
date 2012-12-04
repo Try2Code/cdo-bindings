@@ -282,7 +282,6 @@ class TestCdo < Test::Unit::TestCase
     end
   end
 
-
   if 'thingol' == `hostname`.chomp  then
     def test_readCdf
       input = "-settunits,days  -setyear,2000 -for,1,4"
@@ -297,6 +296,16 @@ class TestCdo < Test::Unit::TestCase
       ifile = '/home/ram/data/examples/EH5_AMIP_1_TSURF_1991-1995.nc'
       assert_equal([192, 96, 10],Cdo.readArray(Cdo.seltimestep('1/10',:input => ifile), 'tsurf').shape)
     end
+    def test_doc
+      Cdo.debug = true
+      Cdo.help(:remap)
+      Cdo.help(:infov)
+      Cdo.help(:topo)
+      Cdo.help(:notDefinedOP)
+      Cdo.help
+    end
+
+
   end
 
 end
