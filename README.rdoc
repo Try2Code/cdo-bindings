@@ -88,6 +88,7 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
      contribution for python from Estanislao Gonzalez
    - autocompletion and built-in documentation through help() for interactive use
      contribution from Estanislao Gonzalez [python]
+   - Added help operator for displaying help interactively [ruby]
 * 1.2.0: API change:
    - Ruby now uses the same keys like the python interface, i.e. :input and :output
      instead of :in and :out
