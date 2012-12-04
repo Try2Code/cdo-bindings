@@ -16,7 +16,7 @@ import numpy as np
 def auto_doc(tool, cdo_self):
     """Generate the __doc__ string of the decorated function by calling the cdo help command"""
     def desc(func):
-        func.__doc__ = cdo_self.run([cdo_self.CDO, '-h', tool]).get('stdout')
+        func.__doc__ = cdo_self.call([cdo_self.CDO, '-h', tool]).get('stdout')
         return func
     return desc
 
@@ -76,8 +76,13 @@ class Cdo(object):
     res.extend(self.operators)
     return res
 
-  def run(self,call):
-    proc = subprocess.Popen(' '.join(call),
+  def call(self,cmd):
+    if self.debug:
+      print '# DEBUG ====================================================================='
+      print 'CALL:'+' '.join(cmd)
+      print '# DEBUG ====================================================================='
+
+    proc = subprocess.Popen(' '.join(cmd),
         shell  = True,
         stderr = subprocess.PIPE,
         stdout = subprocess.PIPE)
@@ -120,7 +125,7 @@ class Cdo(object):
 
       if operatorPrintsOut:
         cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
-        retvals = self.run(cmd)
+        retvals = self.call(cmd)
         if ( not self.hasError(method_name,cmd,retvals) ):
           r = map(string.strip,retvals["stdout"].split(os.linesep))
           return r[:len(r)-1]
@@ -135,17 +140,12 @@ class Cdo(object):
           io.append(kwargs["output"])
 
           cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
-          retvals = self.run(cmd)
+          retvals = self.call(cmd)
           if self.hasError(method_name,cmd,retvals):
               raise CDOException(**retvals)
         else:
-          #why is the command not run if here? Not clear...
           if self.debug:
             print("Use existing file'"+kwargs["output"]+"'")
-
-
-      if self.debug:
-        print 'CALL:'+' '.join(cmd)
 
       if not kwargs.__contains__("returnCdf"):
         kwargs["returnCdf"] = False
