@@ -17,7 +17,7 @@ require 'open3'
 # CDO calling mechnism
 module Cdo
 
-  VERSION = "1.2.0"
+  VERSION = "1.2.1"
 
   State = {
     :debug       => false,
