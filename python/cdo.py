@@ -103,8 +103,8 @@ class Cdo(object):
       return False
 
   def __getattr__(self, method_name):
+      
     @auto_doc(method_name, self)
-
     def get(self, *args,**kwargs):
       operator          = [method_name]
       operatorPrintsOut = re.search(self.outputOperatorsPattern,method_name)
@@ -113,18 +113,26 @@ class Cdo(object):
         for arg in args:
           operator.append(arg.__str__())
 
-      io  = []
-      cmd = ''
-      if not kwargs.__contains__("options"):
-          kwargs["options"] = ""
-      if kwargs.__contains__("input"):
-        io.append(kwargs["input"])
+      #build the cdo command
+      #1. the cdo command
+      cmd = [self.CDO]
+      #2. options
+      if 'options' in kwargs:
+          cmd += kwargs['options'].split()
+      #3. operator(s)
+      cmd.append(','.join(operator))
+      #4.input files
+      if 'input' in kwargs:
+        if isinstance(kwargs["input"], basestring):
+            cmd.append(kwargs["input"])
+        else:
+            #we assume it's either a list, a tuple or any iterable.
+            cmd += kwargs["input"]
 
       if not kwargs.__contains__("force"):
         kwargs["force"] = self.forceOutput
 
       if operatorPrintsOut:
-        cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
         retvals = self.call(cmd)
         if ( not self.hasError(method_name,cmd,retvals) ):
           r = map(string.strip,retvals["stdout"].split(os.linesep))
@@ -137,9 +145,8 @@ class Cdo(object):
           if not kwargs.__contains__("output"):
             kwargs["output"] = self.tempfile.path()
 
-          io.append(kwargs["output"])
+          cmd.append(kwargs["output"])
 
-          cmd     = [self.CDO,kwargs["options"],','.join(operator),' '.join(io)]
           retvals = self.call(cmd)
           if self.hasError(method_name,cmd,retvals):
               raise CDOException(**retvals)
@@ -165,6 +172,8 @@ class Cdo(object):
       if self.debug:
         print("Found method:" + method_name)
 
+      #cache the method for later
+      setattr(self.__class__, method_name, get)
       return get.__get__(self)
     else:
       # If the method isn't in our dictionary, act normal.
