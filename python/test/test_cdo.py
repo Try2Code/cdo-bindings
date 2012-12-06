@@ -264,18 +264,18 @@ class CdoTest(unittest.TestCase):
             self.assertTrue(len(e.stderr) > 1)
             self.assertTrue(hasattr(e, 'stdout'))
 
-    def test_inputArray
+    def test_inputArray(self):
         cdo = Cdo()
         # check for file input
         fileA = cdo.stdatm(0)
         fileB = cdo.stdatm(0)
         files = [fileA,fileB]
         self.assertEqual(cdo.diffv(input = ' '.join(files)), cdo.diffv(input = files))
-        self.assertEqual("0 of 2 records differ",cdo.diffv(input = files).last())
+        self.assertEqual("0 of 2 records differ",cdo.diffv(input = files)[-1])
         # check for operator input
-        self.assertEqual("0 of 2 records differ",cdo.diffv(input = ["-stdatm,0","-stdatm,0"]).last())
+        self.assertEqual("0 of 2 records differ",cdo.diffv(input = ["-stdatm,0","-stdatm,0"])[-1])
         # check for operator input and files
-        self.assertEqual("0 of 2 records differ",cdo.diffv(input = ["-stdatm,0",fileB]).last())
+        self.assertEqual("0 of 2 records differ",cdo.diffv(input = ["-stdatm,0",fileB])[-1])
 
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):
