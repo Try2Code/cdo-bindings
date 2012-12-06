@@ -103,8 +103,8 @@ class Cdo(object):
       return False
 
   def __getattr__(self, method_name):
+      
     @auto_doc(method_name, self)
-
     def get(self, *args,**kwargs):
       operator          = [method_name]
       operatorPrintsOut = re.search(self.outputOperatorsPattern,method_name)
@@ -165,6 +165,8 @@ class Cdo(object):
       if self.debug:
         print("Found method:" + method_name)
 
+      #cache the method for later
+      setattr(self.__class__, method_name, get)
       return get.__get__(self)
     else:
       # If the method isn't in our dictionary, act normal.
