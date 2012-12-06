@@ -81,6 +81,7 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 == Changelog
 * next:
    - allow arrays in additions ot strings for input argument
+   - return arrays/lists of output files, which are created by split* operators
 * 1.2.1:
    - new return option: Masked Arrays
      if the new keyword returnMaArray is given, its value is taken as variable

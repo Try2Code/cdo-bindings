@@ -21,6 +21,7 @@ def auto_doc(tool, cdo_self):
     return desc
 
 class CDOException(Exception):
+
     def __init__(self, stdout, stderr, returncode):
         super(CDOException, self).__init__()
         self.stdout = stdout
@@ -103,7 +104,7 @@ class Cdo(object):
       return False
 
   def __getattr__(self, method_name):
-      
+
     @auto_doc(method_name, self)
     def get(self, *args,**kwargs):
       operator          = [method_name]
@@ -121,7 +122,7 @@ class Cdo(object):
           cmd += kwargs['options'].split()
       #3. operator(s)
       cmd.append(','.join(operator))
-      #4.input files
+      #4. input files or operators
       if 'input' in kwargs:
         if isinstance(kwargs["input"], basestring):
             cmd.append(kwargs["input"])
@@ -320,7 +321,9 @@ class Cdo(object):
 
 # Helper module for easy temp file handling
 class MyTempfile(object):
+
   __tempfiles = []
+
   def __init__(self):
     self.persistent_tempfile = False
 

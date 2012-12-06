@@ -21,7 +21,7 @@ module Cdo
 
   State = {
     :debug       => false,
-    :returnCdf => false,
+    :returnCdf   => false,
     :operators   => [],
     :forceOutput => true
   }
@@ -103,6 +103,7 @@ module Cdo
       :returncode => wait_thr.value.exitstatus
     }
   end
+
   def Cdo.run(cmd,ofile='',options='',returnCdf=false,force=nil,returnArray=nil,returnMaArray=nil)
     cmd = "#{@@CDO} -O #{options} #{cmd} "
     case ofile
@@ -136,6 +137,7 @@ module Cdo
       return ofile
     end
   end
+
   def Cdo.parseArgs(args)
     # splitinto hash-like args and the rest
     operatorArgs = args.reject {|a| a.class == Hash}
@@ -147,6 +149,7 @@ module Cdo
     io[:input] = io[:input].join(' ') if io[:input].respond_to?(:join)
     return [io,opts]
   end
+
   def Cdo.method_missing(sym, *args, &block)
     ## args is expected to look like [opt1,...,optN,:input => iStream,:output => oStream] where
     # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
@@ -162,6 +165,7 @@ module Cdo
       raise ArgumentError,"Operator #{sym.to_s} not found"
     end
   end
+
   def Cdo.loadCdf
     begin
       require "numru/netcdf_miss"
@@ -176,15 +180,19 @@ module Cdo
   def Cdo.debug=(value)
     State[:debug] = value
   end
+
   def Cdo.debug
     State[:debug]
   end
+
   def Cdo.forceOutput=(value)
     State[:forceOutput] = value
   end
+
   def Cdo.forceOutput
     State[:forceOutput]
   end
+
   def Cdo.version
     cmd     = @@CDO + ' 2>&1'
     help    = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
@@ -192,15 +200,18 @@ module Cdo
     line    = help.find {|v| v =~ regexp}
     version = regexp.match(line)[1]
   end
+
   def Cdo.setReturnCdf(value=true)
     if value
       Cdo.loadCdf
     end
     State[:returnCdf] = value
   end
+
   def Cdo.unsetReturnCdf
     setReturnCdf(false)
   end
+
   def Cdo.returnCdf
     State[:returnCdf]
   end
@@ -223,14 +234,17 @@ module Cdo
     end
     return true
   end
+
   def Cdo.setCdo(cdo)
     puts "Will use #{cdo} instead of #@@CDO" if Cdo.debug
     @@CDO = cdo
     Cdo.getOperators(true)
   end
+
   def Cdo.getCdo
     @@CDO
   end
+
   def Cdo.operators
     Cdo.getOperators if State[:operators].empty?
     State[:operators]
@@ -283,6 +297,7 @@ module Cdo
       raise ArgumentError,"Cannot find variable '#{varname}'"
     end
   end
+
   def Cdo.help(operator=nil)
     if operator.nil?
       puts Cdo.call([@@CDO,'-h'].join(' '))[:stderr]
@@ -303,9 +318,11 @@ module MyTempfile
   @@_tempfiles           = []
   @@persistent_tempfiles = false
   @@N                    = 10000000
+
   def MyTempfile.setPersist(value)
     @@persistent_tempfiles = value
   end
+
   def MyTempfile.path
     unless @@persistent_tempfiles
       t = Tempfile.new(self.class.to_s)
@@ -318,6 +335,7 @@ module MyTempfile
       t
     end
   end
+
   def MyTempfile.showFiles
     @@_tempfiles.each {|f| print(f+" ") if f.kind_of? String}
   end
