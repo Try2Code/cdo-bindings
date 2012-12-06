@@ -282,6 +282,20 @@ class TestCdo < Test::Unit::TestCase
     end
   end
 
+  def test_inputArray
+    # check for file input
+    fileA = Cdo.stdatm(0)
+    fileB = Cdo.stdatm(0)
+    files = [fileA,fileB]
+    assert_equal(Cdo.diffv(:input => files.join(' ')),
+                 Cdo.diffv(:input => files))
+    assert_equal("0 of 2 records differ",Cdo.diffv(:input => files).last)
+    # check for operator input
+    assert_equal("0 of 2 records differ",Cdo.diffv(:input => ["-stdatm,0","-stdatm,0"]).last)
+    # check for operator input and files
+    assert_equal("0 of 2 records differ",Cdo.diffv(:input => ["-stdatm,0",fileB]).last)
+  end
+
   if 'thingol' == `hostname`.chomp  then
     def test_readCdf
       input = "-settunits,days  -setyear,2000 -for,1,4"

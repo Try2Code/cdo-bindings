@@ -143,6 +143,8 @@ module Cdo
     io   = args.find {|a| a.class == Hash}
     io   = {} if io.nil?
     args.delete_if   {|a| a.class == Hash}
+    # join input streams together if possible
+    io[:input] = io[:input].join(' ') if io[:input].respond_to?(:join)
     return [io,opts]
   end
   def Cdo.method_missing(sym, *args, &block)
