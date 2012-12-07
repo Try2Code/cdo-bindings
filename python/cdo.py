@@ -1,5 +1,4 @@
 import os,re,subprocess,tempfile,random,string
-import numpy as np
 
 # Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
 # See COPYING file for copying and redistribution conditions.
@@ -309,6 +308,10 @@ class Cdo(object):
 
     #.data is not backwards compatible to old scipy versions, [:] is
     data = fileObj.variables[varname][:]
+    try:
+      import numpy as np
+    except:
+      raise ImportError,"numpy is required to return masked arrays."
 
     if hasattr(fileObj.variables[varname],'_FillValue'):
       #return masked array
