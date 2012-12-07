@@ -308,6 +308,8 @@ class Cdo(object):
 
     #.data is not backwards compatible to old scipy versions, [:] is
     data = fileObj.variables[varname][:]
+
+    # load numpy if available
     try:
       import numpy as np
     except:
