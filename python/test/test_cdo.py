@@ -278,6 +278,11 @@ class CdoTest(unittest.TestCase):
         # check for operator input and files
         self.assertEqual("0 of 2 records differ",cdo.diffv(input = ["-stdatm,0",fileB])[-1])
 
+    def test_output_set_to_none(self):
+        cdo = Cdo()
+        self.assertEqual(str,type(cdo.topo(output = None)))
+        self.assertEqual("File format: GRIB",cdo.sinfov(input = "-topo", output = None)[0])
+
     def test_libs(self):
         cdo = Cdo()
         self.assertTrue(cdo.hasLib("cdi"),"CDI support missing")

@@ -311,6 +311,11 @@ class TestCdo < Test::Unit::TestCase
     end
   end
 
+  def test_output_set_to_nil
+    assert_equal(String,Cdo.topo(:output => nil).class)
+    assert_equal("File format: GRIB",Cdo.sinfov(:input => "-topo", :output => nil)[0])
+  end
+
   if 'thingol' == `hostname`.chomp  then
     def test_readCdf
       input = "-settunits,days  -setyear,2000 -for,1,4"

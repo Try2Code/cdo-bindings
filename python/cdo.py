@@ -144,7 +144,7 @@ class Cdo(object):
       else:
         if kwargs["force"] or \
            (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
-          if not kwargs.__contains__("output"):
+          if not kwargs.__contains__("output") or None == kwargs["output"]:
             kwargs["output"] = self.tempfile.path()
 
           cmd.append(kwargs["output"])
