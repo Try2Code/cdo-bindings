@@ -76,8 +76,10 @@ class TestCdo < Test::Unit::TestCase
     names = Cdo.showname(:input => "-stdatm,0",:options => "-f nc")
     assert_equal(["P T"],names)
 
-    ofile = Cdo.topo(:output => ofile,:options => "-z szip")
-    assert_equal(["GRIB SZIP"],Cdo.showformat(:input => ofile))
+    if Cdo.hasLib?("sz")
+      ofile = Cdo.topo(:output => ofile,:options => "-z szip")
+      assert_equal(["GRIB SZIP"],Cdo.showformat(:input => ofile))
+    end
   end
   def test_chain
     Cdo.debug = true
@@ -294,6 +296,19 @@ class TestCdo < Test::Unit::TestCase
     assert_equal("0 of 2 records differ",Cdo.diffv(:input => ["-stdatm,0","-stdatm,0"]).last)
     # check for operator input and files
     assert_equal("0 of 2 records differ",Cdo.diffv(:input => ["-stdatm,0",fileB]).last)
+  end
+
+  def test_libs
+    assert(Cdo.hasLib?("cdi"),"CDI support missing")
+    assert(Cdo.hasLib?("nc4"),"netcdf4 support missing")
+    assert(Cdo.hasLib?("netcdf"),"netcdf support missing")
+    assert_equal(false,Cdo.hasLib?("boost"))
+    if 'thingol' == `hostname`.chomp
+      assert_equal('1.9.18',Cdo.libsVersion("grib_api")) if Cdo.hasLib?("grib_api") 
+    end
+    assert_raise ArgumentError do
+      Cdo.libsVersion("foo")
+    end
   end
 
   if 'thingol' == `hostname`.chomp  then

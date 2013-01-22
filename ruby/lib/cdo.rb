@@ -176,6 +176,21 @@ module Cdo
     end
   end
 
+  def Cdo.getSupportedLibs(force=false)
+    return unless (State[:libs].nil? or force)
+    _, _, stderr, _ = Open3.popen3(@@CDO + " -V")
+    supported       = stderr.readlines.map(&:chomp)
+    with            = supported.grep(/with/)[0].split(':')[1].split.map(&:downcase)
+    libs            = supported.grep(/library version/).map {|l| 
+      l.strip.split(':').map {|l| 
+        l.split.first.downcase
+      }[0,2]
+    }
+    State[:libs] = {}
+    with.flatten.each {|k| State[:libs][k]=true}
+    libs.each {|lib,version| State[:libs][lib] = version}
+  end
+
   public
   def Cdo.debug=(value)
     State[:debug] = value
@@ -248,6 +263,29 @@ module Cdo
   def Cdo.operators
     Cdo.getOperators if State[:operators].empty?
     State[:operators]
+  end
+
+  def Cdo.libs
+    getSupportedLibs
+    State[:libs]
+  end
+
+  def Cdo.hasLib?(lib)
+    return Cdo.libs.has_key?(lib)
+    return false
+  end
+
+  def Cdo.libsVersion(lib)
+    unless Cdo.hasLib?(lib)
+      raise ArgumentError, "Cdo does NOT have support for '#{lib}'"
+    else
+      if State[:libs][lib].kind_of? String
+        return State[:libs][lib]
+      else
+        warn "No version information available about '#{lib}'"
+        return false
+      end
+    end
   end
 
   #==================================================================

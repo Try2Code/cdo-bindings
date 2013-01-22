@@ -23,10 +23,11 @@ class CDOException(Exception):
 
     def __init__(self, stdout, stderr, returncode):
         super(CDOException, self).__init__()
-        self.stdout = stdout
-        self.stderr = stderr
+        self.stdout     = stdout
+        self.stderr     = stderr
         self.returncode = returncode
-        self.msg = '(returncode:%s) %s' % (returncode, stderr)
+        self.msg        = '(returncode:%s) %s' % (returncode, stderr)
+
     def __str__(self):
         return self.msg
 
@@ -70,6 +71,7 @@ class Cdo(object):
     self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
     self.cdfMod      = ''
+    self.libs        = self.getSupportedLibs()
 
   def __dir__(self):
     res = dir(type(self)) + list(self.__dict__.keys())
@@ -205,6 +207,24 @@ class Cdo(object):
       except:
         raise ImportError,"scipy or python-netcdf4 module is required to return numpy arrays."
 
+  def getSupportedLibs(self,force=False):
+    proc = subprocess.Popen('cdo -V',
+        shell  = True,
+        stderr = subprocess.PIPE,
+        stdout = subprocess.PIPE)
+    retvals = proc.communicate()
+
+    withs     = re.findall('with: (.*)',retvals[1])[0].split(' ')
+    libs      = re.findall('(\w+) library version : (\d+\.\d+\.\d+)',retvals[1])
+    libraries = dict({})
+    for w in withs:
+      libraries[w.lower()] = True
+
+    for lib in libs:
+      l,v = lib
+      libraries[l.lower()] = v
+
+    return libraries
 
   def setReturnArray(self,value=True):
     self.returnCdf = value
@@ -239,6 +259,20 @@ class Cdo(object):
 
   def getCdo(self):
     return self.CDO
+
+  def hasLib(self,lib):
+    return lib in self.libs
+    return false
+
+  def libsVersion(self,lib):
+    if not self.hasLib(lib):
+      raise AttributeError, "Cdo does NOT have support for '#{lib}'"
+    else:
+      if True != self.libs[lib]:
+        return self.libs[lib]
+      else:
+        print "No version information available about '" + lib + "'"
+        return False
 
   #==================================================================
   # Addional operators:

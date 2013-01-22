@@ -277,6 +277,16 @@ class CdoTest(unittest.TestCase):
         # check for operator input and files
         self.assertEqual("0 of 2 records differ",cdo.diffv(input = ["-stdatm,0",fileB])[-1])
 
+    def test_libs(self):
+        cdo = Cdo()
+        self.assertTrue(cdo.hasLib("cdi"),"CDI support missing")
+        self.assertTrue(cdo.hasLib("nc4"),"netcdf4 support missing")
+        self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
+        self.assertFalse(cdo.hasLib("boost"),'boost is not a CDO dependency')
+        if 'thingol' == os.popen('hostname').read().strip():
+          self.assertEqual('1.9.18',cdo.libsVersion("grib_api"))
+        self.assertRaises(AttributeError, cdo.libsVersion,"foo")
+
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):
             cdo = Cdo()
