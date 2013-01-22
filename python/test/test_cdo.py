@@ -76,8 +76,9 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo()
         names = cdo.showname(input = "-stdatm,0",options = "-f nc")
         self.assertEqual(["P T"],names)
-        ofile = cdo.topo(options = "-z szip")
-        self.assertEqual(["GRIB SZIP"],cdo.showformat(input = ofile))
+        if cdo.hasLib("sz"):
+          ofile = cdo.topo(options = "-z szip")
+          self.assertEqual(["GRIB SZIP"],cdo.showformat(input = ofile))
 
     def test_chain(self):
         cdo = Cdo()
