@@ -119,6 +119,6 @@ Cdo.{rb,py} makes use of the GPLv2D License, see COPYING
 
 Author::   Ralf Mueller <stark.dreamdetective@gmail.com>
 Requires:: CDO version 1.5.x
-License::  Copyright 2011-2012 by Ralf Mueller
+License::  Copyright 2011-2013 by Ralf Mueller
            Released under GPLv2 license.  See the COPYING
            file included in the distribution.
