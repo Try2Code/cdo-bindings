@@ -37,31 +37,31 @@ The Ruby module can be used directly after loading it. For python an instance ha
 
 * File information
     
-    Cdo.infov(:input => ifile)       (ruby version)
+    Cdo.infov(:input => ifile)       (ruby)
     Cdo.showlevels(:input => ifile)
 
-    cdo.infov(input=ifile)        (python verson)
+    cdo.infov(input=ifile)         (python)
     cdo.showlevels(input=ifile)
 
 * Operators with user defined regular output files
 
-    Cdo.timmin(:input => ifile ,:output => ofile) (ruby version)
-    cdo.timmin(input = ifile,output = ofile) (python version)
+    Cdo.timmin(:input => ifile ,:output => ofile) (ruby)
+    cdo.timmin(input = ifile,output = ofile)    (python)
 
 * Use temporary output files
 
-    tminFile = Cdo.timmin(:input => ifile) (ruby version)
-    tminFile = cdo.timmin(input = ifile) (python version)
+    tminFile = Cdo.timmin(:input => ifile) (ruby)
+    tminFile = cdo.timmin(input = ifile) (python)
 
 * Operators with options
 
-    Cdo.remap([gridfile,weightfile],:input => ifile, :output => ofile) (ruby version)
-    cdo.remap([gridfile,weightfile],input => ifile, output => ofile) (python version)
+    Cdo.remap([gridfile,weightfile],:input => ifile, :output => ofile) (ruby)
+    cdo.remap([gridfile,weightfile],input => ifile, output => ofile) (python)
 
 * Set global CDO options
 
-   Cdo.copy(:input => ifile, :output => ofile,:options => "-f nc4") (ruby version)
-   cdo.copy(input = ifile, output = ofile,options = "-f nc4") (python version)
+   Cdo.copy(:input => ifile, :output => ofile,:options => "-f nc4") (ruby)
+   cdo.copy(input = ifile, output = ofile,options = "-f nc4")     (python)
 
 * Return multi-dimension arrrays
 
