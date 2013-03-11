@@ -111,7 +111,7 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 
 == License
 
-Cdo.{rb,py} makes use of the GPLv2D License, see COPYING
+Cdo.{rb,py} makes use of the GPLv2 License, see COPYING
 
 ---
 
