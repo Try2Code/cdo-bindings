@@ -290,8 +290,18 @@ class CdoTest(unittest.TestCase):
         self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
         self.assertFalse(cdo.hasLib("boost"),'boost is not a CDO dependency')
         if 'thingol' == os.popen('hostname').read().strip():
-          self.assertEqual('1.9.18',cdo.libsVersion("grib_api"))
+          self.assertEqual('1.10.0',cdo.libsVersion("grib_api"))
         self.assertRaises(AttributeError, cdo.libsVersion,"foo")
+
+    def test_returnNone(self):
+        cdo = Cdo()
+        self.assertFalse(cdo.returnNoneOnError,"'returnNoneOnError' is _not_ False after initialization")
+        cdo.returnNoneOnError = True
+        self.assertTrue(cdo.returnNoneOnError,"'returnNoneOnError' is _not_ True after manual setting")
+        ret  = cdo.sinfo(input="-topf")
+        self.assertEqual(None,ret)
+        print(ret)
+
 
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):

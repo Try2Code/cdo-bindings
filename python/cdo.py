@@ -65,6 +65,7 @@ class Cdo(object):
 
     self.operators   = self.getOperators()
     self.returnCdf   = False
+    self.returnNoneOnError = False
     self.tempfile    = MyTempfile()
     self.forceOutput = True
     self.debug       = False
@@ -140,7 +141,10 @@ class Cdo(object):
           r = map(string.strip,retvals["stdout"].split(os.linesep))
           return r[:len(r)-1]
         else:
-          raise CDOException(**retvals)
+          if self.returnNoneOnError:
+            return None
+          else:
+            raise CDOException(**retvals)
       else:
         if kwargs["force"] or \
            (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
@@ -151,6 +155,9 @@ class Cdo(object):
 
           retvals = self.call(cmd)
           if self.hasError(method_name,cmd,retvals):
+            if self.returnNoneOnError:
+              return None
+            else:
               raise CDOException(**retvals)
         else:
           if self.debug:
@@ -181,7 +188,7 @@ class Cdo(object):
       # If the method isn't in our dictionary, act normal.
       print("#=====================================================")
       print("Cannot find method:" + method_name)
-      raise AttributeError, method_name
+      raise AttributeError, "Unknown method '" + method_name +"'!"
 
   def getOperators(self):
     import os
