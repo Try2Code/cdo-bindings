@@ -304,7 +304,7 @@ class TestCdo < Test::Unit::TestCase
     assert(Cdo.hasLib?("netcdf"),"netcdf support missing")
     assert_equal(false,Cdo.hasLib?("boost"))
     if 'thingol' == `hostname`.chomp
-      assert_equal('1.9.18',Cdo.libsVersion("grib_api")) if Cdo.hasLib?("grib_api") 
+      assert_equal('1.10.0',Cdo.libsVersion("grib_api")) if Cdo.hasLib?("grib_api") 
     end
     assert_raise ArgumentError do
       Cdo.libsVersion("foo")
