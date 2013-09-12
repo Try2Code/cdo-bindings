@@ -84,10 +84,15 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 
 == Changelog
 * next:
-   - allow arrays in additions ot strings for input argument
    - return arrays/lists of output files, which are created by split* operators
      suggestion from Karl-Hermann Wieners
+   - support object interface in the ruby version (easy setup of options during initializaion, thread safety)
+
+* 1.2.2
+   - allow arrays in additions to strings for input argument
    - add methods for checking the IO libraries of CDO and their versions
+   - optionally return None on error (suggestion from Alex Loew, python only)
+
 * 1.2.1:
    - new return option: Masked Arrays
      if the new keyword returnMaArray is given, its value is taken as variable
