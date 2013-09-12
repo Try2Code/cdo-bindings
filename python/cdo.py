@@ -33,7 +33,7 @@ class CDOException(Exception):
 
 class Cdo(object):
 
-  def __init__(self):
+  def __init__(self,returnCdf=False,returnNoneOnError=False,forceOutput=True,debug=False):
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
     self.undocumentedOperators = ['anomaly','beta','boxavg','change_e5lsm','change_e5mask',
@@ -63,12 +63,12 @@ class Cdo(object):
     else:
       self.CDO = 'cdo'
 
-    self.operators   = self.getOperators()
-    self.returnCdf   = False
-    self.returnNoneOnError = False
-    self.tempfile    = MyTempfile()
-    self.forceOutput = True
-    self.debug       = False
+    self.operators              = self.getOperators()
+    self.returnCdf              = returnCdf
+    self.returnNoneOnError      = returnNoneOnError
+    self.tempfile               = MyTempfile()
+    self.forceOutput            = forceOutput
+    self.debug                  = debug
     self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
     self.cdfMod      = ''
