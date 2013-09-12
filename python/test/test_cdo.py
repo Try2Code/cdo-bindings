@@ -302,6 +302,23 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(None,ret)
         print(ret)
 
+        cdo_ = Cdo(returnNoneOnError=True)
+        self.assertTrue(cdo_.returnNoneOnError)
+        ret  = cdo_.sinfo(input=" ifile.grb")
+        self.assertEqual(None,ret)
+        print(ret)
+
+    def test_initOptions(self):
+        cdo = Cdo(debug=True)
+        self.assertTrue(cdo.debug)
+        cdo = Cdo(forceOutput=False)
+        self.assertFalse(cdo.forceOutput)
+        cdo = Cdo(True,True)
+        self.assertTrue(cdo.returnCdf)
+        cdo.returnCdf = False
+        self.assertTrue(not cdo.returnCdf)
+        self.assertTrue(cdo.returnNoneOnError)
+
 
     if 'thingol' == os.popen('hostname').read().strip():
         def testCall(self):
