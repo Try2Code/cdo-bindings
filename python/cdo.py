@@ -215,13 +215,13 @@ class Cdo(object):
         raise ImportError,"scipy or python-netcdf4 module is required to return numpy arrays."
 
   def getSupportedLibs(self,force=False):
-    proc = subprocess.Popen('cdo -V',
+    proc = subprocess.Popen(self.CDO + ' -V',
         shell  = True,
         stderr = subprocess.PIPE,
         stdout = subprocess.PIPE)
     retvals = proc.communicate()
 
-    withs     = re.findall('with: (.*)',retvals[1])[0].split(' ')
+    withs     = list(re.findall('(with|Features): (.*)',retvals[1])[0])[1].split(' ')
     libs      = re.findall('(\w+) library version : (\d+\.\d+\.\d+)',retvals[1])
     libraries = dict({})
     for w in withs:

@@ -285,6 +285,8 @@ class CdoTest(unittest.TestCase):
 
     def test_libs(self):
         cdo = Cdo()
+        cdo.debug = True
+        cdo.setCdo('../../src/cdo')
         self.assertTrue(cdo.hasLib("cdi"),"CDI support missing")
         self.assertTrue(cdo.hasLib("nc4"),"netcdf4 support missing")
         self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
