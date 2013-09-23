@@ -88,6 +88,9 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
      suggestion from Karl-Hermann Wieners
    - support object interface in the ruby version (easy setup of options during initializaion, thread safety)
 
+* 1.2.3
+   - bugfix release: adjust library/feature check to latest cdo-1.6.2  release
+
 * 1.2.2
    - allow arrays in additions to strings for input argument
    - add methods for checking the IO libraries of CDO and their versions
