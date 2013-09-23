@@ -67,10 +67,10 @@ class TestCdo < Test::Unit::TestCase
     (1...info.size).each {|i| assert_equal(0.0,info[i].split[-1].to_f)}
   end
   def test_operator_options
+    Cdo.debug=true
     targetLevels = [0,10,50,100,200,400,1000]
-    ofile = Cdo.stdatm(targetLevels)
-    levels = Cdo.showlevel(:input => ofile)
-    [0,1].each {|i| assert_equal(targetLevels.map(&:to_s),levels[i].split)}
+    levels = Cdo.showlevel(:input => " -stdatm,#{targetLevels.join(',')}")
+    [0,1].each {|i| assert_equal(targetLevels.join(' '),levels[i])}
   end
   def test_CDO_options
     names = Cdo.showname(:input => "-stdatm,0",:options => "-f nc")
@@ -305,6 +305,10 @@ class TestCdo < Test::Unit::TestCase
     assert_equal(false,Cdo.hasLib?("boost"))
     if 'thingol' == `hostname`.chomp
       assert_equal('1.10.0',Cdo.libsVersion("grib_api")) if Cdo.hasLib?("grib_api") 
+      Cdo.debug  = true
+      assert(! Cdo.libs.has_key?('magics'),"Magics support shoud not be build in the system wide installation")
+      Cdo.setCdo('../../src/cdo')
+      assert(Cdo.libs.has_key?('magics'),"Magics support is expected in the local development binary")
     end
     assert_raise ArgumentError do
       Cdo.libsVersion("foo")

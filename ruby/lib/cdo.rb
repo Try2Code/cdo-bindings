@@ -180,7 +180,7 @@ module Cdo
     return unless (State[:libs].nil? or force)
     _, _, stderr, _ = Open3.popen3(@@CDO + " -V")
     supported       = stderr.readlines.map(&:chomp)
-    with            = supported.grep(/with/)[0].split(':')[1].split.map(&:downcase)
+    with            = supported.grep(/(with|Features)/)[0].split(':')[1].split.map(&:downcase)
     libs            = supported.grep(/library version/).map {|l| 
       l.strip.split(':').map {|l| 
         l.split.first.downcase
@@ -254,6 +254,7 @@ module Cdo
     puts "Will use #{cdo} instead of #@@CDO" if Cdo.debug
     @@CDO = cdo
     Cdo.getOperators(true)
+    Cdo.getSupportedLibs(true)
   end
 
   def Cdo.getCdo
