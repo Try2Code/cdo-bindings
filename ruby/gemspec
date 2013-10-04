@@ -15,6 +15,7 @@ spec = Gem::Specification.new do |s|
   s.extra_rdoc_files  = ["README.rdoc","COPYING"]
   s.license           = "GPLv2"
   s.required_ruby_version = ">= 1.9"
+  s.add_development_dependency('unifiedPlot')
 end
 
 # vim:ft=ruby
