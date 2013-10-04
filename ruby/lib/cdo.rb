@@ -317,6 +317,11 @@ module Cdo
     NetCDF.open(iFile)
   end
 
+  def Cdo.openCdf(iFile)
+    Cdo.loadCdf unless State[:returnCdf] 
+    NetCDF.open(iFile,'r+')
+  end
+
   def Cdo.readArray(iFile,varname)
     filehandle = Cdo.readCdf(iFile)
     if filehandle.var_names.include?(varname)
