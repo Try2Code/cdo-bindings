@@ -1,6 +1,21 @@
 import unittest,os,tempfile
 from stat import *
 from cdo import *
+import numpy as np
+import pylab as pl
+
+def plot(ary,ofile=False):
+    pl.grid(True)
+
+    if 1 == ary.ndim:
+      pl.plot(ary)
+    else:
+      pl.imshow(ary,origin='lower',interpolation='nearest')
+
+    if not ofile:
+      pl.show()
+    else:
+      pl.savefig(ofile,bbox_inches='tight',dpi=200)
 
 class CdoTest(unittest.TestCase):
 
@@ -355,9 +370,8 @@ class CdoTest(unittest.TestCase):
                   'tsurf').shape)
 
         def test_showMaArray(self):
-            cdo = Cdo()
+            cdo = Cdo(cdfMod='netcdf4')
             cdo.debug = True
-            import pylab as pl
             bathy = cdo.setrtomiss(0,10000,
                 input = cdo.topo(options='-f nc'),returnMaArray='topo')
             pl.imshow(bathy,origin='lower')
@@ -372,7 +386,63 @@ class CdoTest(unittest.TestCase):
                                  options = "-f nc")
             pl.imshow(random,origin='lower')
             pl.show()
+        def test_fillmiss(self):
+            cdo = Cdo(cdfMod='netcdf4')
+            cdo.setCdo('../../src/cdo')
+            cdo.debug = True
+            rand = cdo.setname('v',input = '-random,r5x5 ', options = ' -f nc',output = '/tmp/rand.nc')
+            cdf  = cdo.openCdf(rand)
+            var = cdf.variables['v']
+            vals = var[:]
+            #plot(vals)
+            ni,nj = np.shape(vals)
+            for i in range(0,ni):
+              for j in range(0,nj):
+                vals[i,j] = np.abs((ni/2-i) - (nj/2-j))
 
+            vals = vals/np.abs(vals).max()
+            var[:] = vals
+            cdf.close()
+            # recheck:
+            #plot(cdo.readArray(rand,'v'))
+
+            missRange = '0.25,0.85'
+            arOrg = cdo.setrtomiss(missRange,input = rand,returnMaArray = 'v',output='myrand.nc')
+            arFm  = cdo.fillmiss(input = "-setrtomiss,%s %s"%(missRange,rand),returnMaArray = 'v')
+            arFm1s= cdo.fillmiss1s(input = "-setrtomiss,%s %s"%(missRange,rand),returnMaArray = 'v')
+            vOrg  = arOrg[:,:]
+            vFm   = arFm[:,:]
+            vFm1s = arFm1s[:,:]
+            plot(vOrg,'vOrg')
+            plot(vFm,'vFm')
+            plot(vFm1s,'vFm1s')
+            os.system("convert +append %s %s %s test_fm1s.png "%('vOrg.png','vFm.png','vFm1s.png'))
+
+        def test_phc(self):
+            ifile = '/home/ram/data/icon/input/phc3.0/phc.nc'
+            cdo = Cdo(cdfMod='netcdf4')
+            cdo.setCdo('../../src/cdo')
+            cdo.debug = True
+            cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
+                      output=ifile,
+                      options='-O')
+            phc = cdo.chname('SO,s,TO,t',input=ifile)
+            cdf = cdo.openCdf(phc)
+            print(cdf.variables)
+            s = cdf.variables['s']
+            sv = s[0,:,:]
+            sv[25:26,199:204] = 35.0
+            sv[22:25,199:204] = 5.0
+            plot(sv)
+            return
+            s[:]  = sv
+            cdf.close()
+            os.system("ncview "+ifile)
+            return
+            so = cdo.setmisstoc('0',input=ifile,returnMaArray='SO')
+            pl.imshow(so)
+            pl.show()
+            
 
 if __name__ == '__main__':
     unittest.main()
