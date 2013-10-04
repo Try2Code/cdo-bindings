@@ -33,7 +33,7 @@ class CDOException(Exception):
 
 class Cdo(object):
 
-  def __init__(self,returnCdf=False,returnNoneOnError=False,forceOutput=True,debug=False):
+  def __init__(self,returnCdf=False,returnNoneOnError=False,forceOutput=True,cdfMod='scipy',debug=False):
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
     self.undocumentedOperators = ['anomaly','beta','boxavg','change_e5lsm','change_e5mask',
@@ -68,10 +68,10 @@ class Cdo(object):
     self.returnNoneOnError      = returnNoneOnError
     self.tempfile               = MyTempfile()
     self.forceOutput            = forceOutput
+    self.cdfMod                 = cdfMod
     self.debug                  = debug
     self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
-    self.cdfMod      = ''
     self.libs        = self.getSupportedLibs()
 
   def __dir__(self):
@@ -202,15 +202,18 @@ class Cdo(object):
     return list(set(s.split(" ") + self.undocumentedOperators))
 
   def loadCdf(self):
-    try:
-      import scipy.io.netcdf as cdf
-      self.cdf    = cdf
-      self.cdfMod = "scipy"
-    except:
+    if self.cdfMod == "scipy":
+      try:
+        import scipy.io.netcdf as cdf
+        self.cdf    = cdf
+      except:
+        print "Could not load scipy.io.netcdf - try to load nercdf4"
+        self.cdfMod = "netcdf4" 
+
+    if self.cdfMod == "netcdf4":
       try:
         import netCDF4 as cdf
         self.cdf    = cdf
-        self.cdfMod = "netcdf4"
       except:
         raise ImportError,"scipy or python-netcdf4 module is required to return numpy arrays."
 
@@ -330,7 +333,24 @@ class Cdo(object):
       raise ImportError,"Could not import data from file '" + iFile + "'"
 
     retval = fileObj
-    fileObj.close()
+    return retval
+
+  def openCdf(self,iFile):
+    """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:scipy)"""
+    if not self.returnCdf:
+      self.loadCdf()
+
+    if ( "scipy" == self.cdfMod):
+      #making it compatible to older scipy versions
+      print("Use scipy")
+      fileObj =  self.cdf.netcdf_file(iFile, mode='r+')
+    elif ( "netcdf4" == self.cdfMod ):
+      print("Use netcdf4")
+      fileObj = self.cdf.Dataset(iFile,'r+')
+    else:
+      raise ImportError,"Could not import data from file '" + iFile + "'"
+
+    retval = fileObj
     return retval
 
   def readArray(self,iFile,varname):
