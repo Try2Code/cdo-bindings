@@ -1,9 +1,11 @@
 $:.unshift File.join(File.dirname(__FILE__),"..","lib")
-require 'test/unit'
+require 'minitest'
+require 'minitest/autorun'
 require 'cdo'
+require 'unifiedPlot'
 require 'pp'
 
-class TestCdo < Test::Unit::TestCase
+class TestCdo < Minitest::Test
 
   DEFAULT_CDO_PATH = 'cdo'
 
@@ -342,10 +344,49 @@ class TestCdo < Test::Unit::TestCase
       Cdo.help(:notDefinedOP)
       Cdo.help
     end
+    def test_fillmiss
+      Cdo.setCdo('../../src/cdo')
+      Cdo.debug = true
+      # check up-down replacement
+      rand = Cdo.setname('v',:input => '-random,r1x10 ', :options => ' -f nc',:output => '/tmp/rand.nc')
+      cdf  = Cdo.openCdf(rand)
+      vals = cdf.var('v').get
+      cdf.var('v').put(vals.sort)
+      cdf.sync
+      cdf.close
 
+      missRange = '0.3,0.8'
+      arOrg = Cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
+      arFm  = Cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+      arFm1s= Cdo.fillmiss1s(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+      vOrg  = arOrg[0,0..-1]
+      vFm   = arFm[0,0..-1]
+      vFm1s = arFm1s[0,0..-1]
+      UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
+                            {:y => vFm,  :style => 'points',:title => 'fillmiss'},
+                            {:y => vFm1s,:style => 'points',:title => 'fillmiss1s'}],
+                            plotConf: {:yrange => '[0:1]'},title: 'r1x10')
+      # check left-right replacement
+      rand = Cdo.setname('v',:input => '-random,r10x1 ', :options => ' -f nc',:output => '/tmp/rand.nc')
+      cdf  = Cdo.openCdf(rand)
+      vals = cdf.var('v').get
+      cdf.var('v').put(vals.sort)
+      cdf.sync
+      cdf.close
 
+      missRange = '0.3,0.8'
+      arOrg = Cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
+      arFm  = Cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+      arFm1s= Cdo.fillmiss1s(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+      vOrg  =  arOrg[0..-1,0]
+      vFm   =   arFm[0..-1,0]
+      vFm1s = arFm1s[0..-1,0]
+      UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
+                            {:y => vFm,  :style => 'points',:title => 'fillmiss'},
+                            {:y => vFm1s,:style => 'points',:title => 'fillmiss1s'}],
+                            plotConf: {:yrange => '[0:1]'},title: 'r10x1')
+    end
   end
-
 end
 
 #  # Calling simple operators
