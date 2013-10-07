@@ -79,16 +79,20 @@ class Cdo(object):
     res.extend(self.operators)
     return res
 
-  def call(self,cmd):
+  def call(self,cmd,environment=None):
     if self.debug:
       print '# DEBUG ====================================================================='
+      if None != environment:
+        for k,v in environment.items():
+          print "ENV: " + k + " = " + v
       print 'CALL:'+' '.join(cmd)
       print '# DEBUG ====================================================================='
 
     proc = subprocess.Popen(' '.join(cmd),
-        shell  = True,
-        stderr = subprocess.PIPE,
-        stdout = subprocess.PIPE)
+                            shell  = True,
+                            stderr = subprocess.PIPE,
+                            stdout = subprocess.PIPE,
+                            env    = environment)
     retvals = proc.communicate()
     return {"stdout"     : retvals[0]
            ,"stderr"     : retvals[1]
@@ -152,8 +156,12 @@ class Cdo(object):
             kwargs["output"] = self.tempfile.path()
 
           cmd.append(kwargs["output"])
+          if kwargs.__contains__("env"):
+            environment = kwargs["env"]
+          else:
+            environment = None
 
-          retvals = self.call(cmd)
+          retvals = self.call(cmd,environment=environment)
           if self.hasError(method_name,cmd,retvals):
             if self.returnNoneOnError:
               return None
