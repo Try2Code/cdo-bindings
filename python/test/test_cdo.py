@@ -367,6 +367,24 @@ class CdoTest(unittest.TestCase):
         for f in files:
           os.system("rm "+f)
 
+    def test_showMaArray(self):
+        cdo = Cdo(cdfMod='netcdf4')
+        cdo.debug = True
+        bathy = cdo.setrtomiss(0,10000,
+            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+        pl.imshow(bathy,origin='lower')
+        pl.show()
+        oro = cdo.setrtomiss(-10000,0,
+            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+        pl.imshow(oro,origin='lower')
+        pl.show()
+        random = cdo.setname('test_maArray',
+                             input = "-setrtomiss,0.4,0.8 -random,r180x90 ",
+                             returnMaArray='test_maArray',
+                             options = "-f nc")
+        pl.imshow(random,origin='lower')
+        pl.show()
+        rand = cdo.setname('v',input = '-random,r5x5 ', options = ' -f nc',output = '/tmp/rand.nc')
 
     def test_fillmiss(self):
         cdo = Cdo(cdfMod='netcdf4')
@@ -435,25 +453,6 @@ class CdoTest(unittest.TestCase):
                 cdo.readArray(cdo.seltimestep('1/10',
                   input=ifile),
                   'tsurf').shape)
-
-        def test_showMaArray(self):
-            cdo = Cdo(cdfMod='netcdf4')
-            cdo.debug = True
-            bathy = cdo.setrtomiss(0,10000,
-                input = cdo.topo(options='-f nc'),returnMaArray='topo')
-            pl.imshow(bathy,origin='lower')
-            pl.show()
-            oro = cdo.setrtomiss(-10000,0,
-                input = cdo.topo(options='-f nc'),returnMaArray='topo')
-            pl.imshow(oro,origin='lower')
-            pl.show()
-            random = cdo.setname('test_maArray',
-                                 input = "-setrtomiss,0.4,0.8 -random,r180x90 ",
-                                 returnMaArray='test_maArray',
-                                 options = "-f nc")
-            pl.imshow(random,origin='lower')
-            pl.show()
-            rand = cdo.setname('v',input = '-random,r5x5 ', options = ' -f nc',output = '/tmp/rand.nc')
 
         def test_phc(self):
             ifile = '/home/ram/data/icon/input/phc3.0/phc.nc'
