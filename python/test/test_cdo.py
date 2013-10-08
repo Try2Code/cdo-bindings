@@ -394,9 +394,8 @@ class CdoTest(unittest.TestCase):
         cdo.debug = True
         rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
         cdf  = cdo.openCdf(rand)
-        var = cdf.variables['v']
+        var  = cdf.variables['v']
         vals = var[:]
-        #plot(vals)
         ni,nj = np.shape(vals)
         for i in range(0,ni):
           for j in range(0,nj):
@@ -405,20 +404,18 @@ class CdoTest(unittest.TestCase):
         vals = vals/np.abs(vals).max()
         var[:] = vals
         cdf.close()
-        # recheck:
-        #plot(cdo.readArray(rand,'v'))
 
         missRange = '0.25,0.85'
         withMissRange = 'withMissRange.nc'
-        arWmr = cdo.setrtomiss(missRange,input = rand,output = 'withMissRange.nc',returnMaArray='v')
         arOrg = cdo.copy(input = rand,returnMaArray = 'v')
-        arFm  = cdo.fillmiss(    input = withMissRange,returnMaArray = 'v')
-        arFm1s= cdo.fillmiss1s(1,  input = withMissRange,returnMaArray = 'v',output='foo.nc')
+        arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
+        arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
+        arFm1s= cdo.fillmiss1s(1,        input = withMissRange,returnMaArray = 'v',output='foo.nc')
 
         os.system("rm fm_*.png")
-#       plot(arOrg,title='org'        )
+        plot(arOrg,title='org'        )
         plot(arWmr,title='missing'    )
-#       plot(arFm,title='fillmiss'    )
+        plot(arFm,title='fillmiss'    )
         plot(arFm1s,title='fillmiss1s')
 #        os.system("convert +append %s %s %s %s fm_all.png "%('fm_org.png','fm_wmr.png','fm_fm.png','fm_fm1s.png'))
 
@@ -455,29 +452,23 @@ class CdoTest(unittest.TestCase):
                   'tsurf').shape)
 
         def test_phc(self):
-            ifile = '/home/ram/data/icon/input/phc3.0/phc.nc'
-            cdo = Cdo(cdfMod='netcdf4')
-            cdo.setCdo('../../src/cdo')
-            cdo.debug = True
-            cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
-                      output=ifile,
-                      options='-O')
-            phc = cdo.chname('SO,s,TO,t',input=ifile)
-            cdf = cdo.openCdf(phc)
-            print(cdf.variables)
-            s = cdf.variables['s']
-            sv = s[0,:,:]
-            sv[25:26,199:204] = 35.0
-            sv[22:25,199:204] = 5.0
-            plot(sv)
-            return
-            s[:]  = sv
-            cdf.close()
-            os.system("ncview "+ifile)
-            return
-            so = cdo.setmisstoc('0',input=ifile,returnMaArray='SO')
-            pl.imshow(so)
-            pl.show()
+           ifile = '/home/ram/data/icon/input/phc3.0/phc.nc'
+           cdo = Cdo(cdfMod='netcdf4')
+           cdo = Cdo(cdfMod='scipy')
+           cdo.setCdo('../../src/cdo')
+           cdo.debug = True
+           #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
+           #          output=ifile,
+           #          options='-O')
+           s = cdo.sellonlatbox(0,30,0,90, input="-chname,SO,s,TempO,t " + ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
+           plot(s[0,:,:],ofile='org',title='org')
+           sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+           plot(sfmo[0,:,:],ofile='fm',title='fm')
+           sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss1s -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+           plot(sfm[0,:,:],ofile='fm1',title='fm1')
+           for im in ['org.png','fm1.png','fm.png']:
+             os.system("eog "+im+" &")
+
             
 
 if __name__ == '__main__':
