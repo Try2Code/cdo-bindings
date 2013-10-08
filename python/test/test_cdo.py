@@ -382,11 +382,13 @@ class CdoTest(unittest.TestCase):
         ni,nj = np.shape(vals)
         for i in range(0,ni):
           for j in range(0,nj):
-            vals[i,j] = np.abs((ni/2-i) + (nj/2-j))
+            vals[i,j] = np.abs((ni/2-i) - (nj/2-j))
 
         vals = vals/np.abs(vals).max()
         var[:] = vals
         cdf.close()
+        # recheck:
+        #plot(cdo.readArray(rand,'v'))
 
         missRange = '0.25,0.85'
         withMissRange = 'withMissRange.nc'
