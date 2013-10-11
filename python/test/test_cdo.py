@@ -399,7 +399,7 @@ class CdoTest(unittest.TestCase):
         ni,nj = np.shape(vals)
         for i in range(0,ni):
           for j in range(0,nj):
-            vals[i,j] = np.abs((ni/2-i) - (nj/2-j))
+            vals[i,j] = np.abs((ni/2-i)**2 + (nj/2-j)**2)
 
         vals = vals/np.abs(vals).max()
         var[:] = vals
@@ -410,7 +410,7 @@ class CdoTest(unittest.TestCase):
         arOrg = cdo.copy(input = rand,returnMaArray = 'v')
         arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
         arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
-        arFm1s= cdo.fillmiss1s(1,        input = withMissRange,returnMaArray = 'v',output='foo.nc')
+        arFm1s= cdo.fillmiss1s(2,        input = withMissRange,returnMaArray = 'v',output='foo.nc')
 
         os.system("rm fm_*.png")
         plot(arOrg,title='org'        )
