@@ -418,7 +418,35 @@ class CdoTest(unittest.TestCase):
         plot(arFm1s,title='fillmiss1s')#ofile='fmFm2.svg')
 #        os.system("convert +append %s %s %s %s fm_all.png "%('fm_org.png','fm_wmr.png','fm_fm.png','fm_fm1s.png'))
 
+    if os.popen('hostname -d').read().strip() == 'zmaw.de' or os.popen('hostname -d').read().strip() == 'mpi.zmaw.de':
+        def test_keep_coordinates(self):
+            #cdo = Cdo(cdfMod='netcdf4')
+            cdo = Cdo()
+            cdo.setCdo('../../src/cdo')
+            ifile = '/pool/data/ICON/ocean_data/ocean_grid/iconR2B02-ocean_etopo40_planet.nc'
+            ivar  = 'ifs2icon_cell_grid'
+            varIn = cdo.readCdf(ifile)
+            varIn = varIn.variables[ivar]
+            self.assertEqual('clon clat',varIn.coordinates)
+
+            varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
+            varOut = varOut.variables[ivar]
+            self.assertEqual('clon clat',varOut.coordinates)
+
+
     if 'thingol' == os.popen('hostname').read().strip():
+        def test_icon_coords(self):
+            cdo = Cdo()
+            cdo.setCdo('../../src/cdo')
+            ifile = os.environ.get('HOME')+'/data/icon/oce_r2b7.nc'
+            ivar  = 't_acc'
+            varIn = cdo.readCdf(ifile)
+            varIn = varIn.variables[ivar]
+            self.assertEqual('clon clat',varIn.coordinates)
+
+            varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
+            varOut = varOut.variables[ivar]
+            self.assertEqual('clon clat',varOut.coordinates)
         def testCall(self):
             cdo = Cdo()
             print cdo.sinfov(input='/home/ram/data/icon/oce.nc')
