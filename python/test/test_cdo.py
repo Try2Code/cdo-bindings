@@ -46,6 +46,10 @@ class CdoTest(unittest.TestCase):
         self.assertTrue("mask" in cdo.operators)
         self.assertTrue("studentt" in cdo.operators)
 
+    def test_mod_version(self):
+        cdo = Cdo()
+        self.assertEqual('1.2.3',cdo.module_version())
+
     def test_getOperators(self):
         cdo = Cdo()
         for op in ['random','stdatm','for','cdiwrite','info','showlevel','sinfo','remap','geopotheight','mask','topo','thicknessOfLevels']:
