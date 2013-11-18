@@ -233,7 +233,8 @@ class Cdo(object):
     retvals = proc.communicate()
 
     withs     = list(re.findall('(with|Features): (.*)',retvals[1])[0])[1].split(' ')
-    libs      = re.findall('(\w+) library version : (\d+\.\d+\.\d+)',retvals[1])
+    libs      = re.findall('(\w+) library version : (\d+\.\d+|\d+\.\d+\.\d+)',retvals[1])
+    print(libs)
     libraries = dict({})
     for w in withs:
       libraries[w.lower()] = True
