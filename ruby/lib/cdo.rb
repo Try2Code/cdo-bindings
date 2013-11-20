@@ -1,7 +1,7 @@
 require 'pp'
 require 'open3'
 
-# Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
+# Copyright (C) 2011-2013 Ralf Mueller, ralf.mueller@zmaw.de
 # See COPYING file for copying and redistribution conditions.
 # 
 # This program is free software; you can redistribute it and/or modify
@@ -17,13 +17,14 @@ require 'open3'
 # CDO calling mechnism
 module Cdo
 
-  VERSION = "1.2.3"
+  VERSION = "1.2.4rc1"
 
   State = {
     :debug       => false,
     :returnCdf   => false,
     :operators   => [],
-    :forceOutput => true
+    :forceOutput => true,
+    :env         => {},
   }
   State[:debug] = true unless ENV['DEBUG'].nil?
 
@@ -89,13 +90,20 @@ module Cdo
     end
   end
 
+  def Cdo.env=(envHash)
+    State[:env] = envHash
+  end
+  def Cdo.env; State[:env]; end
+
   def Cdo.call(cmd)
     if (State[:debug])
       puts '# DEBUG ====================================================================='
+      pp Cdo.env unless Cdo.env.nil?
+      puts 'CMD: '
       puts cmd
       puts '# DEBUG ====================================================================='
     end
-    stdin, stdout, stderr, wait_thr = Open3.popen3(cmd)
+    stdin, stdout, stderr, wait_thr = Open3.popen3(Cdo.env,cmd)
 
     {
       :stdout => stdout.read,

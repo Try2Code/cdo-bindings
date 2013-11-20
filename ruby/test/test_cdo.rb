@@ -418,7 +418,8 @@ class TestCdo < Minitest::Test
 
     # oType = nc, from input ENV
     ofiles = expected.map {|f| f += '.nc2'}
-    Cdo.splitlevel(input: Cdo.stdatm(0,10,100,options: '-f nc'),output: oTag,env: {'CDO_FILE_SUFFIX' => '.nc2'})
+    Cdo.env = {'CDO_FILE_SUFFIX' => '.nc2'}
+    Cdo.splitlevel(input: Cdo.stdatm(0,10,100,options: '-f nc'),output: oTag)
     assert_equal(ofiles,Dir.glob(oTag+'*').sort)
     rm(ofiles)
   end
