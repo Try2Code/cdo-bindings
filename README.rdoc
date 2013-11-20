@@ -87,6 +87,8 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
    - return arrays/lists of output files, which are created by split* operators
      suggestion from Karl-Hermann Wieners
    - support object interface in the ruby version (easy setup of options during initializaion, thread safety)
+   - allow environment variables set at (1) each operator call or (2) cdo object initialization or (3) external JSON file
+   - allow NIO as netcdf backend
 
 * 1.2.3
    - bugfix release: adjust library/feature check to latest cdo-1.6.2  release
