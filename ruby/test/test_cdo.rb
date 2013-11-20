@@ -5,6 +5,8 @@ require 'cdo'
 require 'unifiedPlot'
 require 'pp'
 
+def rm(files); files.each {|f| FileUtils.rm(f) if File.exists?(f)};end
+
 class TestCdo < Minitest::Test
 
   DEFAULT_CDO_PATH = 'cdo'
@@ -386,6 +388,39 @@ class TestCdo < Minitest::Test
                             {:y => vFm1s,:style => 'points',:title => 'fillmiss1s'}],
                             plotConf: {:yrange => '[0:1]'},title: 'r10x1')
     end
+  end
+
+  def test_env
+    Cdo.debug  = ENV.has_key?('DEBUG')
+    oTag     = 'test_env_with_splitlevel_'
+    levels   = [0,10,100]
+    expected = levels.map {|l| "test_env_with_splitlevel_000#{l.to_s.rjust(3,'0')}"}
+    # clean up first
+    rm(Dir.glob(oTag+'*'))
+
+    # oType = grb (default)
+    ofiles = expected.map {|f| f += '.grb'}
+    Cdo.splitlevel(input: "-stdatm,0,10,100",output: oTag)
+    assert_equal(ofiles,Dir.glob(oTag+'*').sort)
+    rm(ofiles)
+
+    # oType = nc, from cdo options
+    ofiles = expected.map {|f| f += '.nc'}
+    Cdo.splitlevel(input: "-stdatm,0,10,100",output: oTag,options: '-f nc')
+    assert_equal(ofiles,Dir.glob(oTag+'*').sort)
+    rm(ofiles)
+
+    # oType = nc, from input type
+    ofiles = expected.map {|f| f += '.nc'}
+    Cdo.splitlevel(input: Cdo.stdatm(0,10,100,options: '-f nc'),output: oTag)
+    assert_equal(ofiles,Dir.glob(oTag+'*').sort)
+    rm(ofiles)
+
+    # oType = nc, from input ENV
+    ofiles = expected.map {|f| f += '.nc2'}
+    Cdo.splitlevel(input: Cdo.stdatm(0,10,100,options: '-f nc'),output: oTag,env: {'CDO_FILE_SUFFIX' => '.nc2'})
+    assert_equal(ofiles,Dir.glob(oTag+'*').sort)
+    rm(ofiles)
   end
 end
 
