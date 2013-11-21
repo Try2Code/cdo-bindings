@@ -33,7 +33,13 @@ class CDOException(Exception):
 
 class Cdo(object):
 
-  def __init__(self,returnCdf=False,returnNoneOnError=False,forceOutput=True,cdfMod='scipy',debug=False):
+  def __init__(self,
+               returnCdf=False,
+               returnNoneOnError=False,
+               forceOutput=True,
+               cdfMod='scipy',
+               env={},
+               debug=False):
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
     self.undocumentedOperators = ['anomaly','beta','boxavg','change_e5lsm','change_e5mask',
@@ -69,6 +75,7 @@ class Cdo(object):
     self.tempfile               = MyTempfile()
     self.forceOutput            = forceOutput
     self.cdfMod                 = cdfMod
+    self.env                    = env
     self.debug                  = debug
     self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
@@ -79,11 +86,11 @@ class Cdo(object):
     res.extend(self.operators)
     return res
 
-  def call(self,cmd,environment=None):
+  def call(self,cmd):
     if self.debug:
       print '# DEBUG ====================================================================='
-      if None != environment:
-        for k,v in environment.items():
+      if {} != self.env:
+        for k,v in self.env.items():
           print "ENV: " + k + " = " + v
       print 'CALL:'+' '.join(cmd)
       print '# DEBUG ====================================================================='
@@ -92,7 +99,7 @@ class Cdo(object):
                             shell  = True,
                             stderr = subprocess.PIPE,
                             stdout = subprocess.PIPE,
-                            env    = environment)
+                            env    = self.env)
     retvals = proc.communicate()
     return {"stdout"     : retvals[0]
            ,"stderr"     : retvals[1]
@@ -157,11 +164,9 @@ class Cdo(object):
 
           cmd.append(kwargs["output"])
           if kwargs.__contains__("env"):
-            environment = kwargs["env"]
-          else:
-            environment = None
+            self.env = kwargs["env"]
 
-          retvals = self.call(cmd,environment=environment)
+          retvals = self.call(cmd)
           if self.hasError(method_name,cmd,retvals):
             if self.returnNoneOnError:
               return None
