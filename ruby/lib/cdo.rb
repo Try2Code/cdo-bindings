@@ -106,8 +106,8 @@ module Cdo
     stdin, stdout, stderr, wait_thr = Open3.popen3(Cdo.env,cmd)
 
     {
-      :stdout => stdout.read,
-      :stderr => stderr.read,
+      :stdout     => stdout.read,
+      :stderr     => stderr.read,
       :returncode => wait_thr.value.exitstatus
     }
   end
@@ -163,7 +163,7 @@ module Cdo
     # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
     puts "Operator #{sym.to_s} is called" if State[:debug]
     if getOperators.include?(sym.to_s)
-      io,opts = Cdo.parseArgs(args)
+      io, opts = Cdo.parseArgs(args)
       if @@outputOperatorsPattern.match(sym)
         run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout)
       else
