@@ -3,7 +3,7 @@ $:.unshift File.join(File.dirname(__FILE__),"..","lib")
 
 spec = Gem::Specification.new do |s|
   s.name              = "cdo"
-  s.version           = '1.2.3'
+  s.version           = '1.2.4rc1'
   s.platform          = Gem::Platform::RUBY
   s.files             = ["lib/cdo.rb"] + ["gemspec","COPYING","README.rdoc","ChangeLog"]
   s.test_file         = "test/test_cdo.rb"
@@ -14,7 +14,7 @@ spec = Gem::Specification.new do |s|
   s.homepage          = "https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D"
   s.extra_rdoc_files  = ["README.rdoc","COPYING"]
   s.license           = "GPLv2"
-  s.required_ruby_version = ">= 1.9"
+  s.required_ruby_version = ">= 2.0"
   s.add_development_dependency('unifiedPlot')
 end
 
