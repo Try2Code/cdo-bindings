@@ -26,7 +26,7 @@ module Cdo
     :forceOutput => true,
     :env         => {},
   }
-  State[:debug] = true unless ENV['DEBUG'].nil?
+  State[:debug] = ENV.has_key?('DEBUG')
 
   @@CDO = ENV['CDO'].nil? ? 'cdo' : ENV['CDO']
 
@@ -98,7 +98,7 @@ module Cdo
   def Cdo.call(cmd)
     if (State[:debug])
       puts '# DEBUG ====================================================================='
-      pp Cdo.env unless Cdo.env.nil?
+      pp Cdo.env unless Cdo.env.empty?
       puts 'CMD: '
       puts cmd
       puts '# DEBUG ====================================================================='
