@@ -57,16 +57,10 @@ class TestCdo < Minitest::Test
     assert("1.4.3.1" < Cdo.version,"Version to low: #{Cdo.version}")
   end
   def test_args
-    #Cdo.Debug = true
-    #MyTempfile.setPersist(true)
-    ofile0 = MyTempfile.path
-    ofile1 = MyTempfile.path
-    ofile2 = MyTempfile.path
-    ofile3 = MyTempfile.path
-    Cdo.stdatm(0,20,40,80,200,230,400,600,1100,:output => ofile0)
-    Cdo.intlevel(0,10,50,100,500,1000,  :input => ofile0,:output => ofile1)
-    Cdo.intlevel([0,10,50,100,500,1000],:input => ofile0,:output => ofile2)
-    Cdo.sub(:input => [ofile1,ofile2].join(' '),:output => ofile3)
+    ofile0 = Cdo.stdatm(0,20,40,80,200,230,400,600,1100)
+    ofile1 = Cdo.intlevel(0,10,50,100,500,1000,  :input => ofile0)
+    ofile2 = Cdo.intlevel([0,10,50,100,500,1000],:input => ofile0)
+    ofile3 = Cdo.sub(:input => [ofile1,ofile2].join(' '))
     info = Cdo.infon(:input => ofile3)
     (1...info.size).each {|i| assert_equal(0.0,info[i].split[-1].to_f)}
   end
@@ -420,6 +414,12 @@ class TestCdo < Minitest::Test
     ofiles = expected.map {|f| f += '.nc2'}
     Cdo.env = {'CDO_FILE_SUFFIX' => '.nc2'}
     Cdo.splitlevel(input: Cdo.stdatm(0,10,100,options: '-f nc'),output: oTag)
+    assert_equal(ofiles,Dir.glob(oTag+'*').sort)
+    rm(ofiles)
+
+    # oType = nc, from input ENV setting for each call
+    ofiles = expected.map {|f| f += '.nc2'}
+    Cdo.splitlevel(input: Cdo.stdatm(0,10,100,options: '-f nc'),output: oTag,env: {'CDO_FILE_SUFFIX' => '.nc2'})
     assert_equal(ofiles,Dir.glob(oTag+'*').sort)
     rm(ofiles)
   end
