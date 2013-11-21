@@ -394,7 +394,6 @@ class TestCdo < Minitest::Test
   end
 
   def test_env
-    Cdo.debug  = ENV.has_key?('DEBUG')
     oTag     = 'test_env_with_splitlevel_'
     levels   = [0,10,100]
     expected = levels.map {|l| "test_env_with_splitlevel_000#{l.to_s.rjust(3,'0')}"}
