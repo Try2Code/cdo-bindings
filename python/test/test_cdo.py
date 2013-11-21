@@ -303,11 +303,11 @@ class CdoTest(unittest.TestCase):
         fileB = cdo.stdatm(0,output='B')
         files = [fileA,fileB]
         self.assertEqual(cdo.diffv(input = ' '.join(files)), cdo.diffv(input = files))
-        self.assertEqual("0 of 2 records differ",cdo.diffv(input = files)[-1])
+        self.assertEqual([],cdo.diffv(input = files))
         # check for operator input
-        self.assertEqual("0 of 2 records differ",cdo.diffv(input = ["-stdatm,0","-stdatm,0"])[-1])
+        self.assertEqual([],cdo.diffv(input = ["-stdatm,0","-stdatm,0"]))
         # check for operator input and files
-        self.assertEqual("0 of 2 records differ",cdo.diffv(input = ["-stdatm,0",fileB])[-1])
+        self.assertEqual([],cdo.diffv(input = ["-stdatm,0",fileB]))
 
     def test_output_set_to_none(self):
         cdo = Cdo()
@@ -504,7 +504,9 @@ class CdoTest(unittest.TestCase):
            ifile = '/home/ram/data/icon/input/phc3.0/phc.nc'
            cdo = Cdo(cdfMod='netcdf4')
            cdo = Cdo(cdfMod='scipy')
-           cdo.setCdo('../../src/cdo')
+           if 'CDO' in os.environ:
+             cdo.setCdo(os.environ.get('CDO'))
+
            cdo.debug = True
            #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
            #          output=ifile,
