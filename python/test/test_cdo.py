@@ -22,6 +22,11 @@ def plot(ary,ofile=False,title=None):
     else:
       pl.savefig(ofile,bbox_inches='tight',dpi=200)
 
+def rm(files):
+  for f in files:
+    if os.path.exists(f):
+      os.system("rm "+f)
+
 class CdoTest(unittest.TestCase):
 
     def testCDO(self):
@@ -350,30 +355,38 @@ class CdoTest(unittest.TestCase):
         self.assertTrue(cdo.returnNoneOnError)
 
     def test_env(self):
+        # clean up
         tag = '__env_test'
         files = glob.glob(tag+'*')
-        for f in files:
-          os.system("rm "+f)
+        rm(files)
         files = glob.glob(tag+'*')
         self.assertEqual([],files)
 
+        # setup
         cdo = Cdo()
-        cdo.debug = True
-        cdo.setCdo('../../src/cdo')
+        cdo.debug = 'DEBUG' in os.environ
+
+        # cdf default
         ifile = cdo.stdatm(10,20,50,100,options='-f nc')
-        tag = '__env_test'
         cdo.splitname(input=ifile,output=tag)
         files = glob.glob(tag+'*')
         self.assertEqual(['__env_testP.nc', '__env_testT.nc'],files)
-        for f in files:
-          os.system("rm "+f)
+        rm(files)
 
+        # manual setup to nc2 via operator call
         cdo.splitname(input=ifile,output=tag,env={"CDO_FILE_SUFFIX": ".nc2"})
         files = glob.glob(tag+'*')
         files.sort()
         self.assertEqual(['__env_testP.nc2', '__env_testT.nc2'],files)
-        for f in files:
-          os.system("rm "+f)
+        rm(files)
+
+        # manual setup to nc2 via object setup
+        cdo.env = {"CDO_FILE_SUFFIX": ".foo"}
+        cdo.splitname(input=ifile,output=tag)
+        files = glob.glob(tag+'*')
+        files.sort()
+        self.assertEqual(['__env_testP.foo', '__env_testT.foo'],files)
+        rm(files)
 
     def test_showMaArray(self):
         cdo = Cdo(cdfMod='netcdf4')
@@ -395,9 +408,10 @@ class CdoTest(unittest.TestCase):
         rand = cdo.setname('v',input = '-random,r5x5 ', options = ' -f nc',output = '/tmp/rand.nc')
 
     def test_fillmiss(self):
-        cdo = Cdo(cdfMod='netcdf4')
-        if 'thingol' == os.popen('hostname').read().strip():
-          cdo.setCdo('../../src/cdo')
+      cdo = Cdo(cdfMod='netcdf4')
+      if 'thingol' == os.popen('hostname').read().strip():
+        if 'CDO' in os.environ:
+          cdo.setCdo(os.environ.get('CDO'))
 
         cdo.debug = True
         rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
@@ -424,7 +438,7 @@ class CdoTest(unittest.TestCase):
         plot(arWmr,title='missing'    )#ofile='fmWmr.svg')
         plot(arFm,title='fillmiss'    )#ofile='fmFm.svg')
         plot(arFm1s,title='fillmiss1s')#ofile='fmFm2.svg')
-#        os.system("convert +append %s %s %s %s fm_all.png "%('fm_org.png','fm_wmr.png','fm_fm.png','fm_fm1s.png'))
+        #        os.system("convert +append %s %s %s %s fm_all.png "%('fm_org.png','fm_wmr.png','fm_fm.png','fm_fm1s.png
 
     if os.popen('hostname -d').read().strip() == 'zmaw.de' or os.popen('hostname -d').read().strip() == 'mpi.zmaw.de':
         def test_keep_coordinates(self):
