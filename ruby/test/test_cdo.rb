@@ -1,6 +1,4 @@
 $:.unshift File.join(File.dirname(__FILE__),"..","lib")
-require 'minitest'
-require 'minitest/autorun'
 require 'test/unit/assertions'
 require 'cdo'
 require 'unifiedPlot'
