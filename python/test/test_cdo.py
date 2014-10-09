@@ -77,9 +77,10 @@ class CdoTest(unittest.TestCase):
         s   = cdo.sinfov(input="-topo",options="-f nc")
         s   = cdo.sinfov(input="-remapnn,r36x18 -topo",options="-f nc")
         f   = 'ofile.nc'
-        cdo.expr("'z=log(abs(topo+1))*9.81'",input="-topo",output = f,options="-f nc")
+        cdo.expr("'z=log(abs(topo+1))*9.81'",input="-topo", output=f, options="-f nc")
         s   = cdo.infov(input=f)
         cdo.stdatm("0",output=f,options="-f nc")
+        rm([f,])
 
     def test_outputOperators(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -152,6 +153,7 @@ class CdoTest(unittest.TestCase):
         cdo.unsetReturnArray()
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
+        rm([outfile, ])
 
 
     def test_forceOutput(self):
@@ -318,6 +320,7 @@ class CdoTest(unittest.TestCase):
         self.assertEqual([],cdo.diffv(input = ["-stdatm,0","-stdatm,0"]))
         # check for operator input and files
         self.assertEqual([],cdo.diffv(input = ["-stdatm,0",fileB]))
+        rm([fileA, fileB])
 
     def test_output_set_to_none(self):
         cdo = Cdo(cdfMod=CDF_MOD)
