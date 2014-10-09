@@ -6,7 +6,7 @@ import pylab as pl
 
 # add local dir to search path
 
-CDF_MOD = "netcdf4"
+CDF_MOD = CDF_MOD_NETCDF4
 
 def plot(ary,ofile=False,title=None):
     pl.grid(True)
