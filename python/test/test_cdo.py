@@ -6,6 +6,8 @@ import pylab as pl
 
 # add local dir to search path
 
+CDF_MOD = CDF_MOD_SCIPY
+
 def plot(ary,ofile=False,title=None):
     pl.grid(True)
 
@@ -30,7 +32,7 @@ def rm(files):
 class CdoTest(unittest.TestCase):
 
     def testCDO(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         newCDO="/usr/bin/cdo"
         if os.path.isfile(newCDO):
             cdo.setCdo(newCDO)
@@ -38,25 +40,25 @@ class CdoTest(unittest.TestCase):
             cdo.setCdo('cdo')
 
     def testDbg(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         self.assertEqual(False,cdo.debug)
         cdo.debug = True
         self.assertEqual(True,cdo.debug)
         cdo.debug = False
 
     def testOps(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         self.assertTrue("sinfov" in cdo.operators)
         self.assertTrue("for" in cdo.operators)
         self.assertTrue("mask" in cdo.operators)
         self.assertTrue("studentt" in cdo.operators)
 
     def test_mod_version(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         self.assertEqual('1.2.3',cdo.module_version())
 
     def test_getOperators(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         for op in ['random','stdatm','for','cdiwrite','info','showlevel','sinfo','remap','geopotheight','mask','topo','thicknessOfLevels']:
             if 'thicknessOfLevels' != op:
                 self.assertTrue(op in cdo.operators)
@@ -64,23 +66,24 @@ class CdoTest(unittest.TestCase):
                 self.assertTrue(op in dir(cdo))
 
     def test_listAllOperators(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         operators = cdo.operators
         operators.sort()
         #print "\n".join(operators)
 
     def test_simple(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
         s   = cdo.sinfov(input="-topo",options="-f nc")
         s   = cdo.sinfov(input="-remapnn,r36x18 -topo",options="-f nc")
         f   = 'ofile.nc'
-        cdo.expr("'z=log(abs(topo+1))*9.81'",input="-topo",output = f,options="-f nc")
+        cdo.expr("'z=log(abs(topo+1))*9.81'",input="-topo", output=f, options="-f nc")
         s   = cdo.infov(input=f)
         cdo.stdatm("0",output=f,options="-f nc")
+        rm([f,])
 
     def test_outputOperators(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         levels = cdo.showlevel(input = "-stdatm,0")
         info   = cdo.sinfo(input = "-stdatm,0")
         self.assertEqual([0,0],map(float,levels))
@@ -94,7 +97,7 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(["0", "10000","0", "10000"],values)
 
     def test_bndLevels(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         ofile = cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,options = "-f nc")
         self.assertEqual([0, 50.0, 150.0, 350.0, 650.0, 1100.0, 1700.0, 2500.0, 3500.0, 4500.0, 5500.0],
                     cdo.boundaryLevels(input = "-selname,T " + ofile))
@@ -102,7 +105,7 @@ class CdoTest(unittest.TestCase):
                      cdo.thicknessOfLevels(input = ofile))
 
     def test_CDO_options(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
         names = cdo.showname(input = "-stdatm,0",options = "-f nc")
         self.assertEqual(["P T"],names)
@@ -111,12 +114,12 @@ class CdoTest(unittest.TestCase):
           #self.assertEqual(["GRIB SZIP"],cdo.showformat(input = ofile))
 
     def test_chain(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         ofile = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")
         self.assertEqual(["veloc"],cdo.showname(input = ofile))
 
     def test_diff(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
         diffv = cdo.diffn(input = "-random,r1x1 -random,r1x1")
         print diffv
@@ -126,34 +129,37 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(diff[1].split(' ')[-3],"0.53060")
 
     def test_returnCdf(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         ofile = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy').name
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
-        a = cdo.readCdf(press)
         variables = cdo.stdatm("0",options="-f nc",returnCdf=True).variables
         print(variables)
-        press = cdo.stdatm("0",options="-f nc",returnCdf=True).variables['P'][:]
+        cdf = cdo.stdatm("0",options="-f nc",returnCdf=True)
+        press = cdf.variables['P'][:]
         self.assertEqual(1013.25,press.min())
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
         cdo.setReturnArray()
         outfile = 'test.nc'
-        press = cdo.stdatm("0",output=outfile,options="-f nc").variables["P"][:]
+        cdf = cdo.stdatm("0",output=outfile,options="-f nc")
+        press = cdf.variables["P"][:]
         self.assertEqual(1013.25,press.min())
         cdo.unsetReturnArray()
         press = cdo.stdatm("0",output=outfile,options="-f nc")
         self.assertEqual(press,outfile)
-        press = cdo.stdatm("0",output=outfile,options="-f nc",returnCdf=True).variables["P"][:]
+        cdf = cdo.stdatm("0",output=outfile,options="-f nc",returnCdf=True)
+        press = cdf.variables["P"][:]
         self.assertEqual(1013.25,press.min())
         print("press = "+press.min().__str__())
         cdo.unsetReturnArray()
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
+        rm([outfile, ])
 
 
     def test_forceOutput(self):
-        cdo =Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
         outs = []
         # tempfiles
@@ -200,7 +206,7 @@ class CdoTest(unittest.TestCase):
         outs = []
 
     def test_combine(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
         stdatm  = cdo.stdatm("0",options = "-f nc")
         stdatm_ = cdo.stdatm("0",options = "-f nc")
@@ -210,34 +216,35 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(288.0,sum.variables["T"][:])
 
     def test_cdf(self):
-        cdo = Cdo()
-        self.assertTrue("cdf" not in cdo.__dict__)
+        cdo = Cdo(cdfMod=CDF_MOD)
+        self.assertTrue(hasattr(cdo, "cdf"))# not in cdo.__dict__)
         cdo.setReturnArray()
-        self.assertTrue("cdf" in cdo.__dict__)
+        self.assertTrue(hasattr(cdo, "cdf"))#"cdf" in cdo.__dict__)
         cdo.setReturnArray(False)
         sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
         self.assertEqual(1013.25,sum.variables["P"][:])
         cdo.unsetReturnArray()
 
     def test_cdf_mod(self):
-        cdo =Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.setReturnArray()
         print('cdo.cdfMod:' + cdo.cdfMod)
-        self.assertEqual(cdo.cdfMod,"scipy")
+        self.assertEqual(cdo.cdfMod, CDF_MOD)
+
     def test_thickness(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         levels            = "25 100 250 500 875 1400 2100 3000 4000 5000".split(' ')
         targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
         self.assertEqual(targetThicknesses, cdo.thicknessOfLevels(input = "-selname,T -stdatm,"+ ','.join(levels)))
 
     def test_showlevels(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         sourceLevels = "25 100 250 500 875 1400 2100 3000 4000 5000".split()
         self.assertEqual(' '.join(sourceLevels), 
                         cdo.showlevel(input = "-selname,T " + cdo.stdatm(','.join(sourceLevels),options = "-f nc"))[0]) 
 
     def test_verticalLevels(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         # check, if a given input files has vertival layers of a given thickness array
         targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
         sourceLevels = "25 100 250 500 875 1400 2100 3000 4000 5000".split()
@@ -246,16 +253,16 @@ class CdoTest(unittest.TestCase):
 
 
     def test_returnArray(self):
-        cdo = Cdo()
-        temperature = cdo.stdatm(0,options = '-f nc', returnCdf = True).variables['T'][:]
-        self.assertEqual(False, cdo.stdatm(0,options = '-f nc',returnArray = 'TT'))
-        temperature = cdo.stdatm(0,options = '-f nc',returnArray = 'T')
+        cdo = Cdo(cdfMod=CDF_MOD)
+        cdo.debug = True
+        self.assertEqual(False, cdo.stdatm(0,options = '-f nc', returnArray = 'TT'))
+        temperature = cdo.stdatm(0,options = '-f nc', returnArray = 'T')
         self.assertEqual(288.0,temperature.flatten()[0])
         pressure = cdo.stdatm("0,1000",options = '-f nc -b F64',returnArray = 'P')
         self.assertEqual("[ 1013.25         898.54345604]",pressure.flatten().__str__())
 
     def test_returnMaArray(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
         topo = cdo.topo(options='-f nc',returnMaArray='topo')
         self.assertEqual(-1890.0,round(topo.mean()))
@@ -278,7 +285,7 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(True,withMask.mask[0,1])
 
     def test_errorException(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         self.assertFalse(hasattr(cdo, 'nonExistingMethod'))
         self.failUnlessRaises(CDOException, cdo.max)
         try:
@@ -290,13 +297,13 @@ class CdoTest(unittest.TestCase):
 
         try:
             cdo.stdatm(0,10,input="",output="")
-        except CDOException as a:
+        except CDOException as e:
             self.assertTrue(e.returncode != 0)
             self.assertTrue(len(e.stderr) > 1)
             self.assertTrue(hasattr(e, 'stdout'))
 
     def test_inputArray(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = 'DEBUG' in os.environ
         # check for file input
         fileA = cdo.stdatm(0,output='A')
@@ -308,28 +315,24 @@ class CdoTest(unittest.TestCase):
         self.assertEqual([],cdo.diffv(input = ["-stdatm,0","-stdatm,0"]))
         # check for operator input and files
         self.assertEqual([],cdo.diffv(input = ["-stdatm,0",fileB]))
+        rm([fileA, fileB])
 
     def test_output_set_to_none(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         self.assertEqual(str,type(cdo.topo(output = None)))
         self.assertEqual("File format: GRIB",cdo.sinfov(input = "-topo", output = None)[0])
 
     def test_libs(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
-        cdo.setCdo('../../src/cdo')
-        print(cdo.libs)
-        return
         self.assertTrue(cdo.hasLib("cdi"),"CDI support missing")
         self.assertTrue(cdo.hasLib("nc4"),"netcdf4 support missing")
         self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
         self.assertFalse(cdo.hasLib("boost"),'boost is not a CDO dependency')
-        #if 'thingol' == os.popen('hostname').read().strip():
-        #  self.assertEqual('1.10',cdo.libsVersion("grib_api"))
         self.assertRaises(AttributeError, cdo.libsVersion,"foo")
 
     def test_returnNone(self):
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         self.assertFalse(cdo.returnNoneOnError,"'returnNoneOnError' is _not_ False after initialization")
         cdo.returnNoneOnError = True
         self.assertTrue(cdo.returnNoneOnError,"'returnNoneOnError' is _not_ True after manual setting")
@@ -337,18 +340,18 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(None,ret)
         print(ret)
 
-        cdo_ = Cdo(returnNoneOnError=True)
+        cdo_ = Cdo(cdfMod=CDF_MOD, returnNoneOnError=True)
         self.assertTrue(cdo_.returnNoneOnError)
         ret  = cdo_.sinfo(input=" ifile.grb")
         self.assertEqual(None,ret)
         print(ret)
 
     def test_initOptions(self):
-        cdo = Cdo(debug=True)
+        cdo = Cdo(cdfMod=CDF_MOD, debug=True)
         self.assertTrue(cdo.debug)
         cdo = Cdo(forceOutput=False)
         self.assertFalse(cdo.forceOutput)
-        cdo = Cdo(True,True)
+        cdo = Cdo(True,True, cdfMod=CDF_MOD)
         self.assertTrue(cdo.returnCdf)
         cdo.returnCdf = False
         self.assertTrue(not cdo.returnCdf)
@@ -363,13 +366,14 @@ class CdoTest(unittest.TestCase):
         self.assertEqual([],files)
 
         # setup
-        cdo = Cdo()
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = 'DEBUG' in os.environ
 
         # cdf default
         ifile = cdo.stdatm(10,20,50,100,options='-f nc')
         cdo.splitname(input=ifile,output=tag)
         files = glob.glob(tag+'*')
+        files.sort()
         self.assertEqual(['__env_testP.nc', '__env_testT.nc'],files)
         rm(files)
 
@@ -389,7 +393,7 @@ class CdoTest(unittest.TestCase):
         rm(files)
 
     def test_showMaArray(self):
-        cdo = Cdo(cdfMod='netcdf4')
+        cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
         bathy = cdo.setrtomiss(0,10000,
             input = cdo.topo(options='-f nc'),returnMaArray='topo')
@@ -523,6 +527,7 @@ class CdoTest(unittest.TestCase):
             
 
 if __name__ == '__main__':
-    unittest.main()
+    suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)
+    unittest.TextTestRunner(verbosity=2).run(suite)
 
 # vim:sw=2

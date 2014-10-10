@@ -12,6 +12,9 @@ import os,re,subprocess,tempfile,random,string
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+CDF_MOD_SCIPY = "scipy"
+CDF_MOD_NETCDF4 = "netcdf4"
+
 def auto_doc(tool, cdo_self):
     """Generate the __doc__ string of the decorated function by calling the cdo help command"""
     def desc(func):
@@ -37,7 +40,7 @@ class Cdo(object):
                returnCdf=False,
                returnNoneOnError=False,
                forceOutput=True,
-               cdfMod='scipy',
+               cdfMod=CDF_MOD_SCIPY,
                env={},
                debug=False):
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
@@ -74,7 +77,7 @@ class Cdo(object):
     self.returnNoneOnError      = returnNoneOnError
     self.tempfile               = MyTempfile()
     self.forceOutput            = forceOutput
-    self.cdfMod                 = cdfMod
+    self.cdfMod                 = cdfMod.lower()
     self.env                    = env
     self.debug                  = debug
     self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
@@ -184,8 +187,6 @@ class Cdo(object):
       elif not None == kwargs.get("returnMaArray"):
         return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
       elif self.returnCdf or kwargs["returnCdf"]:
-        if not self.returnCdf:
-          self.loadCdf()
         return self.readCdf(kwargs["output"])
       else:
         return kwargs["output"]
@@ -197,6 +198,10 @@ class Cdo(object):
       #cache the method for later
       setattr(self.__class__, method_name, get)
       return get.__get__(self)
+    elif (method_name == "cdf"):
+        # initialize cdf module implicitly
+        self.loadCdf()
+        return self.cdf
     else:
       # If the method isn't in our dictionary, act normal.
       print("#=====================================================")
@@ -215,20 +220,23 @@ class Cdo(object):
     return list(set(s.split(" ") + self.undocumentedOperators))
 
   def loadCdf(self):
-    if self.cdfMod == "scipy":
+    if self.cdfMod == CDF_MOD_SCIPY:
       try:
-        import scipy.io.netcdf as cdf
+        from scipy.io.netcdf import netcdf_file as cdf
         self.cdf    = cdf
       except:
-        print "Could not load scipy.io.netcdf - try to load nercdf4"
-        self.cdfMod = "netcdf4" 
+        print "Could not load scipy.io.netcdf"
+        raise
 
-    if self.cdfMod == "netcdf4":
+    elif self.cdfMod == CDF_MOD_NETCDF4:
       try:
-        import netCDF4 as cdf
+        from netCDF4 import Dataset as cdf
         self.cdf    = cdf
       except:
-        raise ImportError,"scipy or python-netcdf4 module is required to return numpy arrays."
+        print "Could not load netCDF4"
+        raise
+    else:
+        raise ImportError("scipy or python-netcdf4 module is required to return numpy arrays.")
 
   def getSupportedLibs(self,force=False):
     proc = subprocess.Popen(self.CDO + ' -V',
@@ -251,8 +259,6 @@ class Cdo(object):
 
   def setReturnArray(self,value=True):
     self.returnCdf = value
-    if value:
-      self.loadCdf()
 
 
   def unsetReturnArray(self):
@@ -285,7 +291,6 @@ class Cdo(object):
 
   def hasLib(self,lib):
     return lib in self.libs
-    return false
 
   def libsVersion(self,lib):
     if not self.hasLib(lib):
@@ -334,46 +339,32 @@ class Cdo(object):
 
   def readCdf(self,iFile):
     """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:scipy)"""
-    if not self.returnCdf:
-      self.loadCdf()
-
-    if ( "scipy" == self.cdfMod):
-      #making it compatible to older scipy versions
-      fileObj =  self.cdf.netcdf_file(iFile, mode='r')
-    elif ( "netcdf4" == self.cdfMod ):
-      fileObj = self.cdf.Dataset(iFile)
+    try:
+        fileObj =  self.cdf(iFile, mode='r')
+    except:
+      print "Could not import data from file '%s'" % iFile
+      raise
     else:
-      raise ImportError,"Could not import data from file '" + iFile + "'"
-
-    retval = fileObj
-    return retval
+        return fileObj
 
   def openCdf(self,iFile):
     """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:scipy)"""
-    if not self.returnCdf:
-      self.loadCdf()
-
-    if ( "scipy" == self.cdfMod):
-      #making it compatible to older scipy versions
-      print("Use scipy")
-      fileObj =  self.cdf.netcdf_file(iFile, mode='r+')
-    elif ( "netcdf4" == self.cdfMod ):
-      print("Use netcdf4")
-      fileObj = self.cdf.Dataset(iFile,'r+')
+    try:
+      fileObj =  self.cdf(iFile, mode='r+')
+    except:
+      print "Could not import data from file '%s'" % iFile
+      raise
     else:
-      raise ImportError,"Could not import data from file '" + iFile + "'"
-
-    retval = fileObj
-    return retval
+        return fileObj
 
   def readArray(self,iFile,varname):
     """Direcly return a numpy array for a given variable name"""
     filehandle = self.readCdf(iFile)
-    if varname in filehandle.variables:
+    try:
       # return the data array
-      return filehandle.variables[varname][:]
-    else:
-      print "Cannot find variable '" + varname +"'"
+      return filehandle.variables[varname][:].copy()
+    except KeyError:
+      print "Cannot find variable '%s'" % varname
       return False
 
   def readMaArray(self,iFile,varname):
@@ -381,7 +372,7 @@ class Cdo(object):
     fileObj =  self.readCdf(iFile)
 
     #.data is not backwards compatible to old scipy versions, [:] is
-    data = fileObj.variables[varname][:]
+    data = fileObj.variables[varname][:].copy()
 
     # load numpy if available
     try:
