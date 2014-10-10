@@ -360,11 +360,11 @@ class Cdo(object):
   def readArray(self,iFile,varname):
     """Direcly return a numpy array for a given variable name"""
     filehandle = self.readCdf(iFile)
-    if varname in filehandle.variables:
+    try:
       # return the data array
-      return filehandle.variables[varname][:]
-    else:
-      print "Cannot find variable '" + varname +"'"
+      return filehandle.variables[varname][:].copy()
+    except KeyError:
+      print "Cannot find variable '%s'" % varname
       return False
 
   def readMaArray(self,iFile,varname):
@@ -372,7 +372,7 @@ class Cdo(object):
     fileObj =  self.readCdf(iFile)
 
     #.data is not backwards compatible to old scipy versions, [:] is
-    data = fileObj.variables[varname][:]
+    data = fileObj.variables[varname][:].copy()
 
     # load numpy if available
     try:

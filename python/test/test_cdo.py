@@ -6,7 +6,7 @@ import pylab as pl
 
 # add local dir to search path
 
-CDF_MOD = CDF_MOD_NETCDF4
+CDF_MOD = CDF_MOD_SCIPY
 
 def plot(ary,ofile=False,title=None):
     pl.grid(True)
@@ -133,21 +133,23 @@ class CdoTest(unittest.TestCase):
         ofile = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy').name
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
-        a = cdo.readCdf(press)
         variables = cdo.stdatm("0",options="-f nc",returnCdf=True).variables
         print(variables)
-        press = cdo.stdatm("0",options="-f nc",returnCdf=True).variables['P'][:]
+        cdf = cdo.stdatm("0",options="-f nc",returnCdf=True)
+        press = cdf.variables['P'][:]
         self.assertEqual(1013.25,press.min())
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
         cdo.setReturnArray()
         outfile = 'test.nc'
-        press = cdo.stdatm("0",output=outfile,options="-f nc").variables["P"][:]
+        cdf = cdo.stdatm("0",output=outfile,options="-f nc")
+        press = cdf.variables["P"][:]
         self.assertEqual(1013.25,press.min())
         cdo.unsetReturnArray()
         press = cdo.stdatm("0",output=outfile,options="-f nc")
         self.assertEqual(press,outfile)
-        press = cdo.stdatm("0",output=outfile,options="-f nc",returnCdf=True).variables["P"][:]
+        cdf = cdo.stdatm("0",output=outfile,options="-f nc",returnCdf=True)
+        press = cdf.variables["P"][:]
         self.assertEqual(1013.25,press.min())
         print("press = "+press.min().__str__())
         cdo.unsetReturnArray()
@@ -253,16 +255,9 @@ class CdoTest(unittest.TestCase):
     def test_returnArray(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
-        print "Debug1"
-        temperature = cdo.stdatm(0,options='-f nc', returnCdf=True).variables['T'][:]
-        print temperature
         self.assertEqual(False, cdo.stdatm(0,options = '-f nc', returnArray = 'TT'))
-        print "Debug2"
         temperature = cdo.stdatm(0,options = '-f nc', returnArray = 'T')
-        print "Debug2.1"
-        print temperature
         self.assertEqual(288.0,temperature.flatten()[0])
-        print "Debug3"
         pressure = cdo.stdatm("0,1000",options = '-f nc -b F64',returnArray = 'P')
         self.assertEqual("[ 1013.25         898.54345604]",pressure.flatten().__str__())
 
@@ -532,6 +527,7 @@ class CdoTest(unittest.TestCase):
             
 
 if __name__ == '__main__':
-    unittest.main()
+    suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)
+    unittest.TextTestRunner(verbosity=2).run(suite)
 
 # vim:sw=2
