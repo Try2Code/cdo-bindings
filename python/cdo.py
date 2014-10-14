@@ -1,5 +1,9 @@
 from __future__ import print_function
-import os,re,subprocess,tempfile,random,string
+import os,re,subprocess,tempfile,random
+try:
+    from string import strip
+except ImportError:
+    strip = str.strip
 
 # Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
 # See COPYING file for copying and redistribution conditions.
@@ -153,7 +157,7 @@ class Cdo(object):
       if operatorPrintsOut:
         retvals = self.call(cmd)
         if ( not self.hasError(method_name,cmd,retvals) ):
-          r = list(map(string.strip,retvals["stdout"].split(os.linesep)))
+          r = list(map(strip,retvals["stdout"].split(os.linesep)))
           return r[:len(r)-1]
         else:
           if self.returnNoneOnError:
