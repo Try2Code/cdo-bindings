@@ -1,4 +1,9 @@
-import os,re,subprocess,tempfile,random,string
+from __future__ import print_function
+import os,re,subprocess,tempfile,random
+try:
+    from string import strip
+except ImportError:
+    strip = str.strip
 
 # Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
 # See COPYING file for copying and redistribution conditions.
@@ -67,7 +72,7 @@ class Cdo(object):
         'tstepcount','vardes','vardup','varmul','varquot2test','varrms','vertwind','write_e5ml',
         'writegrid','writerandom','yearcount']
 
-    if os.environ.has_key('CDO'):
+    if 'CDO' in os.environ:
       self.CDO = os.environ['CDO']
     else:
       self.CDO = 'cdo'
@@ -91,12 +96,12 @@ class Cdo(object):
 
   def call(self,cmd):
     if self.debug:
-      print '# DEBUG ====================================================================='
+      print('# DEBUG =====================================================================')
       if {} != self.env:
-        for k,v in self.env.items():
-          print "ENV: " + k + " = " + v
-      print 'CALL:'+' '.join(cmd)
-      print '# DEBUG ====================================================================='
+        for k,v in list(self.env.items()):
+          print("ENV: " + k + " = " + v)
+      print('CALL:'+' '.join(cmd))
+      print('# DEBUG =====================================================================')
 
     proc = subprocess.Popen(' '.join(cmd),
                             shell  = True,
@@ -104,8 +109,8 @@ class Cdo(object):
                             stdout = subprocess.PIPE,
                             env    = self.env)
     retvals = proc.communicate()
-    return {"stdout"     : retvals[0]
-           ,"stderr"     : retvals[1]
+    return {"stdout"     : retvals[0].decode("utf-8")
+           ,"stderr"     : retvals[1].decode("utf-8")
            ,"returncode" : proc.returncode}
 
   def hasError(self,method_name,cmd,retvals):
@@ -140,7 +145,7 @@ class Cdo(object):
       cmd.append(','.join(operator))
       #4. input files or operators
       if 'input' in kwargs:
-        if isinstance(kwargs["input"], basestring):
+        if isinstance(kwargs["input"], str):
             cmd.append(kwargs["input"])
         else:
             #we assume it's either a list, a tuple or any iterable.
@@ -152,7 +157,7 @@ class Cdo(object):
       if operatorPrintsOut:
         retvals = self.call(cmd)
         if ( not self.hasError(method_name,cmd,retvals) ):
-          r = map(string.strip,retvals["stdout"].split(os.linesep))
+          r = list(map(strip,retvals["stdout"].split(os.linesep)))
           return r[:len(r)-1]
         else:
           if self.returnNoneOnError:
@@ -177,7 +182,7 @@ class Cdo(object):
               raise CDOException(**retvals)
         else:
           if self.debug:
-            print("Use existing file'"+kwargs["output"]+"'")
+            print(("Use existing file'"+kwargs["output"]+"'"))
 
       if not kwargs.__contains__("returnCdf"):
         kwargs["returnCdf"] = False
@@ -193,7 +198,7 @@ class Cdo(object):
 
     if ((method_name in self.__dict__) or (method_name in self.operators)):
       if self.debug:
-        print("Found method:" + method_name)
+        print(("Found method:" + method_name))
 
       #cache the method for later
       setattr(self.__class__, method_name, get)
@@ -205,15 +210,15 @@ class Cdo(object):
     else:
       # If the method isn't in our dictionary, act normal.
       print("#=====================================================")
-      print("Cannot find method:" + method_name)
-      raise AttributeError, "Unknown method '" + method_name +"'!"
+      print(("Cannot find method:" + method_name))
+      raise AttributeError("Unknown method '" + method_name +"'!")
 
   def getOperators(self):
     import os
     proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
     ret  = proc.communicate()
-    l    = ret[1].find("Operators:")
-    ops  = ret[1][l:-1].split(os.linesep)[1:-1]
+    l    = ret[1].decode("utf-8").find("Operators:")
+    ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
     endI = ops.index('')
     s    = ' '.join(ops[:endI]).strip()
     s    = re.sub("\s+" , " ", s)
@@ -225,7 +230,7 @@ class Cdo(object):
         from scipy.io.netcdf import netcdf_file as cdf
         self.cdf    = cdf
       except:
-        print "Could not load scipy.io.netcdf"
+        print("Could not load scipy.io.netcdf")
         raise
 
     elif self.cdfMod == CDF_MOD_NETCDF4:
@@ -233,7 +238,7 @@ class Cdo(object):
         from netCDF4 import Dataset as cdf
         self.cdf    = cdf
       except:
-        print "Could not load netCDF4"
+        print("Could not load netCDF4")
         raise
     else:
         raise ImportError("scipy or python-netcdf4 module is required to return numpy arrays.")
@@ -245,8 +250,10 @@ class Cdo(object):
         stdout = subprocess.PIPE)
     retvals = proc.communicate()
 
-    withs     = list(re.findall('(with|Features): (.*)',retvals[1])[0])[1].split(' ')
-    libs      = re.findall('(\w+) library version : (\d+\.\S+) ',retvals[1])
+    withs     = list(re.findall('(with|Features): (.*)',
+                     retvals[1].decode("utf-8"))[0])[1].split(' ')
+    libs      = re.findall('(\w+) library version : (\d+\.\S+) ',
+                           retvals[1].decode("utf-8"))
     libraries = dict({})
     for w in withs:
       libraries[w.lower()] = True
@@ -280,7 +287,7 @@ class Cdo(object):
           stderr = subprocess.PIPE,
           stdout = subprocess.PIPE)
       retvals = proc.communicate()
-      print retvals
+      print(retvals)
 
   def setCdo(self,value):
     self.CDO       = value
@@ -294,12 +301,12 @@ class Cdo(object):
 
   def libsVersion(self,lib):
     if not self.hasLib(lib):
-      raise AttributeError, "Cdo does NOT have support for '#{lib}'"
+      raise AttributeError("Cdo does NOT have support for '#{lib}'")
     else:
       if True != self.libs[lib]:
         return self.libs[lib]
       else:
-        print "No version information available about '" + lib + "'"
+        print("No version information available about '" + lib + "'")
         return False
 
   #==================================================================
@@ -312,12 +319,12 @@ class Cdo(object):
     # return CDO's version
     proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
     ret  = proc.communicate()
-    cdo_help   = ret[1]
+    cdo_help   = ret[1].decode("utf-8")
     match = re.search("CDO version (\d.*), Copyright",cdo_help)
     return match.group(1)
 
   def boundaryLevels(self,**kwargs):
-    ilevels         = map(float,self.showlevel(input = kwargs['input'])[0].split())
+    ilevels         = list(map(float,self.showlevel(input = kwargs['input'])[0].split()))
     bound_levels    = []
     bound_levels.insert(0,0)
     for i in range(1,len(ilevels)+1):
@@ -342,7 +349,7 @@ class Cdo(object):
     try:
         fileObj =  self.cdf(iFile, mode='r')
     except:
-      print "Could not import data from file '%s'" % iFile
+      print("Could not import data from file '%s'" % iFile)
       raise
     else:
         return fileObj
@@ -352,7 +359,7 @@ class Cdo(object):
     try:
       fileObj =  self.cdf(iFile, mode='r+')
     except:
-      print "Could not import data from file '%s'" % iFile
+      print("Could not import data from file '%s'" % iFile)
       raise
     else:
         return fileObj
@@ -364,7 +371,7 @@ class Cdo(object):
       # return the data array
       return filehandle.variables[varname][:].copy()
     except KeyError:
-      print "Cannot find variable '%s'" % varname
+      print("Cannot find variable '%s'" % varname)
       return False
 
   def readMaArray(self,iFile,varname):
@@ -378,7 +385,7 @@ class Cdo(object):
     try:
       import numpy as np
     except:
-      raise ImportError,"numpy is required to return masked arrays."
+      raise ImportError("numpy is required to return masked arrays.")
 
     if hasattr(fileObj.variables[varname],'_FillValue'):
       #return masked array

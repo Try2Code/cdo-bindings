@@ -1,8 +1,9 @@
+from __future__ import print_function
 import unittest,os,tempfile,sys,glob
 from stat import *
 from cdo import *
 import numpy as np
-import pylab as pl
+from matplotlib import pylab as pl
 
 # add local dir to search path
 
@@ -86,7 +87,7 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo(cdfMod=CDF_MOD)
         levels = cdo.showlevel(input = "-stdatm,0")
         info   = cdo.sinfo(input = "-stdatm,0")
-        self.assertEqual([0,0],map(float,levels))
+        self.assertEqual([0,0],list(map(float,levels)))
         self.assertEqual("File format: GRIB",info[0])
 
         values = cdo.outputkey("value",input="-stdatm,0")
@@ -122,7 +123,7 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
         diffv = cdo.diffn(input = "-random,r1x1 -random,r1x1")
-        print diffv
+        print(diffv)
         self.assertEqual(diffv[1].split(' ')[-1],"random")
         self.assertEqual(diffv[1].split(' ')[-3],"0.53060")
         diff  = cdo.diff(input = "-random,r1x1 -random,r1x1")
@@ -475,13 +476,13 @@ class CdoTest(unittest.TestCase):
             self.assertEqual('clon clat',varOut.coordinates)
         def testCall(self):
             cdo = Cdo()
-            print cdo.sinfov(input='/home/ram/data/icon/oce.nc')
+            print(cdo.sinfov(input='/home/ram/data/icon/oce.nc'))
         def test_readCdf(self):
             cdo = Cdo()
             input= "-settunits,days  -setyear,2000 -for,1,4"
             cdfFile = cdo.copy(options="-f nc",input=input)
             cdf     = cdo.readCdf(cdfFile)
-            self.assertEqual(['lat','lon','for','time'],cdf.variables.keys())
+            self.assertEqual(['lat','lon','for','time'],list(cdf.variables.keys()))
 
         def testTmp(self):
             cdo = Cdo()
