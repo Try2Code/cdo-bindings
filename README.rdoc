@@ -68,9 +68,14 @@ The Ruby module can be used directly after loading it. For python an instance ha
    temperatures = Cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
    temperatures = cdo.fldmin(input = ifile,returnArray = True).variables['T'][:] (py, version < 1.2.0)
    temperatures = Cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    (rb, version >= 1.2.0)
-   temperatures = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]  (py, version >= 1.2.0)
+   temperatures = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]   (py, version >= 1.2.0)*
    temperatures = Cdo.fldmin(:input => ifile,:returnArray => 'T')                (rb, version >= 1.2.0)
    temperatures = cdo.fldmin(input = ifile,returnArray = 'T')                   (py, version >= 1.2.0)
+
+*) If you use scipy >= 0.14 as netcdf backend, you have use following code instead:
+
+   cdf = cdo.fldmin(input = ifile,returnCdf = True)
+   temperatures = cdf.variables['T'][:]
 
 More examples can be found in test/cdo-examples.rb and on the homepage: https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D
 
