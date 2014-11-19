@@ -10,7 +10,10 @@ from matplotlib import pylab as pl
 if 'CDF_MOD' in os.environ:
   CDF_MOD = os.environ['CDF_MOD']
 else:
-  CDF_MOD = 'scipy'
+  CDF_MOD = 'netcdf4'
+
+HOSTNAME = 'nearly'
+DATA_DIR = os.environ.get('HOME')+'/local/data'
 
 def plot(ary,ofile=False,title=None):
     pl.grid(True)
@@ -417,7 +420,7 @@ class CdoTest(unittest.TestCase):
 
     def test_fillmiss(self):
       cdo = Cdo(cdfMod='netcdf4')
-      if 'thingol' == os.popen('hostname').read().strip():
+      if HOSTNAME == os.popen('hostname').read().strip():
         if 'CDO' in os.environ:
           cdo.setCdo(os.environ.get('CDO'))
 
@@ -463,10 +466,10 @@ class CdoTest(unittest.TestCase):
             self.assertEqual(b'clon clat',varOut.coordinates)
 
 
-    if 'thingol' == os.popen('hostname').read().strip():
+    if HOSTNAME == os.popen('hostname').read().strip():
         def test_icon_coords(self):
             cdo = Cdo()
-            ifile = os.environ.get('HOME')+'/data/icon/oce_AquaAtlanticBoxACC.nc'
+            ifile = DATA_DIR +'/icon/oce_AquaAtlanticBoxACC.nc'
             ivar  = 't_acc'
             varIn = cdo.readCdf(ifile)
             varIn = varIn.variables[ivar]
