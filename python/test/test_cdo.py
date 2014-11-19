@@ -481,7 +481,7 @@ class CdoTest(unittest.TestCase):
             self.assertEqual(b'clon clat',varOut.coordinates)
         def testCall(self):
             cdo = Cdo()
-            print(cdo.sinfov(input='/home/ram/data/icon/oce.nc'))
+            print(cdo.sinfov(input=DATA_DIR+'/icon/oce.nc'))
         def test_readCdf(self):
             cdo = Cdo()
             input= "-settunits,days  -setyear,2000 -for,1,4"
