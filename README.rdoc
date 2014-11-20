@@ -92,15 +92,16 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
    - return arrays/lists of output files, which are created by split* operators
      suggestion from Karl-Hermann Wieners
    
-* 1.3
-   - require ruby-2.0
+* 1.3 (upcomming)
+   - require ruby-2.*
    - support object interface in the ruby version (easy setup of options during initializaion, thread safety)
-   - allow environment variables set at (1) each operator call or (2) cdo object initialization or (3) external JSON file
+   - allow environment variables set with external JSON file
 
-* 1.2.4 (upcoming)
+* 1.2.4
    - support python3: Thanks to @jhamman
    - bugfix for scipy: Thanks to @martinclaus
    - docu fixes: Thanks to @guziy
+   - allow environment setting via call and object construction (see test_env in test_cdo.py)
 
 * 1.2.3
    - bugfix release: adjust library/feature check to latest cdo-1.6.2  release
