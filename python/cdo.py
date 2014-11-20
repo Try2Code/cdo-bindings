@@ -17,7 +17,7 @@ except ImportError:
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-CDF_MOD_SCIPY = "scipy"
+CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
 
 def auto_doc(tool, cdo_self):
@@ -45,7 +45,7 @@ class Cdo(object):
                returnCdf=False,
                returnNoneOnError=False,
                forceOutput=True,
-               cdfMod=CDF_MOD_SCIPY,
+               cdfMod=CDF_MOD_NETCDF4,
                env={},
                debug=False):
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
@@ -355,7 +355,7 @@ class Cdo(object):
         return fileObj
 
   def openCdf(self,iFile):
-    """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:scipy)"""
+    """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:netcdf4)"""
     try:
       fileObj =  self.cdf(iFile, mode='r+')
     except:
