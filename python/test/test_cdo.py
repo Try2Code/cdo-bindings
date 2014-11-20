@@ -505,14 +505,13 @@ class CdoTest(unittest.TestCase):
             self.assertEqual(tempfilesStart,tempfilesEnd)
         def test_readArray(self):
             cdo = Cdo()
-            ifile = '/home/ram/data/examples/EH5_AMIP_1_TSURF_1991-1995.nc'
-            self.assertEqual((10, 96, 192),
-                cdo.readArray(cdo.seltimestep('1/10',
-                  input=ifile),
-                  'tsurf').shape)
+            ifile = cdo.enlarge('r44x35',
+                                input=' -stdatm,0,100,1000',
+                                options='-f nc')
+            self.assertEqual((3,35,44), cdo.readArray(ifile, 'T').shape)
 
         def test_phc(self):
-           ifile = '/home/ram/data/icon/input/phc.nc'
+           ifile = DATA_DIR+'/icon/phc.nc'
            cdo = Cdo(cdfMod=CDF_MOD)
            cdo.debug = True
            #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
@@ -536,3 +535,4 @@ if __name__ == '__main__':
 #   unittest.TextTestRunner(verbosity=2).run(suite)
 
 # vim:sw=2
+# vim:fdm=syntax
