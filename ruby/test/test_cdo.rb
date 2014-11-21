@@ -1,10 +1,10 @@
 $:.unshift File.join(File.dirname(__FILE__),"..","lib")
-require 'test/unit/assertions'
+
+require 'minitest/autorun'
 require 'cdo'
 require 'unifiedPlot'
 require 'pp'
 
-include Test::Unit::Assertions
 
 #===============================================================================
 def rm(files); files.each {|f| FileUtils.rm(f) if File.exists?(f)};end
