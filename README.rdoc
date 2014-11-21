@@ -63,6 +63,13 @@ The Ruby module can be used directly after loading it. For python an instance ha
    Cdo.copy(:input => ifile, :output => ofile,:options => "-f nc4") (ruby)
    cdo.copy(input = ifile, output = ofile,options = "-f nc4")     (python)
 
+* Set environment variables
+
+   Cdo.splitname(:input => ifile.join(' '), :output => 'splitTag',:env {'CDO_FILE_SUFFIX' => '.nc'}) (ruby)
+   or Cdo.env = {'CDO_FILE_SUFFIX' => '.nc'}
+   cdo.splitname(input = ' '.join(ifiles) ,  output =  'splitTag', env={"CDO_FILE_SUFFIX": ".nc"})   (python)
+   or Cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
+
 * Return multi-dimension arrrays
 
    temperatures = Cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
