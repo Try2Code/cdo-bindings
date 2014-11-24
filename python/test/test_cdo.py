@@ -418,6 +418,14 @@ class CdoTest(unittest.TestCase):
         pl.show()
         rand = cdo.setname('v',input = '-random,r5x5 ', options = ' -f nc',output = '/tmp/rand.nc')
 
+    def test_cdf_mods(self):
+        cdo = Cdo(cdfMod=CDF_MOD)
+        if 'CDF_MOD' in os.environ:
+          self.assertEqual(os.environ['CDF_MOD'],cdo.cdfMod)
+        else:
+          self.assertEqual('netcdf4',cdo.cdfMod)
+
+
     def test_fillmiss(self):
       cdo = Cdo(cdfMod='netcdf4')
       if HOSTNAME == os.popen('hostname').read().strip():
@@ -465,25 +473,24 @@ class CdoTest(unittest.TestCase):
             varOut = varOut.variables[ivar]
             self.assertEqual(b'clon clat',varOut.coordinates)
 
-
     if HOSTNAME == os.popen('hostname').read().strip():
         def test_icon_coords(self):
-            cdo = Cdo()
+            cdo = Cdo(cdfMod=CDF_MOD)
             ifile = DATA_DIR +'/icon/oce_AquaAtlanticBoxACC.nc'
             ivar  = 't_acc'
             varIn = cdo.readCdf(ifile)
             varIn = varIn.variables[ivar]
-            self.assertEqual(b'clon clat',varIn.coordinates)
-            print(varIn.coordinates)
+            self.assertEqual('clon clat',varIn.coordinates)
+
 
             varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
             varOut = varOut.variables[ivar]
-            self.assertEqual(b'clon clat',varOut.coordinates)
+            self.assertEqual('clon clat',varOut.coordinates)
         def testCall(self):
-            cdo = Cdo()
+            cdo = Cdo(cdfMod=CDF_MOD)
             print(cdo.sinfov(input=DATA_DIR+'/icon/oce.nc'))
         def test_readCdf(self):
-            cdo = Cdo()
+            cdo = Cdo(cdfMod=CDF_MOD)
             input= "-settunits,days  -setyear,2000 -for,1,4"
             cdfFile = cdo.copy(options="-f nc",input=input)
             cdf     = cdo.readCdf(cdfFile)
@@ -491,7 +498,7 @@ class CdoTest(unittest.TestCase):
             self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
 
         def testTmp(self):
-            cdo = Cdo()
+            cdo = Cdo(cdfMod=CDF_MOD)
             import glob
             tempfilesStart = glob.glob('/tmp/cdoPy*')
             tempfilesStart.sort()
@@ -504,7 +511,7 @@ class CdoTest(unittest.TestCase):
             tempfilesEnd.sort()
             self.assertEqual(tempfilesStart,tempfilesEnd)
         def test_readArray(self):
-            cdo = Cdo()
+            cdo = Cdo(cdfMod=CDF_MOD)
             ifile = cdo.enlarge('r44x35',
                                 input=' -stdatm,0,100,1000',
                                 options='-f nc')
