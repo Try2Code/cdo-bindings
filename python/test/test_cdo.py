@@ -467,11 +467,16 @@ class CdoTest(unittest.TestCase):
             ivar  = 'ifs2icon_cell_grid'
             varIn = cdo.readCdf(ifile)
             varIn = varIn.variables[ivar]
-            self.assertEqual(b'clon clat',varIn.coordinates)
+            if ('scipy' == cdo.cdfMod ):
+              expected = b'clon clat'
+            else:
+              expected =  'clon clat'
+
+            self.assertEqual(expected,varIn.coordinates)
 
             varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
             varOut = varOut.variables[ivar]
-            self.assertEqual(b'clon clat',varOut.coordinates)
+            self.assertEqual(expected,varOut.coordinates)
 
     if HOSTNAME == os.popen('hostname').read().strip():
         def test_icon_coords(self):
@@ -480,12 +485,16 @@ class CdoTest(unittest.TestCase):
             ivar  = 't_acc'
             varIn = cdo.readCdf(ifile)
             varIn = varIn.variables[ivar]
-            self.assertEqual('clon clat',varIn.coordinates)
+            if ('scipy' == cdo.cdfMod ):
+              expected = b'clon clat'
+            else:
+              expected =  'clon clat'
+            self.assertEqual(expected,varIn.coordinates)
 
 
             varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
             varOut = varOut.variables[ivar]
-            self.assertEqual('clon clat',varOut.coordinates)
+            self.assertEqual(expected,varOut.coordinates)
         def testCall(self):
             cdo = Cdo(cdfMod=CDF_MOD)
             print(cdo.sinfov(input=DATA_DIR+'/icon/oce.nc'))
