@@ -459,24 +459,23 @@ class CdoTest(unittest.TestCase):
         plot(arFm1s,title='fillmiss1s')#ofile='fmFm2.svg')
         #        os.system("convert +append %s %s %s %s fm_all.png "%('fm_org.png','fm_wmr.png','fm_fm.png','fm_fm1s.png
 
-    if os.popen('hostname -d').read().strip() == 'zmaw.de' or os.popen('hostname -d').read().strip() == 'mpi.zmaw.de':
-        def test_keep_coordinates(self):
-            #cdo = Cdo(cdfMod='netcdf4')
-            cdo = Cdo()
-            ifile = '/pool/data/ICON/ocean_data/ocean_grid/iconR2B02-ocean_etopo40_planet.nc'
-            ivar  = 'ifs2icon_cell_grid'
-            varIn = cdo.readCdf(ifile)
-            varIn = varIn.variables[ivar]
-            if ('scipy' == cdo.cdfMod ):
-              expected = b'clon clat'
-            else:
-              expected =  'clon clat'
+    def test_keep_coordinates(self):
+        cdo = Cdo(cdfMod=CDF_MOD)
+        ifile = '/pool/data/ICON/ocean_data/ocean_grid/iconR2B02-ocean_etopo40_planet.nc'
+        if (os.path.isfile(ifile)):
+          ivar  = 'ifs2icon_cell_grid'
+          varIn = cdo.readCdf(ifile)
+          varIn = varIn.variables[ivar]
+          if ('scipy' == cdo.cdfMod ):
+            expected = b'clon clat'
+          else:
+            expected =  'clon clat'
 
-            self.assertEqual(expected,varIn.coordinates)
+          self.assertEqual(expected,varIn.coordinates)
 
-            varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
-            varOut = varOut.variables[ivar]
-            self.assertEqual(expected,varOut.coordinates)
+          varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
+          varOut = varOut.variables[ivar]
+          self.assertEqual(expected,varOut.coordinates)
 
     if HOSTNAME == os.popen('hostname').read().strip():
         def test_icon_coords(self):
