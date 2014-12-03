@@ -100,11 +100,11 @@ class CdoTest(unittest.TestCase):
         self.assertEqual([0,0],list(map(float,levels)))
         self.assertEqual("GRIB",info[0].split(' ')[-1])
 
-        values = cdo.outputkey("value",input="-stdatm,0")
+        values = cdo.outputkey("value",input="-stdatm,0")[1::]
         self.assertEqual(["1013.25", "288"],values)
-        values = cdo.outputkey("value",input="-stdatm,0,10000")
+        values = cdo.outputkey("value",input="-stdatm,0,10000")[1::]
         self.assertEqual(["1013.25", "271.913", "288", "240.591"],values)
-        values = cdo.outputkey("level",input="-stdatm,0,10000")
+        values = cdo.outputkey("level",input="-stdatm,0,10000")[1::]
         self.assertEqual(["0", "10000","0", "10000"],values)
 
     def test_bndLevels(self):
