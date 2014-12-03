@@ -19,6 +19,7 @@ except ImportError:
 
 CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
+CDO_PY_VERSION  = "1.2.4"
 
 def auto_doc(tool, cdo_self):
     """Generate the __doc__ string of the decorated function by calling the cdo help command"""
@@ -396,6 +397,8 @@ class Cdo(object):
 
     return retval
 
+  def __version__(self):
+    return CDO_PY_VERSION
 # Helper module for easy temp file handling
 class MyTempfile(object):
 
