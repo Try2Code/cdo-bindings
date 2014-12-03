@@ -1,7 +1,7 @@
 from __future__ import print_function
 import unittest,os,tempfile,sys,glob
 from stat import *
-from cdo import *
+from testcdo import *
 import numpy as np
 from matplotlib import pylab as pl
 
@@ -37,6 +37,10 @@ def rm(files):
       os.system("rm "+f)
 
 class CdoTest(unittest.TestCase):
+
+    def testVersion(self):
+        cdo = Cdo()
+        print(cdo.__version__())
 
     def testCDO(self):
         cdo = Cdo(cdfMod=CDF_MOD)
