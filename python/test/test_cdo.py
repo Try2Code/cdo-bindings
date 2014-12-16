@@ -38,9 +38,10 @@ def rm(files):
 
 class CdoTest(unittest.TestCase):
 
-    def testVersion(self):
+    def testVersions(self):
         cdo = Cdo()
-        print(cdo.__version__())
+        self.assertEqual('1.2.4',cdo.__version__())
+        self.assertEqual('1.6.7',cdo.version())
 
     def testCDO(self):
         cdo = Cdo(cdfMod=CDF_MOD)

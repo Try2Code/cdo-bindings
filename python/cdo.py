@@ -313,9 +313,6 @@ class Cdo(object):
   #==================================================================
   # Addional operators:
   #------------------------------------------------------------------
-  def module_version(self):
-    return '1.2.3'
-
   def version(self):
     # return CDO's version
     proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
