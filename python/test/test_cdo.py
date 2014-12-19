@@ -15,7 +15,12 @@ else:
 HOSTNAME = 'nearly'
 DATA_DIR = os.environ.get('HOME')+'/local/data'
 
+SHOW = 'SHOW' in os.environ
+
 def plot(ary,ofile=False,title=None):
+    if not SHOW:
+      return
+
     pl.grid(True)
 
     if not None == title:
@@ -64,10 +69,6 @@ class CdoTest(unittest.TestCase):
         self.assertTrue("for" in cdo.operators)
         self.assertTrue("mask" in cdo.operators)
         self.assertTrue("studentt" in cdo.operators)
-
-    def test_mod_version(self):
-        cdo = Cdo(cdfMod=CDF_MOD)
-        self.assertEqual('1.2.3',cdo.module_version())
 
     def test_getOperators(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -409,18 +410,15 @@ class CdoTest(unittest.TestCase):
         cdo.debug = True
         bathy = cdo.setrtomiss(0,10000,
             input = cdo.topo(options='-f nc'),returnMaArray='topo')
-        pl.imshow(bathy,origin='lower')
-        pl.show()
+        plot(bathy)
         oro = cdo.setrtomiss(-10000,0,
             input = cdo.topo(options='-f nc'),returnMaArray='topo')
-        pl.imshow(oro,origin='lower')
-        pl.show()
+        plot(oro)
         random = cdo.setname('test_maArray',
                              input = "-setrtomiss,0.4,0.8 -random,r180x90 ",
                              returnMaArray='test_maArray',
                              options = "-f nc")
-        pl.imshow(random,origin='lower')
-        pl.show()
+        plot(random)
         rand = cdo.setname('v',input = '-random,r5x5 ', options = ' -f nc',output = '/tmp/rand.nc')
 
     def test_cdf_mods(self):
