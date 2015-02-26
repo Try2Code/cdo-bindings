@@ -104,17 +104,13 @@ class Cdo(object):
       print('CALL:'+' '.join(cmd))
       print('# DEBUG =====================================================================')
 
-    if {} != self.env:
-      proc = subprocess.Popen(' '.join(cmd),
-                              shell  = True,
-                              stderr = subprocess.PIPE,
-                              stdout = subprocess.PIPE,
-                              env    = self.env)
-    else:
-      proc = subprocess.Popen(' '.join(cmd),
-                              shell  = True,
-                              stderr = subprocess.PIPE,
-                              stdout = subprocess.PIPE)
+    for k,v in self.env.iteritems():
+      os.environ[k] = v
+
+    proc = subprocess.Popen(' '.join(cmd),
+                            shell  = True,
+                            stderr = subprocess.PIPE,
+                            stdout = subprocess.PIPE)
 
     retvals = proc.communicate()
 
@@ -181,7 +177,9 @@ class Cdo(object):
 
           cmd.append(kwargs["output"])
           if kwargs.__contains__("env"):
-            self.env = kwargs["env"]
+            for k,v in kwargs["env"].iteritems():
+              os.environ[k] = v
+              print({k : v})
 
           retvals = self.call(cmd)
           if self.hasError(method_name,cmd,retvals):
