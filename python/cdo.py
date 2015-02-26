@@ -179,7 +179,7 @@ class Cdo(object):
           if kwargs.__contains__("env"):
             for k,v in kwargs["env"].iteritems():
               os.environ[k] = v
-              print({k : v})
+              #self.env[k] = v
 
           retvals = self.call(cmd)
           if self.hasError(method_name,cmd,retvals):
