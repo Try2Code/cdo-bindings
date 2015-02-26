@@ -85,7 +85,7 @@ class Cdo(object):
     self.forceOutput            = forceOutput
     self.cdfMod                 = cdfMod.lower()
     self.env                    = env
-    self.debug                  = debug
+    self.debug                  = True if 'DEBUG' in os.environ else debug
     self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
     self.libs        = self.getSupportedLibs()
@@ -104,12 +104,20 @@ class Cdo(object):
       print('CALL:'+' '.join(cmd))
       print('# DEBUG =====================================================================')
 
-    proc = subprocess.Popen(' '.join(cmd),
-                            shell  = True,
-                            stderr = subprocess.PIPE,
-                            stdout = subprocess.PIPE,
-                            env    = self.env)
+    if {} != self.env:
+      proc = subprocess.Popen(' '.join(cmd),
+                              shell  = True,
+                              stderr = subprocess.PIPE,
+                              stdout = subprocess.PIPE,
+                              env    = self.env)
+    else:
+      proc = subprocess.Popen(' '.join(cmd),
+                              shell  = True,
+                              stderr = subprocess.PIPE,
+                              stdout = subprocess.PIPE)
+
     retvals = proc.communicate()
+
     return {"stdout"     : retvals[0].decode("utf-8")
            ,"stderr"     : retvals[1].decode("utf-8")
            ,"returncode" : proc.returncode}
