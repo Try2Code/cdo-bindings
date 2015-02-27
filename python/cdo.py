@@ -104,7 +104,7 @@ class Cdo(object):
       print('CALL:'+' '.join(cmd))
       print('# DEBUG =====================================================================')
 
-    for k,v in self.env.iteritems():
+    for k,v in self.env.items():
       os.environ[k] = v
 
     proc = subprocess.Popen(' '.join(cmd),
@@ -177,7 +177,7 @@ class Cdo(object):
 
           cmd.append(kwargs["output"])
           if kwargs.__contains__("env"):
-            for k,v in kwargs["env"].iteritems():
+            for k,v in kwargs["env"].items():
               os.environ[k] = v
               #self.env[k] = v
 
