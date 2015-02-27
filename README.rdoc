@@ -104,6 +104,9 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
    - support object interface in the ruby version (easy setup of options during initializaion, thread safety)
    - allow environment variables set with external JSON file
 
+* 1.2.5
+   - bugfix for environment handling (Thanks philipp) [python-only]
+
 * 1.2.4
    - support python3: Thanks to @jhamman
    - bugfix for scipy: Thanks to @martinclaus
