@@ -1,5 +1,5 @@
 from __future__ import print_function
-import unittest,os,tempfile,sys,glob
+import unittest,os,tempfile,sys,glob,subprocess
 from stat import *
 from testcdo import *
 import numpy as np
@@ -35,6 +35,7 @@ def plot(ary,ofile=False,title=None):
       pl.show()
     else:
       pl.savefig(ofile,bbox_inches='tight',dpi=200)
+      subprocess.Popen('sxiv {0}.{1} &'.format(ofile,'png'), shell=True, stderr=subprocess.STDOUT)
 
 def rm(files):
   for f in files:
@@ -546,8 +547,6 @@ class CdoTest(unittest.TestCase):
            plot(sfmo[0,:,:],ofile='fm',title='fm')
            sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss2 -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
            plot(sfm[0,:,:],ofile='fm2',title='fm2')
-           for im in ['org.png','fm2.png','fm.png']:
-             os.system("sxiv "+im+" &")
 
             
 
