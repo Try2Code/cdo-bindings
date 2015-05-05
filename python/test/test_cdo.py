@@ -45,8 +45,8 @@ class CdoTest(unittest.TestCase):
 
     def testVersions(self):
         cdo = Cdo()
-        self.assertEqual('1.2.4',cdo.__version__())
-        self.assertEqual('1.6.7',cdo.version())
+        self.assertEqual('1.2.6',cdo.__version__())
+        self.assertEqual('1.6.9',cdo.version())
 
     def testCDO(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -338,9 +338,14 @@ class CdoTest(unittest.TestCase):
     def test_libs(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
+        print(cdo.libs)
         self.assertTrue(cdo.hasLib("cdi"),"CDI support missing")
+        self.assertTrue(cdo.hasLib("extra"),"netcdf4 support missing")
+        self.assertTrue(cdo.hasLib("sz"),"netcdf4 support missing")
         self.assertTrue(cdo.hasLib("nc4"),"netcdf4 support missing")
         self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
+        self.assertTrue(cdo.hasLib("udunits2"),"netcdf support missing")
+        self.assertFalse(cdo.hasLib("udunits"),'boost is not a CDO dependency')
         self.assertFalse(cdo.hasLib("boost"),'boost is not a CDO dependency')
         self.assertRaises(AttributeError, cdo.libsVersion,"foo")
 

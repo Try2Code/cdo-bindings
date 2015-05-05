@@ -19,7 +19,7 @@ except ImportError:
 
 CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
-CDO_PY_VERSION  = "1.2.4"
+CDO_PY_VERSION  = "1.2.6"
 
 def auto_doc(tool, cdo_self):
     """Generate the __doc__ string of the decorated function by calling the cdo help command"""
@@ -215,10 +215,12 @@ class Cdo(object):
         self.loadCdf()
         return self.cdf
     else:
-      # If the method isn't in our dictionary, act normal.
-      print("#=====================================================")
-      print(("Cannot find method:" + method_name))
-      raise AttributeError("Unknown method '" + method_name +"'!")
+      # given method might match part of know operators: autocompletion
+      if (len(list(filter(lambda x : re.search(method_name,x),operators))) > 0):
+          print('')
+      else:
+          # If the method isn't in our dictionary, act normal.
+          raise AttributeError("Unknown method '" + method_name +"'!")
 
   def getOperators(self):
     import os
@@ -259,6 +261,17 @@ class Cdo(object):
 
     withs     = list(re.findall('(with|Features): (.*)',
                      retvals[1].decode("utf-8"))[0])[1].split(' ')
+    # do an additional split, if the entry has a / and collect everything into a flatt list
+    withs     =  list(map(lambda x : x.split('/') if re.search('\/',x) else x, withs))
+    allWiths  = []
+    for _withs in withs:
+        if isinstance(_withs,list):
+            for __withs in _withs:
+                allWiths.append(__withs)
+        else:
+            allWiths.append(_withs)
+    withs     = allWiths
+
     libs      = re.findall('(\w+) library version : (\d+\.\S+) ',
                            retvals[1].decode("utf-8"))
     libraries = dict({})
@@ -304,7 +317,7 @@ class Cdo(object):
     return self.CDO
 
   def hasLib(self,lib):
-    return lib in self.libs
+    return (lib in self.libs.keys())
 
   def libsVersion(self,lib):
     if not self.hasLib(lib):
