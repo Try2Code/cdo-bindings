@@ -216,9 +216,7 @@ class Cdo(object):
         return self.cdf
     else:
       # given method might match part of know operators: autocompletion
-      if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) > 0):
-          print('')
-      else:
+      if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) == 0):
           # If the method isn't in our dictionary, act normal.
           raise AttributeError("Unknown method '" + method_name +"'!")
 
