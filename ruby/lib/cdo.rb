@@ -1,5 +1,7 @@
 require 'pp'
 require 'open3'
+require 'logger'
+require 'stringio'
 
 # Copyright (C) 2011-2013 Ralf Mueller, ralf.mueller@zmaw.de
 # See COPYING file for copying and redistribution conditions.
@@ -17,7 +19,8 @@ require 'open3'
 # CDO calling mechnism
 module Cdo
 
-  VERSION = "1.2.4rc1"
+  VERSION = "1.2.5"
+  @@file  = StringIO.new
 
   State = {
     :debug       => false,
@@ -25,8 +28,13 @@ module Cdo
     :operators   => [],
     :forceOutput => true,
     :env         => {},
+    :log         => false,
+    :logger      => Logger.new(@@file),
   }
   State[:debug] = ENV.has_key?('DEBUG')
+  State[:logger].formatter = proc do |serverity, time, progname, msg|
+    msg
+  end
 
   @@CDO = ENV['CDO'].nil? ? 'cdo' : ENV['CDO']
 
@@ -117,6 +125,7 @@ module Cdo
     case ofile
     when $stdout
       retvals = Cdo.call(cmd)
+      State[:logger].info(cmd+"\n") if State[:log]
       unless hasError(cmd,retvals)
         return retvals[:stdout].split($/).map {|l| l.chomp.strip}
       else
@@ -128,6 +137,7 @@ module Cdo
         ofile = MyTempfile.path if ofile.nil?
         cmd << "#{ofile}"
         retvals = call(cmd)
+        State[:logger].info(cmd+"\n") if State[:log]
         if hasError(cmd,retvals)
           raise ArgumentError,"CDO did NOT run successfully!"
         end
@@ -203,17 +213,21 @@ module Cdo
   def Cdo.debug=(value)
     State[:debug] = value
   end
-
   def Cdo.debug
     State[:debug]
   end
-
   def Cdo.forceOutput=(value)
     State[:forceOutput] = value
   end
-
   def Cdo.forceOutput
     State[:forceOutput]
+  end
+  def Cdo.log=(value)
+    State[:log] = value
+  end
+
+  def Cdo.log
+    State[:log]
   end
 
   def Cdo.version
@@ -295,6 +309,11 @@ module Cdo
         return false
       end
     end
+  end
+
+  def Cdo.showlog
+    @@file.rewind
+    puts @@file.read
   end
 
   #==================================================================

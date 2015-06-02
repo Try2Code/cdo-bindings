@@ -429,6 +429,11 @@ class TestCdo < Minitest::Test
     assert_equal(ofiles,Dir.glob(oTag+'*').sort)
     rm(ofiles)
   end
+  def test_log
+    Cdo.log = true
+    Cdo.topo
+    Cdo.showlog
+  end
 end
 
 #  # Calling simple operators

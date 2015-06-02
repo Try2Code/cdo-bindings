@@ -109,6 +109,7 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 
 * 1.2.5
    - bugfix for environment handling (Thanks philipp) [python-only]
+   - add logging to ruby version
 
 * 1.2.4
    - support python3: Thanks to @jhamman
