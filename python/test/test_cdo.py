@@ -12,7 +12,7 @@ if 'CDF_MOD' in os.environ:
 else:
   CDF_MOD = 'netcdf4'
 
-HOSTNAME = 'nearly'
+HOSTNAME = 'luthien'
 DATA_DIR = os.environ.get('HOME')+'/local/data'
 
 SHOW = 'SHOW' in os.environ
@@ -437,36 +437,40 @@ class CdoTest(unittest.TestCase):
 
     def test_fillmiss(self):
       cdo = Cdo(cdfMod='netcdf4')
-      if HOSTNAME == os.popen('hostname').read().strip():
-        if 'CDO' in os.environ:
-          cdo.setCdo(os.environ.get('CDO'))
+      if 'CDO' in os.environ:
+        cdo.setCdo(os.environ.get('CDO'))
 
-        cdo.debug = True
-        rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
-        cdf  = cdo.openCdf(rand)
-        var  = cdf.variables['v']
-        vals = var[:]
-        ni,nj = np.shape(vals)
-        for i in range(0,ni):
-          for j in range(0,nj):
-            vals[i,j] = np.abs((ni/2-i)**2 + (nj/2-j)**2)
+      cdo.debug = True
+      rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
+      cdf  = cdo.openCdf(rand)
+      var  = cdf.variables['v']
+      vals = var[:]
+      ni,nj = np.shape(vals)
+      for i in range(0,ni):
+        for j in range(0,nj):
+          vals[i,j] = np.abs((ni/2-i)**2 + (nj/2-j)**2)
 
-        vals = vals/np.abs(vals).max()
-        var[:] = vals
-        cdf.close()
+      vals = vals/np.abs(vals).max()
+      var[:] = vals
+      cdf.close()
 
-        missRange = '0.25,0.85'
-        withMissRange = 'withMissRange.nc'
-        arOrg = cdo.copy(input = rand,returnMaArray = 'v')
-        arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
-        arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
-        arFm1s= cdo.fillmiss2(2,        input = withMissRange,returnMaArray = 'v',output='foo.nc')
+      missRange = '0.25,0.85'
+      withMissRange = 'withMissRange.nc'
+      arOrg = cdo.copy(input = rand,returnMaArray = 'v')
+      arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
+      arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
+      arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v',output='foo.nc')
+      if 'setmisstonn' in cdo.operators:
+        arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='foo.nc')
 
-        plot(arOrg,title='org'        )#ofile='fmOrg.svg')
-        plot(arWmr,title='missing'    )#ofile='fmWmr.svg')
-        plot(arFm,title='fillmiss'    )#ofile='fmFm.svg')
-        plot(arFm1s,title='fillmiss1s')#ofile='fmFm2.svg')
-        #        os.system("convert +append %s %s %s %s fm_all.png "%('fm_org.png','fm_wmr.png','fm_fm.png','fm_fm1s.png
+      images = []
+      plot(arOrg,title='org'        , ofile='fmOrg'); images.append('fmOrg.png')
+      plot(arWmr,title='missing'    , ofile='fmWmr'); images.append('fmWmr.png')
+      plot(arFm,title='fillmiss'    )#ofile= 'fmFm'); images.append('fmFm.png')
+      plot(arFm1s,title='fillmiss1s')#ofile='fmFm2'); images.append('fmFm2.png')
+      if 'setmisstonn' in cdo.operators:
+        plot(arM2NN,title='setmisstonn')#, ofile='fmsetMNN'); images.append('fmsetMNN.png')
+#     os.system("convert +append %s fm_all.png "%(' '.join(images)))
 
     def test_keep_coordinates(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -537,16 +541,28 @@ class CdoTest(unittest.TestCase):
         def test_phc(self):
            ifile = DATA_DIR+'/icon/phc.nc'
            cdo = Cdo(cdfMod=CDF_MOD)
+           cdo.setCdo('/home/ram/local/bin/cdo-dev')
            cdo.debug = True
            #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
            #          output=ifile,
            #          options='-O')
-           s = cdo.sellonlatbox(0,30,0,90, input="-chname,SO,s,TempO,t " + ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
-           plot(s[0,:,:],ofile='org',title='org')
-           sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-           plot(sfmo[0,:,:],ofile='fm',title='fm')
-           sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss2 -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-           plot(sfm[0,:,:],ofile='fm2',title='fm2')
+          #s = cdo.sellonlatbox(0,30,0,90, input="-chname,SO,s,TempO,t " + ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
+          #plot(s[0,:,:],ofile='org',title='org')
+          #sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          #plot(sfmo[0,:,:],ofile='fm',title='fm')
+          #sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss2 -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          #plot(sfm[0,:,:],ofile='fm2',title='fm2')
+          #ssetmisstonn = cdo.sellonlatbox(0,30,0,90, input="-setmisstonn -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          #plot(ssetmisstonn[0,:,:],ofile='setmisstonn',title='setmisstonn')
+           #global plot
+           s_global = cdo.chname('SO,s,TempO,t',input=ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
+           plot(s_global[0,:,:],ofile='org_global',title='org_global')
+           sfmo_global = cdo.fillmiss(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+           plot(sfmo_global[0,:,:],ofile='fm_global',title='fm_global')
+           sfm_global = cdo.fillmiss2(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+           plot(sfm_global[0,:,:],ofile='fm2_global',title='fm2_global')
+           ssetmisstonn_global = cdo.setmisstonn(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+           plot(ssetmisstonn_global[0,:,:],ofile='setmisstonn_global',title='setmisstonn_global')
 
             
 

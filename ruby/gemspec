@@ -13,7 +13,7 @@ spec = Gem::Specification.new do |s|
   s.email             = "stark.dreamdetective@gmail.com"
   s.homepage          = "https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D"
   s.license           = "GPLv2"
-  s.required_ruby_version = ">= 2.0"
+  s.required_ruby_version = ">= 1.9"
   s.add_development_dependency('unifiedPlot')
 end
 
