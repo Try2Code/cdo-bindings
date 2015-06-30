@@ -1,5 +1,5 @@
 from __future__ import print_function
-import unittest,os,tempfile,sys,glob,subprocess
+import unittest,os,tempfile,sys,glob,subprocess,multiprocessing
 from stat import *
 from testcdo import *
 import numpy as np
@@ -463,14 +463,16 @@ class CdoTest(unittest.TestCase):
       if 'setmisstonn' in cdo.operators:
         arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='foo.nc')
 
-      images = []
-      plot(arOrg,title='org'        , ofile='fmOrg'); images.append('fmOrg.png')
-      plot(arWmr,title='missing'    , ofile='fmWmr'); images.append('fmWmr.png')
-      plot(arFm,title='fillmiss'    )#ofile= 'fmFm'); images.append('fmFm.png')
-      plot(arFm1s,title='fillmiss1s')#ofile='fmFm2'); images.append('fmFm2.png')
+      pool = multiprocessing.Pool(8)
+      pool.apply_async(plot, (arOrg, ),{"title":'org'      })#ofile='fmOrg')
+      pool.apply_async(plot, (arWmr, ),{"title":'missing'  })#ofile='fmWmr')
+      pool.apply_async(plot, (arFm,  ),{"title":'fillmiss' })#ofile= 'fmFm')
+      pool.apply_async(plot, (arFm1s,),{"title":'fillmiss2'})#ofile='fmFm2')
       if 'setmisstonn' in cdo.operators:
-        plot(arM2NN,title='setmisstonn')#, ofile='fmsetMNN'); images.append('fmsetMNN.png')
-#     os.system("convert +append %s fm_all.png "%(' '.join(images)))
+        pool.apply_async(plot, (arM2NN,), {"title":'setmisstonn'})#, ofile='fmsetMNN')
+
+      pool.close()
+      pool.join()
 
     def test_keep_coordinates(self):
         cdo = Cdo(cdfMod=CDF_MOD)
