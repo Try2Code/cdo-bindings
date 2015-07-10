@@ -492,6 +492,27 @@ class CdoTest(unittest.TestCase):
           varOut = varOut.variables[ivar]
           self.assertEqual(expected,varOut.coordinates)
 
+    def testTmp(self):
+        cdo = Cdo(cdfMod=CDF_MOD)
+        import glob
+        tempDir = tempfile.gettempdir()
+        tempfilesStart = glob.glob('{0}/cdoPy*'.format(tempDir))
+        tempfilesStart.sort()
+        tempfilesEnd   = glob.glob('{0}/cdoPy**'.format(tempDir))
+        tempfilesEnd.sort()
+        self.assertEqual(tempfilesStart,tempfilesEnd)
+
+        self.test_combine()
+        tempfilesEnd = glob.glob('{0}/cdoPy**'.format(tempDir))
+        tempfilesEnd.sort()
+        self.assertEqual(tempfilesStart,tempfilesEnd)
+    def test_readArray(self):
+        cdo = Cdo(cdfMod=CDF_MOD)
+        ifile = cdo.enlarge('r44x35',
+                            input=' -stdatm,0,100,1000',
+                            options='-f nc')
+        self.assertEqual((3,35,44), cdo.readArray(ifile, 'T').shape)
+
     if HOSTNAME == os.popen('hostname').read().strip():
         def test_icon_coords(self):
             cdo = Cdo(cdfMod=CDF_MOD)
@@ -520,25 +541,6 @@ class CdoTest(unittest.TestCase):
 
             self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
 
-        def testTmp(self):
-            cdo = Cdo(cdfMod=CDF_MOD)
-            import glob
-            tempfilesStart = glob.glob('/tmp/cdoPy*')
-            tempfilesStart.sort()
-            tempfilesEnd   = glob.glob('/tmp/cdoPy**')
-            tempfilesEnd.sort()
-            self.assertEqual(tempfilesStart,tempfilesEnd)
-
-            self.test_combine()
-            tempfilesEnd = glob.glob('/tmp/cdoPy**')
-            tempfilesEnd.sort()
-            self.assertEqual(tempfilesStart,tempfilesEnd)
-        def test_readArray(self):
-            cdo = Cdo(cdfMod=CDF_MOD)
-            ifile = cdo.enlarge('r44x35',
-                                input=' -stdatm,0,100,1000',
-                                options='-f nc')
-            self.assertEqual((3,35,44), cdo.readArray(ifile, 'T').shape)
 
         def test_phc(self):
            ifile = DATA_DIR+'/icon/phc.nc'
