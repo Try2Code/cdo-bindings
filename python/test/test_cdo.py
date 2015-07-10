@@ -436,43 +436,43 @@ class CdoTest(unittest.TestCase):
 
 
     def test_fillmiss(self):
-      cdo = Cdo(cdfMod='netcdf4')
-      if 'CDO' in os.environ:
-        cdo.setCdo(os.environ.get('CDO'))
+        cdo = Cdo(cdfMod='netcdf4')
+        if 'CDO' in os.environ:
+          cdo.setCdo(os.environ.get('CDO'))
 
-      cdo.debug = True
-      rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
-      cdf  = cdo.openCdf(rand)
-      var  = cdf.variables['v']
-      vals = var[:]
-      ni,nj = np.shape(vals)
-      for i in range(0,ni):
-        for j in range(0,nj):
-          vals[i,j] = np.abs((ni/2-i)**2 + (nj/2-j)**2)
+        cdo.debug = True
+        rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
+        cdf  = cdo.openCdf(rand)
+        var  = cdf.variables['v']
+        vals = var[:]
+        ni,nj = np.shape(vals)
+        for i in range(0,ni):
+          for j in range(0,nj):
+            vals[i,j] = np.abs((ni/2-i)**2 + (nj/2-j)**2)
 
-      vals = vals/np.abs(vals).max()
-      var[:] = vals
-      cdf.close()
+        vals = vals/np.abs(vals).max()
+        var[:] = vals
+        cdf.close()
 
-      missRange = '0.25,0.85'
-      withMissRange = 'withMissRange.nc'
-      arOrg = cdo.copy(input = rand,returnMaArray = 'v')
-      arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
-      arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
-      arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v',output='foo.nc')
-      if 'setmisstonn' in cdo.operators:
-        arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='foo.nc')
+        missRange = '0.25,0.85'
+        withMissRange = 'withMissRange.nc'
+        arOrg = cdo.copy(input = rand,returnMaArray = 'v')
+        arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
+        arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
+        arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v',output='foo.nc')
+        if 'setmisstonn' in cdo.operators:
+          arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='foo.nc')
 
-      pool = multiprocessing.Pool(8)
-      pool.apply_async(plot, (arOrg, ),{"title":'org'      })#ofile='fmOrg')
-      pool.apply_async(plot, (arWmr, ),{"title":'missing'  })#ofile='fmWmr')
-      pool.apply_async(plot, (arFm,  ),{"title":'fillmiss' })#ofile= 'fmFm')
-      pool.apply_async(plot, (arFm1s,),{"title":'fillmiss2'})#ofile='fmFm2')
-      if 'setmisstonn' in cdo.operators:
-        pool.apply_async(plot, (arM2NN,), {"title":'setmisstonn'})#, ofile='fmsetMNN')
+        pool = multiprocessing.Pool(8)
+        pool.apply_async(plot, (arOrg, ),{"title":'org'      })#ofile='fmOrg')
+        pool.apply_async(plot, (arWmr, ),{"title":'missing'  })#ofile='fmWmr')
+        pool.apply_async(plot, (arFm,  ),{"title":'fillmiss' })#ofile= 'fmFm')
+        pool.apply_async(plot, (arFm1s,),{"title":'fillmiss2'})#ofile='fmFm2')
+        if 'setmisstonn' in cdo.operators:
+          pool.apply_async(plot, (arM2NN,), {"title":'setmisstonn'})#, ofile='fmsetMNN')
 
-      pool.close()
-      pool.join()
+        pool.close()
+        pool.join()
 
     def test_keep_coordinates(self):
         cdo = Cdo(cdfMod=CDF_MOD)
