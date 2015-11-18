@@ -1,33 +1,10 @@
-# Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
-# See COPYING file for copying and redistribution conditions.
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-CDF_MOD_SCIPY   = "scipy"
-CDF_MOD_NETCDF4 = "netcdf4"
-CDO_PY_VERSION  = "1.2.6"
-
-class CDOException <<  Exception
-
-   #def __init__(self, stdout, stderr, returncode):
-   #    super(CDOException, self).__init__()
-   #    self.stdout     = stdout
-   #    self.stderr     = stderr
-   #    self.returncode = returncode
-   #    self.msg        = '(returncode:%s) %s' % (returncode, stderr)
-
-end
+require 'pp'
+require 'fileutils'
 
 class Cdo
 
-  attr_accessor :returnCdf, :forceOutput, :env, :debug
+  attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug
+  attr_reader   :operators
 
   def initialize( returnCdf: false,
 #                 returnNoneOnError: false,
@@ -35,30 +12,6 @@ class Cdo
                   cdfMod: CDF_MOD_NETCDF4,
                   env: {},
                   debug: false) 
-    #
-    # Since cdo-1.5.4 undocumented operators are given with the -h option. For
-    # earlier version, they have to be provided manually
-    @undocumentedOperators = ['anomaly','beta','boxavg','change_e5lsm','change_e5mask',
-        'change_e5slm','chisquare','chvar','cloudlayer','cmd','com','command','complextorect',
-        'covar0','covar0r','daycount','daylogs','del29feb','delday','delete','deltap','deltap_fl',
-        'delvar','diffv','divcoslat','dumplogo','dumplogs','duplicate','eca_r1mm','enlargegrid',
-        'ensrkhistspace','ensrkhisttime','eof3d','eof3dspatial','eof3dtime','export_e5ml',
-        'export_e5res','fc2gp','fc2sp','fillmiss','fisher','fldcovar','fldrms','fourier','fpressure',
-        'gather','gengrid','geopotheight','ggstat','ggstats','globavg','gp2fc','gradsdes',
-        'gridverify','harmonic','hourcount','hpressure','ifs2icon','import_e5ml','import_e5res',
-        'import_obs','imtocomplex','infos','infov','interpolate','intgrid','intgridbil',
-        'intgridtraj','intpoint','isosurface','lmavg','lmean','lmmean','lmstd','log','lsmean',
-        'meandiff2test','mergegrid','mod','moncount','monlogs','mrotuv','mrotuvb','mulcoslat','ncode',
-        'ncopy','nmltest','normal','nvar','outputbounds','outputboundscpt','outputcenter',
-        'outputcenter2','outputcentercpt','outputkey','outputtri','outputvector','outputvrml',
-        'pardup','parmul','pinfo','pinfov','pressure_fl','pressure_hl','read_e5ml','remapcon1',
-        'remapdis1','retocomplex','scalllogo','scatter','seascount','select','selgridname',
-        'seloperator','selvar','selzaxisname','setrcaname','setvar','showvar','sinfov','smemlogo',
-        'snamelogo','sort','sortcode','sortlevel','sortname','sorttaxis','sorttimestamp','sortvar',
-        'sp2fc','specinfo','spectrum','sperclogo','splitvar','stimelogo','studentt','template1',
-        'template2','test','test2','testdata','thinout','timcount','timcovar','tinfo','transxy','trms',
-        'tstepcount','vardes','vardup','varmul','varquot2test','varrms','vertwind','write_e5ml',
-        'writegrid','writerandom','yearcount']
 
     @CDO = ENV.has_key?('CDO') ? ENV['CDO'] : 'cdo'
 
@@ -74,27 +27,46 @@ class Cdo
 
     @libs        = getSupportedLibs()
 
-    private:
+  end
+  #============================================================================
 
-      def Cdo.call(cmd)
-        if (State[:debug])
-          puts '# DEBUG ====================================================================='
-          pp Cdo.env unless Cdo.env.empty?
-          puts 'CMD: '
-          puts cmd
-          puts '# DEBUG ====================================================================='
-        end
-        stdin, stdout, stderr, wait_thr = Open3.popen3(Cdo.env,cmd)
+  private
 
-        {
-          :stdout     => stdout.read,
-          :stderr     => stderr.read,
-          :returncode => wait_thr.value.exitstatus
-        }
+    # collect the complete list of possible operators
+    def Cdo.getOperators(force=false)
+      # Do NOT compute anything, if it is not required
+      return @operators unless (@operators.empty? or force)
+      cmd       = @CDO + ' 2>&1'
+      help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
+      if 5 >= help.size
+        warn "Operators could not get listed by running the CDO binary (#{@CDO})"
+        pp help if @debug
+        exit
+      end
+
+      @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
+    end
+    # Execute the given cdo call and return all outputs
+    def Cdo.call(cmd)
+      if (State[:debug])
+        puts '# DEBUG ====================================================================='
+        pp Cdo.env unless Cdo.env.empty?
+        puts 'CMD: '
+        puts cmd
+        puts '# DEBUG ====================================================================='
+      end
+      stdin, stdout, stderr, wait_thr = Open3.popen3(Cdo.env,cmd)
+
+      {
+        :stdout     => stdout.read,
+        :stderr     => stderr.read,
+        :returncode => wait_thr.value.exitstatus
+      }
     end
 
+    # Error handling for the given command
     def Cdo.hasError(cmd,retvals)
-      if (State[:debug])
+      if @debug
         puts("RETURNCODE: #{retvals[:returncode]}")
       end
       if ( 0 != retvals[:returncode] )
@@ -107,25 +79,7 @@ class Cdo
       end
     end
 
-    def Cdo.getOperators(force=false)
-      # Do NOT compute anything, if it is not required
-      return @operators unless (@operators.empty? or force)
-      cmd       = @CDO + ' 2>&1'
-      help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
-      if 5 >= help.size
-        warn "Operators could not get listed by running the CDO binary (#{@CDO})"
-        pp help if @debug
-        exit
-      end
-      # in version 1.5.6 the output of '-h' has changed
-      State[:operators] = case 
-                          when Cdo.version < "1.5.6"
-                            (help[help.index("Operators:")+1].split + @undocumentedOperators).uniq
-                          else
-                            help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
-                          end
-    end
-
+    # command execution wrapper, which handles the possible return types
     def Cdo.run(cmd,ofile='',options='',returnCdf=false,force=nil,returnArray=nil,returnMaArray=nil)
       cmd = "#{@CDO} -O #{options} #{cmd} "
       case ofile
@@ -162,8 +116,8 @@ class Cdo
       end
     end
 
+    # split arguments into hash-like args and the rest
     def Cdo.parseArgs(args)
-      # splitinto hash-like args and the rest
       operatorArgs = args.reject {|a| a.class == Hash}
       opts = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
       io   = args.find {|a| a.class == Hash}
@@ -174,7 +128,8 @@ class Cdo
       return [io,opts]
     end
 
-    def Cdo.method_missing(sym, *args, &block)
+    # Implementation of operator calls using ruby's meta programming skills
+    def method_missing(sym, *args, &block)
       ## args is expected to look like [opt1,...,optN,:input => iStream,:output => oStream] where
       # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
       puts "Operator #{sym.to_s} is called" if @debug
@@ -190,187 +145,159 @@ class Cdo
       end
     end
 
+    # load the netcdf bindings
+    def loadCdf
+      begin
+        require "numru/netcdf_miss"
+        include NumRu
+      rescue LoadError
+        warn "Could not load ruby's netcdf bindings. Please install it."
+        raise
+      end
+    end
 
-  def Cdo.loadCdf
-    begin
-      require "numru/netcdf_miss"
-      include NumRu
-    rescue LoadError
-      warn "Could not load ruby's netcdf bindings. Please install it."
-      raise
+    def getSupportedLibs(force=false)
+      return unless (@libs.nil? or force)
+      _, _, stderr, _ = Open3.popen3(@CDO + " -V")
+      supported       = stderr.readlines.map(&:chomp)
+      with            = supported.grep(/(with|Features)/)[0].split(':')[1].split.map(&:downcase)
+      libs            = supported.grep(/library version/).map {|l| 
+        l.strip.split(':').map {|l| 
+          l.split.first.downcase
+        }[0,2]
+      }
+      @libs = {}
+      with.flatten.each {|k| @libs[k]=true}
+      libs.each {|lib,version| @libs[lib] = version}
+    end
+
+  #============================================================================
+  public
+
+  # Public Class Methods {{{
+  def Cdo.help(operator=nil)
+    if operator.nil?
+      puts Cdo.call([@@CDO,'-h'].join(' '))[:stderr]
+    else
+      operator = operator.to_s unless String == operator.class
+      if Cdo.operators.include?(operator)
+        puts Cdo.call([@@CDO,'-h',operator].join(' '))[:stdout]
+      else
+        puts "Unknown operator #{operator}"
+      end
+    end
+  end
+  # }}}
+  # Public Instance Methods {{{
+
+  # check if cdo backend is working
+  def check
+    return false unless File.exists?(@cdo)
+    return false unless File.executable?(@cdo)
+
+    call = [self.CDO,' -V']
+    proc = subprocess.Popen(' '.join(call),
+                            shell  = True,
+                            stderr = subprocess.PIPE,
+                            stdout = subprocess.PIPE)
+    retvals = proc.communicate()
+    pp retvals if @debug
+
+    return true
+  end
+
+  # return cdf handle to given file readonly
+  def readCdf(iFile)
+    loadCdf
+    NetCDF.open(iFile)
+  end
+
+  # return cdf handle opened in append more
+  def openCdf(iFile)
+    loadCdf
+    NetCDF.open(iFile,'r+')
+  end
+
+  # return narray for given variable name
+  def readArray(iFile,varname)
+    filehandle = readCdf(iFile)
+    if filehandle.var_names.include?(varname)
+      # return the data array
+      filehandle.var(varname).get
+    else
+      raise ArgumentError, "Cannot find variable '#{varname}'"
     end
   end
 
-  def Cdo.getSupportedLibs(force=false)
-    return unless (State[:libs].nil? or force)
-    _, _, stderr, _ = Open3.popen3(@@CDO + " -V")
-    supported       = stderr.readlines.map(&:chomp)
-    with            = supported.grep(/(with|Features)/)[0].split(':')[1].split.map(&:downcase)
-    libs            = supported.grep(/library version/).map {|l| 
-      l.strip.split(':').map {|l| 
-        l.split.first.downcase
-      }[0,2]
-    }
-    State[:libs] = {}
-    with.flatten.each {|k| State[:libs][k]=true}
-    libs.each {|lib,version| State[:libs][lib] = version}
+  # return a masked array for given variable name
+  def readMaArray(iFile,varname)
+    filehandle = readCdf(iFile)
+    if filehandle.var_names.include?(varname)
+      # return the data array
+      filehandle.var(varname).get_with_miss
+    else
+      raise ArgumentError,"Cannot find variable '#{varname}'"
+    end
   end
 
-  def setReturnArray(self,value=True):
-    self.returnCdf = value
+  # }}}
 
-
-  def unsetReturnArray(self):
-    self.setReturnArray(False)
-
-  def hasCdo(self,path=None):
-    if path is None:
-      path = self.CDO
-
-    if os.path.isfile(path) and os.access(path, os.X_OK):
-      return True
-    return False
-
-  def checkCdo(self):
-    if (self.hasCdo()):
-      call = [self.CDO,' -V']
-      proc = subprocess.Popen(' '.join(call),
-          shell  = True,
-          stderr = subprocess.PIPE,
-          stdout = subprocess.PIPE)
-      retvals = proc.communicate()
-      print(retvals)
-
-  def setCdo(self,value):
-    self.CDO       = value
-    self.operators = self.getOperators()
-
-  def getCdo(self):
-    return self.CDO
-
-  def hasLib(self,lib):
-    return (lib in self.libs.keys())
-
-  def libsVersion(self,lib):
-    if not self.hasLib(lib):
-      raise AttributeError("Cdo does NOT have support for '#{lib}'")
-    else:
-      if True != self.libs[lib]:
-        return self.libs[lib]
-      else:
-        print("No version information available about '" + lib + "'")
-        return False
 
   #==================================================================
-  # Addional operators:
+  # Addional operotors: {{{
   #------------------------------------------------------------------
-  def version(self):
-    # return CDO's version
-    proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-    ret  = proc.communicate()
-    cdo_help   = ret[1].decode("utf-8")
-    match = re.search("CDO version (\d.*), Copyright",cdo_help)
-    return match.group(1)
+  def boundaryLevels(args)
+    ilevels         = self.showlevel(:input => args[:input])[0].split.map(&:to_f)
+    bound_levels    = Array.new(ilevels.size+1)
+    bound_levels[0] = 0
+    (1..ilevels.size).each {|i| 
+      bound_levels[i] =bound_levels[i-1] + 2*(ilevels[i-1]-bound_levels[i-1])
+    }
+    bound_levels
+  end
 
-  def boundaryLevels(self,**kwargs):
-    ilevels         = list(map(float,self.showlevel(input = kwargs['input'])[0].split()))
-    bound_levels    = []
-    bound_levels.insert(0,0)
-    for i in range(1,len(ilevels)+1):
-      bound_levels.insert(i,bound_levels[i-1] + 2*(ilevels[i-1]-bound_levels[i-1]))
-
-    return bound_levels
-
-  def thicknessOfLevels(self,**kwargs):
-    bound_levels = self.boundaryLevels(**kwargs)
+  def thicknessOfLevels(args)
+    bound_levels = self.boundaryLevels(args)
     delta_levels    = []
-    for i in range(0,len(bound_levels)):
-      v = bound_levels[i]
-      if 0 == i:
-        continue
+    bound_levels.each_with_index {|v,i| 
+      next if 0 == i
+      delta_levels << v - bound_levels[i-1]
+    }
+    delta_levels
+  end
 
-      delta_levels.append(v - bound_levels[i-1])
+  # }}}
 
-    return delta_levels
 
-  def readCdf(self,iFile):
-    """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:scipy)"""
-    try:
-        fileObj =  self.cdf(iFile, mode='r')
-    except:
-      print("Could not import data from file '%s'" % iFile)
-      raise
-    else:
-        return fileObj
-
-  def openCdf(self,iFile):
-    """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:netcdf4)"""
-    try:
-      fileObj =  self.cdf(iFile, mode='r+')
-    except:
-      print("Could not import data from file '%s'" % iFile)
-      raise
-    else:
-        return fileObj
-
-  def readArray(self,iFile,varname):
-    """Direcly return a numpy array for a given variable name"""
-    filehandle = self.readCdf(iFile)
-    try:
-      # return the data array
-      return filehandle.variables[varname][:].copy()
-    except KeyError:
-      print("Cannot find variable '%s'" % varname)
-      return False
-
-  def readMaArray(self,iFile,varname):
-    """Create a masked array based on cdf's FillValue"""
-    fileObj =  self.readCdf(iFile)
-
-    #.data is not backwards compatible to old scipy versions, [:] is
-    data = fileObj.variables[varname][:].copy()
-
-    # load numpy if available
-    try:
-      import numpy as np
-    except:
-      raise ImportError("numpy is required to return masked arrays.")
-
-    if hasattr(fileObj.variables[varname],'_FillValue'):
-      #return masked array
-      retval = np.ma.array(data,mask=data == fileObj.variables[varname]._FillValue)
-    else:
-      #generate dummy mask which is always valid
-      retval = np.ma.array(data,mask=data != data )
-
-    return retval
-
-  def __version__(self):
-    return CDO_PY_VERSION
+end
+#
 # Helper module for easy temp file handling
-class MyTempfile(object):
+module MyTempfile
+  require 'tempfile'
+  @@_tempfiles           = []
+  @@persistent_tempfiles = false
+  @@N                    = 10000000
 
-  __tempfiles = []
+  def MyTempfile.setPersist(value)
+    @@persistent_tempfiles = value
+  end
 
-  def __init__(self):
-    self.persistent_tempfile = False
+  def MyTempfile.path
+    unless @@persistent_tempfiles
+      t = Tempfile.new(self.class.to_s)
+      @@_tempfiles << t
+      @@_tempfiles << t.path
+      t.path
+    else
+      t = "_"+rand(@@N).to_s
+      @@_tempfiles << t
+      t
+    end
+  end
 
-  def __del__(self):
-    # remove temporary files
-    for filename in self.__class__.__tempfiles:
-      if os.path.isfile(filename):
-        os.remove(filename)
+  def MyTempfile.showFiles
+    @@_tempfiles.each {|f| print(f+" ") if f.kind_of? String}
+  end
+end
 
-  def setPersist(self,value):
-    self.persistent_tempfiles = value
-
-  def path(self):
-    if not self.persistent_tempfile:
-      t = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy')
-      self.__class__.__tempfiles.append(t.name)
-      t.close()
-
-      return t.name
-    else:
-      N =10000000 
-      t = "_"+random.randint(N).__str__()
+#vim fdm=marker
