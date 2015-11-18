@@ -2,174 +2,178 @@ require 'pp'
 require 'fileutils'
 
 class Cdo
+  OutputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
   attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug
   attr_reader   :operators
 
-  def initialize( returnCdf: false,
-#                 returnNoneOnError: false,
-                  forceOutput: true,
-                  cdfMod: CDF_MOD_NETCDF4,
-                  env: {},
-                  debug: false) 
+  def initalize(cdo: 'cdo', 
+                returnCdf: false,
+                returnFalseOnError: false,
+                forceOutput: true,
+                env: {},
+                debug: false) 
 
-    @CDO = ENV.has_key?('CDO') ? ENV['CDO'] : 'cdo'
+    # setup path to cdo executable
+    @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
 
-    @operators              = getOperators()
+    @operators              = Cdo.getOperators(true)
     @returnCdf              = returnCdf
-    @returnNoneOnError      = returnNoneOnError
-    @tempfile               = MyTempfile()
     @forceOutput            = forceOutput
-    @cdfMod                 = cdfMod.lower()
     @env                    = env
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
-    @outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
 
-    @libs        = getSupportedLibs()
+    @libs                   = getSupportedLibs()
+    @returnFalseOnError     = returnFalseOnError
+    @tempfile               = MyTempfile()
 
   end
-  #============================================================================
 
+  #============================================================================
   private
 
-    # collect the complete list of possible operators
-    def Cdo.getOperators(force=false)
-      # Do NOT compute anything, if it is not required
-      return @operators unless (@operators.empty? or force)
-      cmd       = @CDO + ' 2>&1'
-      help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
-      if 5 >= help.size
-        warn "Operators could not get listed by running the CDO binary (#{@CDO})"
-        pp help if @debug
-        exit
-      end
+  # collect the complete list of possible operators
+  def Cdo.getOperators(force=false)
+    # Do NOT compute anything, if it is not required
+    return @operators unless ((@operators ||= []).empty? or force)
 
-      @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
-    end
-    # Execute the given cdo call and return all outputs
-    def Cdo.call(cmd)
-      if (State[:debug])
-        puts '# DEBUG ====================================================================='
-        pp Cdo.env unless Cdo.env.empty?
-        puts 'CMD: '
-        puts cmd
-        puts '# DEBUG ====================================================================='
-      end
-      stdin, stdout, stderr, wait_thr = Open3.popen3(Cdo.env,cmd)
-
-      {
-        :stdout     => stdout.read,
-        :stderr     => stderr.read,
-        :returncode => wait_thr.value.exitstatus
-      }
+    cmd       = @cdo + ' 2>&1'
+    help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
+    if 5 >= help.size
+      warn "Operators could not get listed by running the CDO binary (#{@cdo})"
+      pp help if @debug
+      exit
     end
 
-    # Error handling for the given command
-    def Cdo.hasError(cmd,retvals)
-      if @debug
-        puts("RETURNCODE: #{retvals[:returncode]}")
-      end
-      if ( 0 != retvals[:returncode] )
-        puts("Error in calling:")
-        puts(">>> "+cmd+"<<<")
-        puts(retvals[:stderr])
-        return true
+    @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
+  end
+  # Execute the given cdo call and return all outputs
+  def Cdo.call(cmd)
+    if (State[:debug])
+      puts '# DEBUG ====================================================================='
+      pp Cdo.env unless Cdo.env.empty?
+      puts 'CMD: '
+      puts cmd
+      puts '# DEBUG ====================================================================='
+    end
+    stdin, stdout, stderr, wait_thr = Open3.popen3(Cdo.env,cmd)
+
+    {
+      :stdout     => stdout.read,
+      :stderr     => stderr.read,
+      :returncode => wait_thr.value.exitstatus
+    }
+  end
+
+  # Error handling for the given command
+  def Cdo.hasError(cmd,retvals)
+    if @debug
+      puts("RETURNCODE: #{retvals[:returncode]}")
+    end
+    if ( 0 != retvals[:returncode] )
+      puts("Error in calling:")
+      puts(">>> "+cmd+"<<<")
+      puts(retvals[:stderr])
+      return true
+    else
+      return false
+    end
+  end
+
+  # command execution wrapper, which handles the possible return types
+  def Cdo.run(cmd,ofile='',options='',returnCdf=false,force=nil,returnArray=nil,returnMaArray=nil)
+    cmd = "#{@CDO} -O #{options} #{cmd} "
+    case ofile
+    when $stdout
+      retvals = Cdo.call(cmd)
+      @logger.info(cmd+"\n") if @log
+      unless Cdo.hasError(cmd,retvals)
+        return retvals[:stdout].split($/).map {|l| l.chomp.strip}
       else
-        return false
+        raise ArgumentError,"CDO did NOT run successfully!"
       end
-    end
-
-    # command execution wrapper, which handles the possible return types
-    def Cdo.run(cmd,ofile='',options='',returnCdf=false,force=nil,returnArray=nil,returnMaArray=nil)
-      cmd = "#{@CDO} -O #{options} #{cmd} "
-      case ofile
-      when $stdout
+    else
+      force = @forceOutput if force.nil?
+      if force or not File.exists?(ofile.to_s)
+        ofile = MyTempfile.path if ofile.nil?
+        cmd << "#{ofile}"
         retvals = Cdo.call(cmd)
         @logger.info(cmd+"\n") if @log
-        unless Cdo.hasError(cmd,retvals)
-          return retvals[:stdout].split($/).map {|l| l.chomp.strip}
-        else
+        if Cdo.hasError(cmd,retvals)
           raise ArgumentError,"CDO did NOT run successfully!"
         end
       else
-        force = @forceOutput if force.nil?
-        if force or not File.exists?(ofile.to_s)
-          ofile = MyTempfile.path if ofile.nil?
-          cmd << "#{ofile}"
-          retvals = Cdo.call(cmd)
-          @logger.info(cmd+"\n") if @log
-          if Cdo.hasError(cmd,retvals)
-            raise ArgumentError,"CDO did NOT run successfully!"
-          end
-        else
-          warn "Use existing file '#{ofile}'" if @debug
-        end
+        warn "Use existing file '#{ofile}'" if @debug
       end
-      if not returnArray.nil?
-        Cdo.readArray(ofile,returnArray)
-      elsif not returnMaArray.nil?
-        Cdo.readMaArray(ofile,returnMaArray)
-      elsif returnCdf or @returnCdf
-        Cdo.readCdf(ofile)
+    end
+    if not returnArray.nil?
+      Cdo.readArray(ofile,returnArray)
+    elsif not returnMaArray.nil?
+      Cdo.readMaArray(ofile,returnMaArray)
+    elsif returnCdf or @returnCdf
+      Cdo.readCdf(ofile)
+    else
+      return ofile
+    end
+  end
+
+  # split arguments into hash-like args and the rest
+  def Cdo.parseArgs(args)
+    operatorArgs = args.reject {|a| a.class == Hash}
+    opts = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
+    io   = args.find {|a| a.class == Hash}
+    io   = {} if io.nil?
+    args.delete_if   {|a| a.class == Hash}
+    # join input streams together if possible
+    io[:input] = io[:input].join(' ') if io[:input].respond_to?(:join)
+    return [io,opts]
+  end
+
+  # Implementation of operator calls using ruby's meta programming skills
+  #
+  # args is expected to look like
+  #   [opt1,...,optN,:input => iStream,:output => oStream, :options => ' ']
+  #   where iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
+  def method_missing(sym, *args, &block)
+    puts "Operator #{sym.to_s} is called" if @debug
+
+    if getOperators.include?(sym.to_s)
+      io, opts = Cdo.parseArgs(args)
+      if @@outputOperatorsPattern.match(sym)
+        run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout)
       else
-        return ofile
+        run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray],io[:returnMaArray])
       end
+    else
+      raise ArgumentError,"Operator #{sym.to_s} not found"
     end
+  end
 
-    # split arguments into hash-like args and the rest
-    def Cdo.parseArgs(args)
-      operatorArgs = args.reject {|a| a.class == Hash}
-      opts = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
-      io   = args.find {|a| a.class == Hash}
-      io   = {} if io.nil?
-      args.delete_if   {|a| a.class == Hash}
-      # join input streams together if possible
-      io[:input] = io[:input].join(' ') if io[:input].respond_to?(:join)
-      return [io,opts]
+  # load the netcdf bindings
+  def loadCdf
+    begin
+      require "numru/netcdf_miss"
+      include NumRu
+    rescue LoadError
+      warn "Could not load ruby's netcdf bindings. Please install it."
+      raise
     end
+  end
 
-    # Implementation of operator calls using ruby's meta programming skills
-    def method_missing(sym, *args, &block)
-      ## args is expected to look like [opt1,...,optN,:input => iStream,:output => oStream] where
-      # iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
-      puts "Operator #{sym.to_s} is called" if @debug
-      if getOperators.include?(sym.to_s)
-        io, opts = Cdo.parseArgs(args)
-        if @@outputOperatorsPattern.match(sym)
-          run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout)
-        else
-          run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray],io[:returnMaArray])
-        end
-      else
-        raise ArgumentError,"Operator #{sym.to_s} not found"
-      end
-    end
-
-    # load the netcdf bindings
-    def loadCdf
-      begin
-        require "numru/netcdf_miss"
-        include NumRu
-      rescue LoadError
-        warn "Could not load ruby's netcdf bindings. Please install it."
-        raise
-      end
-    end
-
-    def getSupportedLibs(force=false)
-      return unless (@libs.nil? or force)
-      _, _, stderr, _ = Open3.popen3(@CDO + " -V")
-      supported       = stderr.readlines.map(&:chomp)
-      with            = supported.grep(/(with|Features)/)[0].split(':')[1].split.map(&:downcase)
-      libs            = supported.grep(/library version/).map {|l| 
-        l.strip.split(':').map {|l| 
-          l.split.first.downcase
-        }[0,2]
-      }
-      @libs = {}
-      with.flatten.each {|k| @libs[k]=true}
-      libs.each {|lib,version| @libs[lib] = version}
-    end
+  def getSupportedLibs(force=false)
+    return unless (@libs.nil? or force)
+    _, _, stderr, _ = Open3.popen3(@CDO + " -V")
+    supported       = stderr.readlines.map(&:chomp)
+    with            = supported.grep(/(with|Features)/)[0].split(':')[1].split.map(&:downcase)
+    libs            = supported.grep(/library version/).map {|l| 
+      l.strip.split(':').map {|l| 
+        l.split.first.downcase
+      }[0,2]
+    }
+    @libs = {}
+    with.flatten.each {|k| @libs[k]=true}
+    libs.each {|lib,version| @libs[lib] = version}
+  end
 
   #============================================================================
   public
