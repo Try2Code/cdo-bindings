@@ -10,8 +10,9 @@ def pythonTest(name: nil,interpreter: PythonInterpreter)
   cmd << " CdoTest.#{name}" unless name.nil?
   cmd
 end
-def rubyTest(name: nil,interpreter: RubyInterpreter)
-  cmd = "cd ruby; #{interpreter} test/test_cdo.rb"
+def rubyTest(name: nil,interpreter: RubyInterpreter, testFile: nil)
+  testFile = 'test/test_cdo.rb' if testFile.nil?
+  cmd = "cd ruby; #{interpreter} #{testFile}"
   cmd << " --name=#{name}" unless name.nil?
   cmd
 end
@@ -34,4 +35,9 @@ end
 desc "execute one/all test(s) with ruby or the given env: RubyInterpreter"
 task :testRuby, :name do |t,args|
   sh rubyTest(name: args.name)
+end
+
+desc "execute one/all OO-test(s) with ruby or the given env: RubyInterpreter"
+task :testRubyOO, :name do |t,args|
+  sh rubyTest(name: args.name,testFile: 'test/test_cdo_oo.rb')
 end
