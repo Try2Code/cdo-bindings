@@ -4,17 +4,17 @@ require 'logger'
 require 'stringio'
 
 class Cdo
-  OutputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
+  OutputOperatorsPattern = /(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)/
 
   attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug
-  attr_reader   :operators
+  attr_reader   :operators, :filetypes
 
-  def initialize(cdo: 'cdo', 
-                returnCdf: false,
-                returnFalseOnError: false,
-                forceOutput: true,
-                env: {},
-                debug: false) 
+  def initialize(cdo: 'cdo',
+                 returnCdf: false,
+                 returnFalseOnError: false,
+                 forceOutput: true,
+                 env: {},
+                 debug: false)
 
     # setup path to cdo executable
     @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
@@ -25,13 +25,12 @@ class Cdo
     @env                    = env
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
 
-#   @libs                   = getSupportedLibs()
+    @filetypes              = getFiletypes
     @returnFalseOnError     = returnFalseOnError
 
   end
 
-  #============================================================================
-  private
+  private # {{{
 
   # split arguments into hash-like args and the rest
   def Cdo.parseArgs(args)
@@ -43,7 +42,6 @@ class Cdo
     # join input streams together if possible
     io[:input] = io[:input].join(' ') if io[:input].respond_to?(:join)
 
-    pp [io,opts]
     return [io,opts]
   end
 
@@ -59,6 +57,15 @@ class Cdo
 
     @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
   end
+
+  # get supported IO filetypes form the binary
+  def getFiletypes
+    _, _, stderr, _ = Open3.popen3(@cdo + " -V")
+    supported       = stderr.readlines.map(&:chomp)
+
+    supported.grep(/(Filetypes)/)[0].split(':')[1].split.map(&:downcase)
+  end
+
 
   # Execute the given cdo call and return all outputs
   def _call(cmd)
@@ -96,8 +103,14 @@ class Cdo
   # command execution wrapper, which handles the possible return types
   def _run(cmd,ofile='',options=nil,returnCdf=false,force=nil,returnArray=nil,returnMaArray=nil)
     options = options.to_s
-    options << '-f nc' if options.empty? and not ( returnCdf.nil? and returnArray.nil? and returnMaArray.nil?)
+
+    options << '-f nc' if options.empty? and ( \
+                                              (     returnCdf ) or \
+                                              ( not returnArray.nil? ) or \
+                                              ( not returnMaArray.nil?) \
+                                             )
     cmd = "#{@cdo} -O #{options} #{cmd} "
+
     case ofile
     when $stdout
       retvals = _call(cmd)
@@ -164,23 +177,9 @@ class Cdo
     end
   end
 
-  def getSupportedLibs(force=false)
-    return unless (@libs.nil? or force)
-    _, _, stderr, _ = Open3.popen3(@cdo + " -V")
-    supported       = stderr.readlines.map(&:chomp)
-    with            = supported.grep(/(with|Features)/)[0].split(':')[1].split.map(&:downcase)
-    libs            = supported.grep(/library version/).map {|l| 
-      l.strip.split(':').map {|l| 
-        l.split.first.downcase
-      }[0,2]
-    }
-    @libs = {}
-    with.flatten.each {|k| @libs[k]=true}
-    libs.each {|lib,version| @libs[lib] = version}
-  end
+  # }}}
 
-  #============================================================================
-  public
+  public  # {{{
 
   # show Cdo's built-in help for given operator
   def help(operator=nil)
@@ -200,6 +199,10 @@ class Cdo
     pp retval if @debug
 
     return true
+  end
+
+  def version
+    IO.popen("#{@cdo} -V 2>&1").readlines.first.split(/version/i).last.strip.split(' ').first
   end
 
   # return cdf handle to given file readonly
@@ -238,24 +241,24 @@ class Cdo
 
   # }}}
 
+  # Addional operators: {{{
 
-  #==================================================================
-  # Addional operotors: {{{
-  #------------------------------------------------------------------
+  # compute vertical boundary levels from full levels
   def boundaryLevels(args)
     ilevels         = self.showlevel(:input => args[:input])[0].split.map(&:to_f)
     bound_levels    = Array.new(ilevels.size+1)
     bound_levels[0] = 0
-    (1..ilevels.size).each {|i| 
+    (1..ilevels.size).each {|i|
       bound_levels[i] =bound_levels[i-1] + 2*(ilevels[i-1]-bound_levels[i-1])
     }
     bound_levels
   end
 
+  # compute level thicknesses from given full levels
   def thicknessOfLevels(args)
     bound_levels = self.boundaryLevels(args)
     delta_levels    = []
-    bound_levels.each_with_index {|v,i| 
+    bound_levels.each_with_index {|v,i|
       next if 0 == i
       delta_levels << v - bound_levels[i-1]
     }
@@ -263,7 +266,6 @@ class Cdo
   end
 
   # }}}
-
 
 end
 #
@@ -296,4 +298,4 @@ module MyTempfile
   end
 end
 
-#vim fdm=marker
+#vim:fdm=marker
