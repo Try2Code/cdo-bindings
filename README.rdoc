@@ -104,6 +104,9 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
    - support object interface in the ruby version (easy setup of options during initializaion, thread safety)
    - allow environment variables set with external JSON file
 
+* 1.2.7
+ - Added class interface for ruby version 2.x
+
 * 1.2.6
    - bugfix for autocompletion in interactive usage [python-only]
 
