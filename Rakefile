@@ -37,7 +37,7 @@ task :testRuby, :name do |t,args|
   sh rubyTest(name: args.name)
 end
 
-desc "execute one/all OO-test(s) with ruby or the given env: RubyInterpreter"
-task :testRubyOO, :name do |t,args|
-  sh rubyTest(name: args.name,testFile: 'test/test_cdo_oo.rb')
+desc "execute one/all lib-test(s) with ruby or the given env: RubyInterpreter"
+task :testRubyLib, :name do |t,args|
+  sh rubyTest(name: args.name,testFile: 'test/test_cdo_lib.rb')
 end
