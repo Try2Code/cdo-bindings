@@ -5,9 +5,11 @@ require 'cdo'
 require 'unifiedPlot'
 require 'pp'
 
-
+include Minitest::Assertions
 #===============================================================================
 def rm(files); files.each {|f| FileUtils.rm(f) if File.exists?(f)};end
+
+@show = ENV.has_key?('SHOW')
 
 class TestCdo < Minitest::Test
 
@@ -47,13 +49,13 @@ class TestCdo < Minitest::Test
     assert_equal([0,0].map(&:to_s),levels)
 
     info = Cdo.sinfo(:input => "-stdatm,0")
-    assert_equal("File format: GRIB",info[0])
+    assert_equal("GRIB",info[0].split(':').last.strip)
 
     values = Cdo.outputkey("value",:input => "-stdatm,0")
-    assert_equal(["1013.25", "288"],values)
-    values = Cdo.outputkey("value",:input => "-stdatm,0,10000")
+    assert_equal(["1013.25", "288"],values[-2..-1])
+    values = Cdo.outputkey("value",:input => "-stdatm,0,10000"); values.shift
     assert_equal(["1013.25", "271.913", "288", "240.591"],values)
-    values = Cdo.outputkey("level",:input => "-stdatm,0,10000")
+    values = Cdo.outputkey("level",:input => "-stdatm,0,10000"); values.shift
     assert_equal(["0", "10000","0", "10000"],values)
   end
   def test_CDO_version
@@ -116,6 +118,7 @@ class TestCdo < Minitest::Test
   end
 
   def test_combine
+    Cdo.debug = true
     ofile0, ofile1 = MyTempfile.path, MyTempfile.path
     Cdo.fldsum(:input => Cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:options => "-f nc"),:output => ofile0)
     Cdo.fldsum(:input => "-stdatm,25,100,250,500,875,1400,2100,3000,4000,5000",:options => "-f nc",:output => ofile1)
@@ -129,7 +132,7 @@ class TestCdo < Minitest::Test
 
   def test_tempfile
     ofile0, ofile1 = MyTempfile.path, MyTempfile.path
-    assert_not_equal(ofile0,ofile1)
+    assert(ofile0 != ofile1)
     # Tempfile should not disappeare even if the GC was started
     puts ofile0
     assert(File.exist?(ofile0))
@@ -160,19 +163,21 @@ class TestCdo < Minitest::Test
     test_returnCdf
   end
   def test_force
+    Cdo.debug = true
     outs = []
     # tempfiles
     outs << Cdo.stdatm(0,10,20)
     outs << Cdo.stdatm(0,10,20)
-    assert_not_equal(outs[0],outs[1])
+    assert(outs[0] != outs[1])
 
-    # deticated output, force = true
+    # dedicated output, force = true
     outs.clear
     outs << Cdo.stdatm(0,10,20,:output => 'test_force')
     mtime0 = File.stat(outs[-1]).mtime
+    sleep 0.1
     outs << Cdo.stdatm(0,10,20,:output => 'test_force')
     mtime1 = File.stat(outs[-1]).mtime
-    assert_not_equal(mtime0,mtime1)
+    assert(mtime0 != mtime1, "Unexpected equality of modification times of files")
     assert_equal(outs[0],outs[1])
     FileUtils.rm('test_force')
     outs.clear
@@ -232,7 +237,7 @@ class TestCdo < Minitest::Test
 
   def test_returnArray
     temperature = Cdo.stdatm(0,:options => '-f nc',:returnCdf => true).var('T').get.flatten[0]
-    assert_raise ArgumentError do
+    assert_raises ArgumentError do
       Cdo.stdatm(0,:options => '-f nc',:returnArray => 'TT')
     end
     temperature = Cdo.stdatm(0,:options => '-f nc',:returnArray => 'T')
@@ -265,27 +270,27 @@ class TestCdo < Minitest::Test
   def test_errorException
     Cdo.debug = true
     # stdout operators get get wrong input
-    assert_raise ArgumentError do
+    assert_raises ArgumentError do
       Cdo.showname(:input => '-for,d')
     end
     # non-existing operator
-    assert_raise ArgumentError do
+    assert_raises ArgumentError do
       Cdo.neverDefinedOperator()
     end
     # standard opertor get mis-spelled value
-    assert_raise ArgumentError do
+    assert_raises ArgumentError do
       Cdo.remapnn('r-10x10')
     end
     # standard operator get unexisting operator as input stream
-    assert_raise ArgumentError do
+    assert_raises ArgumentError do
       Cdo.remapnn('r10x10',:input => '-99topo')
     end
     # missing input stream
-    assert_raise ArgumentError do
+    assert_raises ArgumentError do
       Cdo.setname('setname')
     end
     # missing input stream for stdout-operator
-    assert_raise ArgumentError do
+    assert_raises ArgumentError do
       Cdo.showname
     end
   end
@@ -316,14 +321,14 @@ class TestCdo < Minitest::Test
    #  Cdo.setCdo('../../src/cdo')
    #  assert(Cdo.libs.has_key?('magics'),"Magics support is expected in the local development binary")
    #end
-    assert_raise ArgumentError do
+    assert_raises ArgumentError do
       Cdo.libsVersion("foo")
     end
   end
 
   def test_output_set_to_nil
     assert_equal(String,Cdo.topo(:output => nil).class)
-    assert_equal("File format: GRIB",Cdo.sinfov(:input => "-topo", :output => nil)[0])
+    assert_equal("GRIB",Cdo.sinfov(:input => "-topo", :output => nil)[0].split(':').last.strip)
   end
 
   if 'thingol' == `hostname`.chomp  then
@@ -368,7 +373,7 @@ class TestCdo < Minitest::Test
       UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
                             {:y => vFm,  :style => 'points',:title => 'fillmiss'},
                             {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r1x10')
+                            plotConf: {:yrange => '[0:1]'},title: 'r1x10') if @show
       # check left-right replacement
       rand = Cdo.setname('v',:input => '-random,r10x1 ', :options => ' -f nc',:output => '/tmp/rand.nc')
       cdf  = Cdo.openCdf(rand)
@@ -387,7 +392,7 @@ class TestCdo < Minitest::Test
       UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
                             {:y => vFm,  :style => 'points',:title => 'fillmiss'},
                             {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r10x1')
+                            plotConf: {:yrange => '[0:1]'},title: 'r10x1') if @show
     end
   end
 

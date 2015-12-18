@@ -9,6 +9,8 @@ require 'pp'
 #===============================================================================
 def rm(files); files.each {|f| FileUtils.rm(f) if File.exists?(f)};end
 
+@show = ENV.has_key?('SHOW')
+
 class TestCdo < Minitest::Test
 
   DEFAULT_CDO_PATH = 'cdo'
@@ -351,7 +353,7 @@ class TestCdo < Minitest::Test
       UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
                             {:y => vFm,  :style => 'points',:title => 'fillmiss'},
                             {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r1x10')
+                            plotConf: {:yrange => '[0:1]'},title: 'r1x10') if @show
       # check left-right replacement
       rand = @cdo.setname('v',:input => '-random,r10x1 ', :options => ' -f nc',:output => '/tmp/rand.nc')
       cdf  = @cdo.openCdf(rand)
@@ -370,7 +372,7 @@ class TestCdo < Minitest::Test
       UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
                             {:y => vFm,  :style => 'points',:title => 'fillmiss'},
                             {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r10x1')
+                            plotConf: {:yrange => '[0:1]'},title: 'r10x1') if @show
     end
   end
 
