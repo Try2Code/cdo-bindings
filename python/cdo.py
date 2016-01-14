@@ -150,7 +150,7 @@ class Cdo(object):
       cmd.append(','.join(operator))
       #4. input files or operators
       if 'input' in kwargs:
-        if isinstance(kwargs["input"], str):
+        if isinstance(kwargs["input"], str) or isinstance(kwargs["input"], unicode):
             cmd.append(kwargs["input"])
         else:
             #we assume it's either a list, a tuple or any iterable.
