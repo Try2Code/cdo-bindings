@@ -523,12 +523,12 @@ class CdoTest(unittest.TestCase):
             if ('scipy' == cdo.cdfMod ):
               expected = b'clon clat'
             else:
-              expected =  'clon clat'
+              expected =  u'clon clat'
             self.assertEqual(expected,varIn.coordinates)
-
 
             varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
             varOut = varOut.variables[ivar]
+            expected =  u'clat clon'
             self.assertEqual(expected,varOut.coordinates)
         def testCall(self):
             cdo = Cdo(cdfMod=CDF_MOD)
@@ -545,7 +545,6 @@ class CdoTest(unittest.TestCase):
         def test_phc(self):
            ifile = DATA_DIR+'/icon/phc.nc'
            cdo = Cdo(cdfMod=CDF_MOD)
-           cdo.setCdo('/home/ram/local/bin/cdo-dev')
            cdo.debug = True
            #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
            #          output=ifile,

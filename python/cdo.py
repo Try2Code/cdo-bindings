@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os,re,subprocess,tempfile,random
+import os,re,subprocess,tempfile,random,sys
 try:
     from string import strip
 except ImportError:
@@ -95,6 +95,12 @@ class Cdo(object):
     res.extend(self.operators)
     return res
 
+  def isString(self,myString):
+      if (2 == sys.version_info[0]):
+          return isinstance(myString,basestring)
+      else:
+          return isinstance(myString,str)
+
   def call(self,cmd):
     if self.debug:
       print('# DEBUG =====================================================================')
@@ -150,7 +156,7 @@ class Cdo(object):
       cmd.append(','.join(operator))
       #4. input files or operators
       if 'input' in kwargs:
-        if isinstance(kwargs["input"], str) or isinstance(kwargs["input"], unicode):
+        if self.isString(kwargs["input"]):
             cmd.append(kwargs["input"])
         else:
             #we assume it's either a list, a tuple or any iterable.
