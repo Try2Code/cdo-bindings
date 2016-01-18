@@ -19,7 +19,7 @@ class Cdo
     # setup path to cdo executable
     @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
 
-    @operators              = getOperators
+    @operators              = getOperators(binary=@cdo)
     @returnCdf              = returnCdf
     @forceOutput            = forceOutput
     @env                    = env
@@ -46,16 +46,23 @@ class Cdo
   end
 
   # collect the complete list of possible operators
-  def getOperators
-    cmd       = @cdo + ' 2>&1'
-    help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
-    if 5 >= help.size
-      warn "Operators could not get listed by running the CDO binary (#{@cdo})"
-      pp help if @debug
-      exit
-    end
+  def getOperators(cdoExecutable)
+    if version > '1.7.0' then
+      cmd       = cdoExecutable + ' 2>&1'
+      help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
+      if 5 >= help.size
+        warn "Operators could not get listed by running the CDO binary (#{cdoExecutable})"
+        pp help if @debug
+        exit
+      end
 
-    @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
+      @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
+    else
+      cmd = "#{cdoExecutable} --operators"
+      pp cmd
+
+      @operators = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
+    end
   end
 
   # get supported IO filetypes form the binary
