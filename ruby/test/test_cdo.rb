@@ -31,7 +31,6 @@ class TestCdo < Minitest::Test
       cdo = Cdo.new(:cdo => newCDO)
       assert_equal(true,cdo.check)
       assert_equal(newCDO,cdo.cdo)
-      pp cdo.operators
     end
   end
   def test_getOperators
@@ -45,7 +44,6 @@ class TestCdo < Minitest::Test
     assert(@cdo.operators.include?('diff'),"Operator alias 'diff' is not callable")
   end
   def test_listAllOperators
-    print @cdo.operators.join("\n")
     assert(@cdo.operators.size > 700,"cound not find enough operators")
   end
 
