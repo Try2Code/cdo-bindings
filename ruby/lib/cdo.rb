@@ -46,19 +46,19 @@ class Cdo
   end
 
   # collect the complete list of possible operators
-  def getOperators(cdoExecutable)
-    if version > '1.7.0' then
-      cmd       = cdoExecutable + ' 2>&1'
+  def getOperators(path2cdo)
+    if version <= '1.7.0' then
+      cmd       = path2cdo + ' 2>&1'
       help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
       if 5 >= help.size
-        warn "Operators could not get listed by running the CDO binary (#{cdoExecutable})"
+        warn "Operators could not get listed by running the CDO binary (#{path2cdo})"
         pp help if @debug
         exit
       end
 
       @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
     else
-      cmd = "#{cdoExecutable} --operators"
+      cmd = "#{path2cdo} --operators"
       pp cmd
 
       @operators = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
@@ -202,7 +202,7 @@ class Cdo
   def check
     return false unless system("#@cdo -h 1>/dev/null 2>&1")
 
-    retval = _call("#@cdo -V")
+    retval = _call("#{@cdo} -V")
     pp retval if @debug
 
     return true
