@@ -3,7 +3,7 @@ $:.unshift File.join(File.dirname(__FILE__),"..","lib")
 
 spec = Gem::Specification.new do |s|
   s.name              = "cdo"
-  s.version           = '1.2.7'
+  s.version           = '1.3.0'
   s.platform          = Gem::Platform::RUBY
   s.files             = ["lib/cdo.rb","lib/cdo_oo.rb"] + ["gemspec","LICENSE"]
   s.test_file         = "test/test_cdo.rb"
