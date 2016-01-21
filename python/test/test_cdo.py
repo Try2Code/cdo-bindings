@@ -46,8 +46,8 @@ class CdoTest(unittest.TestCase):
 
     def testVersions(self):
         cdo = Cdo()
-        self.assertEqual('1.2.6',cdo.__version__())
-        self.assertEqual('1.7.0',cdo.version())
+        self.assertEqual('1.2.7',cdo.__version__())
+        self.assertTrue(parse_version('1.7.0') <= parse_version(cdo.version()))
 
     def testCDO(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -69,7 +69,9 @@ class CdoTest(unittest.TestCase):
         self.assertTrue("sinfov" in cdo.operators)
         self.assertTrue("for" in cdo.operators)
         self.assertTrue("mask" in cdo.operators)
-        self.assertTrue("studentt" in cdo.operators)
+        if (parse_version('1.7.0') >= parse_version(cdo.version())):
+            self.assertTrue("studentt" in cdo.operators)
+        self.assertTrue(len(cdo.operators) > 700)
 
     def test_getOperators(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -490,7 +492,9 @@ class CdoTest(unittest.TestCase):
 
           varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
           varOut = varOut.variables[ivar]
-          self.assertEqual(expected,varOut.coordinates)
+          expected = expected.split(' ')
+          expected.reverse()
+          self.assertEqual(expected,varOut.coordinates.split(' '))
 
     def testTmp(self):
         cdo = Cdo(cdfMod=CDF_MOD)

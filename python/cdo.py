@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os,re,subprocess,tempfile,random,sys
+from pkg_resources import parse_version
 try:
     from string import strip
 except ImportError:
@@ -19,7 +20,7 @@ except ImportError:
 
 CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
-CDO_PY_VERSION  = "1.2.6"
+CDO_PY_VERSION  = "1.2.7"
 
 def auto_doc(tool, cdo_self):
     """Generate the __doc__ string of the decorated function by calling the cdo help command"""
@@ -27,6 +28,13 @@ def auto_doc(tool, cdo_self):
         func.__doc__ = cdo_self.call([cdo_self.CDO, '-h', tool]).get('stdout')
         return func
     return desc
+
+def getCdoVersion(path2cdo):
+    proc = subprocess.Popen([path2cdo,'-V'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+    ret  = proc.communicate()
+    cdo_help   = ret[1].decode("utf-8")
+    match = re.search("Climate Data Operators version (\d.*) .*",cdo_help)
+    return match.group(1)
 
 class CDOException(Exception):
 
@@ -228,14 +236,23 @@ class Cdo(object):
 
   def getOperators(self):
     import os
-    proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-    ret  = proc.communicate()
-    l    = ret[1].decode("utf-8").find("Operators:")
-    ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
-    endI = ops.index('')
-    s    = ' '.join(ops[:endI]).strip()
-    s    = re.sub("\s+" , " ", s)
-    return list(set(s.split(" ") + self.undocumentedOperators))
+    if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.7.0')):
+        proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+        ret  = proc.communicate()
+        ops  = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+
+        return ops
+
+    else:
+        proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+        ret  = proc.communicate()
+        l    = ret[1].decode("utf-8").find("Operators:")
+        ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
+        endI = ops.index('')
+        s    = ' '.join(ops[:endI]).strip()
+        s    = re.sub("\s+" , " ", s)
+
+        return list(set(s.split(" ") + self.undocumentedOperators))
 
   def loadCdf(self):
     if self.cdfMod == CDF_MOD_SCIPY:
@@ -338,11 +355,7 @@ class Cdo(object):
   #------------------------------------------------------------------
   def version(self):
     # return CDO's version
-    proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-    ret  = proc.communicate()
-    cdo_help   = ret[1].decode("utf-8")
-    match = re.search("CDO version (\d.*), Copyright",cdo_help)
-    return match.group(1)
+    return getCdoVersion(self.CDO)
 
   def boundaryLevels(self,**kwargs):
     ilevels         = list(map(float,self.showlevel(input = kwargs['input'])[0].split()))
