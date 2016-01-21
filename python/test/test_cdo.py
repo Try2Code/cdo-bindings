@@ -46,7 +46,7 @@ class CdoTest(unittest.TestCase):
 
     def testVersions(self):
         cdo = Cdo()
-        self.assertEqual('1.2.7',cdo.__version__())
+        self.assertEqual('1.3.0',cdo.__version__())
         self.assertTrue(parse_version('1.7.0') <= parse_version(cdo.version()))
 
     def testCDO(self):
@@ -516,6 +516,13 @@ class CdoTest(unittest.TestCase):
                             input=' -stdatm,0,100,1000',
                             options='-f nc')
         self.assertEqual((3,35,44), cdo.readArray(ifile, 'T').shape)
+
+    def test_log(self):
+        cdo = Cdo(cdfMod=CDF_MOD,logging = True,logFile='foo.log')
+        cdo.topo()
+        cdo.temp()
+        print(cdo.sinfov(input='-topo'))
+
 
     if HOSTNAME == os.popen('hostname').read().strip():
         def test_icon_coords(self):

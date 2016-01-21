@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os,re,subprocess,tempfile,random,sys
 from pkg_resources import parse_version
+import logging as pyLog
 try:
     from string import strip
 except ImportError:
@@ -20,7 +21,7 @@ except ImportError:
 
 CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
-CDO_PY_VERSION  = "1.2.7"
+CDO_PY_VERSION  = "1.3.0"
 
 def auto_doc(tool, cdo_self):
     """Generate the __doc__ string of the decorated function by calling the cdo help command"""
@@ -56,7 +57,10 @@ class Cdo(object):
                forceOutput=True,
                cdfMod=CDF_MOD_NETCDF4,
                env={},
-               debug=False):
+               debug=False,
+               logging=False,
+               logFile=''):
+
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
     self.undocumentedOperators = ['anomaly','beta','boxavg','change_e5lsm','change_e5mask',
@@ -98,6 +102,17 @@ class Cdo(object):
 
     self.libs        = self.getSupportedLibs()
 
+    self.logging                = logging
+    self.logFile                = logFile
+#   self.logger                 = pyLog.getLogger(__name__)
+#   self.logger.setLevel        = pyLog.INFO
+#   h = pyLog.FileHandler('test.log')
+#   h.setLevel = pyLog.INFO
+#   self.logger.addHandler(h)
+    if (self.logging):
+        pyLog.basicConfig(filename=self.logFile,level=pyLog.INFO,format='%(asctime)s %(levelname)s %(message)s')
+        pyLog.info('start logging for:'+__name__)
+
   def __dir__(self):
     res = dir(type(self)) + list(self.__dict__.keys())
     res.extend(self.operators)
@@ -117,6 +132,9 @@ class Cdo(object):
           print("ENV: " + k + " = " + v)
       print('CALL:'+' '.join(cmd))
       print('# DEBUG =====================================================================')
+
+      if self.logging:
+          pyLog.info(' '.join(cmd))
 
     for k,v in self.env.items():
       os.environ[k] = v
@@ -139,6 +157,8 @@ class Cdo(object):
       print("Error in calling operator " + method_name + " with:")
       print(">>> "+' '.join(cmd)+"<<<")
       print(retvals["stderr"])
+      if self.logging:
+          pyLog.error(cmd + " with:" + retvals["stderr"])
       return True
     else:
       return False
@@ -193,7 +213,6 @@ class Cdo(object):
           if kwargs.__contains__("env"):
             for k,v in kwargs["env"].items():
               os.environ[k] = v
-              #self.env[k] = v
 
           retvals = self.call(cmd)
           if self.hasError(method_name,cmd,retvals):
