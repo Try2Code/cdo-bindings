@@ -518,10 +518,18 @@ class CdoTest(unittest.TestCase):
         self.assertEqual((3,35,44), cdo.readArray(ifile, 'T').shape)
 
     def test_log(self):
+        # logging with a real file
         cdo = Cdo(cdfMod=CDF_MOD,logging = True,logFile='foo.log')
         cdo.topo()
         cdo.temp()
         print(cdo.sinfov(input='-topo'))
+        cdo.showLog()
+        # logging with in-memory stringio
+        cdo = Cdo(cdfMod=CDF_MOD,logging = True)
+        cdo.topo()
+        cdo.temp()
+        print(cdo.sinfov(input='-topo'))
+        cdo.showLog()
 
 
     if HOSTNAME == os.popen('hostname').read().strip():

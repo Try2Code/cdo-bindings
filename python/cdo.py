@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os,re,subprocess,tempfile,random,sys
 from pkg_resources import parse_version
+from io import StringIO
 import logging as pyLog
 try:
     from string import strip
@@ -59,7 +60,7 @@ class Cdo(object):
                env={},
                debug=False,
                logging=False,
-               logFile=''):
+               logFile=StringIO()):
 
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
@@ -330,6 +331,14 @@ class Cdo(object):
 
   def unsetReturnArray(self):
     self.setReturnArray(False)
+
+  def showLog(self):
+      if isinstance(self.logFile,str):
+          print('lof messages in '+self.logFile)
+          with open(self.logFile) as f:
+              print(f.read())
+      else:
+          print(self.logFile.readlines())
 
   def hasCdo(self,path=None):
     if path is None:

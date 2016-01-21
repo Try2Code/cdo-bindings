@@ -67,6 +67,11 @@ Please check the documentation for constructor paramaters
     cdo.remap([gridfile,weightfile],input:   ifile, output:   ofile) (ruby-2.x, class interface)
     cdo.remap([gridfile,weightfile],input => ifile, output => ofile) (python)
 
+* logging
+
+    cdo = Cdo.new(logging: true, logFile: 'cdo_commands.log') [ruby-2.x]
+    cdo = Cdo(logging=True, logFile='cdo_commands.log')       [python]
+
 * Set global CDO options
 
    Cdo.copy(:input => ifile, :output => ofile,:options => "-f nc4") (ruby)
@@ -118,7 +123,8 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
    - support object interface in the ruby version (easy setup of options during initializaion, thread safety)
    - set ruby class interface as default; module interface is still available via "require 'cdo_lib'", but will be remove in one of the next releases
    - support for upcomming CDO release 1.7.1
-   - improve loggin [ruby]
+   - improve loggin for ruby
+   - introduce logging for python
    - unicode bugfix - thanks to Sebastian Illing (illing2005) [python-only]
 
 * 1.2.7

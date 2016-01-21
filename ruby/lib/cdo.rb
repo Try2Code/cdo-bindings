@@ -34,7 +34,7 @@ class Cdo
 
     @logging                = logging
     @logFile                = logFile
-    @logger                 = Logger.new(@logFile)
+    @logger                 = Logger.new(@logFile,'a')
     @logger.level           = Logger::INFO
   end
 
@@ -110,7 +110,7 @@ class Cdo
       puts("Error in calling:")
       puts(">>> "+cmd+"<<<")
       puts(retvals[:stderr])
-      @logger.error("FAILIURE in execution of:"+cmd+"| msg:"+retvals[:stderr])
+      @logger.error("FAILIURE in execution of:"+cmd+"| msg:"+retvals[:stderr]) if @logging
       return true
     else
       return false
@@ -146,7 +146,6 @@ class Cdo
         ofile = MyTempfile.path if ofile.nil?
         cmd << "#{ofile}"
         retvals = _call(cmd)
-        @logger.info(cmd+"\n") if @log
         if _hasError(cmd,retvals)
           if @returnNilOnError then
             return nil
@@ -217,9 +216,8 @@ class Cdo
 
   # print the loggin messaged
   def showLog
-
     if @logger.instance_variable_get(:'@logdev').filename.nil?
-    @logFile.rewind
+      @logFile.rewind
       return @logFile.read
     else
       return File.open(@logFile).readlines

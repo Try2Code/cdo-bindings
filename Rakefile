@@ -1,6 +1,8 @@
 require 'rake/clean'
 
 CLEAN.include("**/*.pyc")
+CLEAN.include("**/*.log")
+CLEAN.include("**/*.log.[0-9]*")
 
 PythonInterpreter = ENV.has_key?('PYTHON') ? ENV['PYTHON'] : 'python'
 RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
