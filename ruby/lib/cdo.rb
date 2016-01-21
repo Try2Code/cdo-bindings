@@ -59,7 +59,6 @@ class Cdo
       @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
     else
       cmd = "#{path2cdo} --operators"
-      pp cmd
 
       @operators = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
     end
