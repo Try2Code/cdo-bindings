@@ -31,14 +31,20 @@ python and ruby-netcdf for ruby.
 
 === Run operators
 
-The Ruby module can be used directly after loading it. For python an instance has to be created first
+The Ruby module can be used directly after loading it. For python and the ruby class interface an instance has to be created first
 
+   cdo = Cdo.new
    cdo = Cdo()
+
+Please check the documentation for constructor paramaters
 
 * File information
     
-    Cdo.infov(:input => ifile)       (ruby)
+    Cdo.infov(:input => ifile)       (ruby, module interface)
     Cdo.showlevels(:input => ifile)
+
+    cdo.infov(input: ifile)       (ruby-2.*, class interface)
+    cdo.showlevels(input: ifile)
 
     cdo.infov(input=ifile)         (python)
     cdo.showlevels(input=ifile)
@@ -46,26 +52,32 @@ The Ruby module can be used directly after loading it. For python an instance ha
 * Operators with user defined regular output files
 
     Cdo.timmin(:input => ifile ,:output => ofile) (ruby)
+    cdo.timmin(input: ifile ,output: ofile) (ruby-2.*, class interface
     cdo.timmin(input = ifile,output = ofile)    (python)
 
 * Use temporary output files
 
     tminFile = Cdo.timmin(:input => ifile) (ruby)
+    tminFile = cdo.timmin(input: ifile) (ruby-2.*, class interface)
     tminFile = cdo.timmin(input = ifile) (python)
 
 * Operators with options
 
     Cdo.remap([gridfile,weightfile],:input => ifile, :output => ofile) (ruby)
+    cdo.remap([gridfile,weightfile],input:   ifile, output:   ofile) (ruby-2.x, class interface)
     cdo.remap([gridfile,weightfile],input => ifile, output => ofile) (python)
 
 * Set global CDO options
 
    Cdo.copy(:input => ifile, :output => ofile,:options => "-f nc4") (ruby)
+   cdo.copy(input:  ifile, output:  ofile,options:  "-f nc4")     (ruby-2.x, class interface)
    cdo.copy(input = ifile, output = ofile,options = "-f nc4")     (python)
 
 * Set environment variables
 
    Cdo.splitname(:input => ifile.join(' '), :output => 'splitTag',:env {'CDO_FILE_SUFFIX' => '.nc'}) (ruby)
+   or Cdo.env = {'CDO_FILE_SUFFIX' => '.nc'}
+   xdo.splitname(input:    ifile.join(' '), output:    'splitTag',env: {'CDO_FILE_SUFFIX' => '.nc'}) (ruby-2.x, class interface)
    or Cdo.env = {'CDO_FILE_SUFFIX' => '.nc'}
    cdo.splitname(input = ' '.join(ifiles) ,  output =  'splitTag', env={"CDO_FILE_SUFFIX": ".nc"})   (python)
    or Cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
@@ -74,8 +86,10 @@ The Ruby module can be used directly after loading it. For python an instance ha
 
    temperatures = Cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
    temperatures = cdo.fldmin(input = ifile,returnArray = True).variables['T'][:] (py, version < 1.2.0)
+
    temperatures = Cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    (rb, version >= 1.2.0)
    temperatures = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]   (py, version >= 1.2.0)*
+
    temperatures = Cdo.fldmin(:input => ifile,:returnArray => 'T')                (rb, version >= 1.2.0)
    temperatures = cdo.fldmin(input = ifile,returnArray = 'T')                   (py, version >= 1.2.0)
 
