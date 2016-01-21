@@ -414,8 +414,8 @@ class TestCdo < Minitest::Test
     rm(ofiles)
   end
   def test_log
-    @cdo = Cdo.new(logFile: 'test.log',returnNilOnError: true)
-    @cdo = Cdo.new(logFile: 'test.log')
+    #  logging without a real file
+    @cdo = Cdo.new(                    returnNilOnError: true)
     @cdo.debug = false
     @cdo.logging = true
     @cdo.temp(output: "tt.grb")
@@ -423,6 +423,10 @@ class TestCdo < Minitest::Test
     puts @cdo.showLog
     @cdo.sinfov(input: '-top')
     @cdo.topo
+    puts @cdo.showLog
+    #  use a use definded file for looging
+    @cdo = Cdo.new(logFile: 'test.log',logging: true, returnNilOnError: true)
+    @cdo.remapnn('r10x10',input: '-topo')
     puts @cdo.showLog
   end
 end
