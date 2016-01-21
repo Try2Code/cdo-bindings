@@ -79,8 +79,10 @@ module Cdo
     State[:operators] = case 
                         when Cdo.version < "1.5.6"
                           (help[help.index("Operators:")+1].split + @@undocumentedOperators).uniq
-                        else
+                        when Cdo.version <= "1.7.0"
                           help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
+                        else
+                          IO.popen(@@CDO + ' --operators').readlines.map {|l| l.split(' ').first}
                         end
   end
 

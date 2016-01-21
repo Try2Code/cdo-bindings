@@ -101,6 +101,8 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
    
 * 1.3 (upcomming)
    - require ruby-2.*
+   - set ruby class interface as default; module interface is still available via "require 'cdo_lib'"
+   - support for upcomming CDO release 1.7.1
    - support object interface in the ruby version (easy setup of options during initializaion, thread safety)
    - allow environment variables set with external JSON file
    - unicode bugfix - thanks to Sebastian Illing (illing2005) [python-only]
