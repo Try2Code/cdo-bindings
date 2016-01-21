@@ -418,17 +418,6 @@ class TestCdo < Minitest::Test
     @cdo.topo
     @cdo.showlog
   end
-
-  def test_CDO_newOperatorList
-    # only valid for cdo version from 1.7.1 onwards
-    cdo = Cdo.new(:cdo => '/home/ram/local/bin/cdo-dev')
-    pp cdo.version
-    assert(cdo.version > '1.7.1',"development version is below 1.7.1!")
-    if cdo.version >'1.7.0' then
-    end
-    pp cdo
-    assert(cdo.operators.size > 700)
-  end
 end
 
 #  # Calling simple operators
