@@ -413,10 +413,17 @@ class TestCdo < Minitest::Test
     assert_equal(ofiles,Dir.glob(oTag+'*').sort)
     rm(ofiles)
   end
-  def _test_log
-    @cdo.log = true
+  def test_log
+    @cdo = Cdo.new(logFile: 'test.log',returnNilOnError: true)
+    @cdo = Cdo.new(logFile: 'test.log')
+    @cdo.debug = false
+    @cdo.logging = true
+    @cdo.temp(output: "tt.grb")
+    @cdo.sinfov(input: '-topo')
+    puts @cdo.showLog
+    @cdo.sinfov(input: '-top')
     @cdo.topo
-    @cdo.showlog
+    puts @cdo.showLog
   end
 end
 

@@ -6,7 +6,7 @@ require 'stringio'
 class Cdo
   OutputOperatorsPattern = /(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)/
 
-  attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug
+  attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug, :logging, :logFile
   attr_reader   :operators, :filetypes
 
   def initialize(cdo: 'cdo',
@@ -14,7 +14,10 @@ class Cdo
                  returnFalseOnError: false,
                  forceOutput: true,
                  env: {},
-                 debug: false)
+                 logging: false,
+                 logFile: StringIO.new,
+                 debug: false,
+                 returnNilOnError: false)
 
     # setup path to cdo executable
     @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
@@ -24,10 +27,15 @@ class Cdo
     @forceOutput            = forceOutput
     @env                    = env
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
+    @returnNilOnError       = returnNilOnError
 
     @filetypes              = getFiletypes
     @returnFalseOnError     = returnFalseOnError
 
+    @logging                = logging
+    @logFile                = logFile
+    @logger                 = Logger.new(@logFile)
+    @logger.level           = Logger::INFO
   end
 
   private # {{{
@@ -83,6 +91,8 @@ class Cdo
       puts '# DEBUG ====================================================================='
     end
 
+    @logger.info(cmd+"\n") if @logging
+
     stdin, stdout, stderr, wait_thr = Open3.popen3(@env,cmd)
     {
       :stdout     => stdout.read,
@@ -100,6 +110,7 @@ class Cdo
       puts("Error in calling:")
       puts(">>> "+cmd+"<<<")
       puts(retvals[:stderr])
+      @logger.error("FAILIURE in execution of:"+cmd+"| msg:"+retvals[:stderr])
       return true
     else
       return false
@@ -120,11 +131,14 @@ class Cdo
     case ofile
     when $stdout
       retvals = _call(cmd)
-      @logger.info(cmd+"\n") if @log
       unless _hasError(cmd,retvals)
         return retvals[:stdout].split($/).map {|l| l.chomp.strip}
       else
-        raise ArgumentError,"CDO did NOT run successfully!"
+        if @returnNilOnError then
+          return nil
+        else
+          raise ArgumentError,"CDO did NOT run successfully!"
+        end
       end
     else
       force = @forceOutput if force.nil?
@@ -134,7 +148,11 @@ class Cdo
         retvals = _call(cmd)
         @logger.info(cmd+"\n") if @log
         if _hasError(cmd,retvals)
-          raise ArgumentError,"CDO did NOT run successfully!"
+          if @returnNilOnError then
+            return nil
+          else
+            raise ArgumentError,"CDO did NOT run successfully!"
+          end
         end
       else
         warn "Use existing file '#{ofile}'" if @debug
@@ -194,6 +212,17 @@ class Cdo
     else
       operator = operator.to_s
       puts _call([@cdo,'-h',operator].join(' ')).values_at(:stdout,:stderr)
+    end
+  end
+
+  # print the loggin messaged
+  def showLog
+
+    if @logger.instance_variable_get(:'@logdev').filename.nil?
+    @logFile.rewind
+      return @logFile.read
+    else
+      return File.open(@logFile).readlines
     end
   end
 
