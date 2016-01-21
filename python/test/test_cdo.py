@@ -524,11 +524,12 @@ class CdoTest(unittest.TestCase):
         cdo.temp()
         print(cdo.sinfov(input='-topo'))
         cdo.showLog()
+
         # logging with in-memory stringio
         cdo = Cdo(cdfMod=CDF_MOD,logging = True)
         cdo.topo()
         cdo.temp()
-        print(cdo.sinfov(input='-topo'))
+#       print(cdo.sinfov(input='-topo'))
         cdo.showLog()
 
 

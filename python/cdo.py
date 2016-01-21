@@ -60,7 +60,7 @@ class Cdo(object):
                env={},
                debug=False,
                logging=False,
-               logFile=StringIO()):
+               logFile=StringIO("logging for cdo.py")):
 
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
@@ -111,7 +111,7 @@ class Cdo(object):
 #   h.setLevel = pyLog.INFO
 #   self.logger.addHandler(h)
     if (self.logging):
-        pyLog.basicConfig(filename=self.logFile,level=pyLog.INFO,format='%(asctime)s %(levelname)s %(message)s')
+        pyLog.basicConfig(filename=self.logFile,filemode='w',level=pyLog.INFO,format='%(asctime)s %(levelname)s %(message)s')
         pyLog.info('start logging for:'+__name__)
 
   def __dir__(self):
@@ -134,8 +134,8 @@ class Cdo(object):
       print('CALL:'+' '.join(cmd))
       print('# DEBUG =====================================================================')
 
-      if self.logging:
-          pyLog.info(' '.join(cmd))
+    if self.logging:
+      pyLog.info(' '.join(cmd))
 
     for k,v in self.env.items():
       os.environ[k] = v
@@ -338,7 +338,7 @@ class Cdo(object):
           with open(self.logFile) as f:
               print(f.read())
       else:
-          print(self.logFile.readlines())
+          print(self.logFile.getvalue())
 
   def hasCdo(self,path=None):
     if path is None:
