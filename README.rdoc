@@ -25,7 +25,10 @@ Download and install cdo.py via pypi:
 === Requirements
 
 Cdo.{rb,py} requires a working CDO binary, but has not special requirement to
-ruby or python. For returning multi-dimensional arrays (numpy for python,
+ruby or python. Both python2 and python3 are fully supported. The class
+interface of the ruby version requires at least ruby-2.x, the module interface
+(available in 'cdo_lib') works with ruby-1.9.x, too.
+For returning multi-dimensional arrays (numpy for python,
 narray for ruby) addtional netcdf-io modules are needed. These are scipy/netcdf4 for
 python and ruby-netcdf for ruby.
 
