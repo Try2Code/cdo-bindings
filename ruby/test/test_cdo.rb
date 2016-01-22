@@ -414,19 +414,23 @@ class TestCdo < Minitest::Test
     rm(ofiles)
   end
   def test_log
+    cmd = '-fldmean -mul -random,r20x20 -topo,r20x20'
     #  logging without a real file
     @cdo = Cdo.new(                    returnNilOnError: true)
     @cdo.debug = false
     @cdo.logging = true
-    @cdo.temp(output: "tt.grb")
-    @cdo.sinfov(input: '-topo')
+    @cdo.topo
+    @cdo.temp
+    @cdo.sinfov(input: cmd)
     puts @cdo.showLog
     @cdo.sinfov(input: '-top')
     @cdo.topo
     puts @cdo.showLog
     #  use a use definded file for looging
     @cdo = Cdo.new(logFile: 'test.log',logging: true, returnNilOnError: true)
-    @cdo.remapnn('r10x10',input: '-topo')
+    @cdo.topo
+    @cdo.temp
+    @cdo.sinfov(input: cmd)
     puts @cdo.showLog
   end
 end

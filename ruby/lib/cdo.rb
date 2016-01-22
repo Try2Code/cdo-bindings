@@ -214,14 +214,18 @@ class Cdo
     end
   end
 
-  # print the loggin messaged
-  def showLog
+  # collect logging messages
+  def collectLogs
     if @logger.instance_variable_get(:'@logdev').filename.nil?
       @logFile.rewind
       return @logFile.read
     else
       return File.open(@logFile).readlines
     end
+  end
+  # print the loggin messaged
+  def showLog
+    puts collectLogs
   end
 
   # check if cdo backend is working

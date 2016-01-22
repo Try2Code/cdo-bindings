@@ -76,7 +76,7 @@ class Cdo(object):
                env={},
                debug=False,
                logging=False,
-               logFile=StringIO("#logging for cdo.py")):
+               logFile=StringIO()):
 
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
@@ -145,7 +145,7 @@ class Cdo(object):
       print('# DEBUG =====================================================================')
 
     if self.logging and '-h' != cmd[1]:
-      self.logger.info(' '.join(cmd))
+      self.logger.info(u' '.join(cmd))
 
     for k,v in self.env.items():
       os.environ[k] = v
@@ -340,15 +340,20 @@ class Cdo(object):
 
 
   def unsetReturnArray(self):
-    self.setReturnArray(False)
+      self.setReturnArray(False)
 
-  def showLog(self):
+  def collectLogs(self):
       if isinstance(self.logFile,str):
-          with open(self.logFile) as f:
-              print(f.read())
+          content = []
+          with open(self.logFile,'r') as f:
+              content.append(f.read())
+          return ''.join(content)
       else:
           self.logFile.flush()
-          print(self.logFile.getvalue())
+          return self.logFile.getvalue()
+
+  def showLog(self):
+      print(self.collectLogs())
 
   def hasCdo(self,path=None):
     if path is None:
