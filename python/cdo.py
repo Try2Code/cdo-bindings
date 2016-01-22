@@ -51,8 +51,6 @@ def setupLogging(logFile):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-    logger.info("STARTED LOGGING CDO COMMANDS")
-
     return logger
 
 
@@ -146,7 +144,7 @@ class Cdo(object):
       print('CALL:'+' '.join(cmd))
       print('# DEBUG =====================================================================')
 
-    if self.logging:
+    if self.logging and '-h' != cmd[1]:
       self.logger.info(' '.join(cmd))
 
     for k,v in self.env.items():
