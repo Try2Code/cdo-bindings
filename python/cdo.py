@@ -38,6 +38,24 @@ def getCdoVersion(path2cdo):
     match = re.search("Climate Data Operators version (\d.*) .*",cdo_help)
     return match.group(1)
 
+def setupLogging(logFile):
+    logger = pyLog.getLogger(__name__)
+    logger.setLevel(pyLog.INFO)
+
+    if isinstance(logFile,str):
+        handler = pyLog.FileHandler(logFile)
+    else:
+        handler = pyLog.StreamHandler(stream=logFile)
+
+    formatter = pyLog.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    logger.info("STARTED LOGGING CDO COMMANDS")
+
+    return logger
+
+
 class CDOException(Exception):
 
     def __init__(self, stdout, stderr, returncode):
@@ -60,7 +78,7 @@ class Cdo(object):
                env={},
                debug=False,
                logging=False,
-               logFile=StringIO("logging for cdo.py")):
+               logFile=StringIO("#logging for cdo.py")):
 
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
@@ -105,14 +123,8 @@ class Cdo(object):
 
     self.logging                = logging
     self.logFile                = logFile
-#   self.logger                 = pyLog.getLogger(__name__)
-#   self.logger.setLevel        = pyLog.INFO
-#   h = pyLog.FileHandler('test.log')
-#   h.setLevel = pyLog.INFO
-#   self.logger.addHandler(h)
     if (self.logging):
-        pyLog.basicConfig(filename=self.logFile,filemode='w',level=pyLog.INFO,format='%(asctime)s %(levelname)s %(message)s')
-        pyLog.info('start logging for:'+__name__)
+        self.logger = setupLogging(self.logFile)
 
   def __dir__(self):
     res = dir(type(self)) + list(self.__dict__.keys())
@@ -135,7 +147,7 @@ class Cdo(object):
       print('# DEBUG =====================================================================')
 
     if self.logging:
-      pyLog.info(' '.join(cmd))
+      self.logger.info(' '.join(cmd))
 
     for k,v in self.env.items():
       os.environ[k] = v
@@ -159,7 +171,7 @@ class Cdo(object):
       print(">>> "+' '.join(cmd)+"<<<")
       print(retvals["stderr"])
       if self.logging:
-          pyLog.error(cmd + " with:" + retvals["stderr"])
+          self.logger.error(cmd + " with:" + retvals["stderr"])
       return True
     else:
       return False
@@ -334,10 +346,10 @@ class Cdo(object):
 
   def showLog(self):
       if isinstance(self.logFile,str):
-          print('lof messages in '+self.logFile)
           with open(self.logFile) as f:
               print(f.read())
       else:
+          self.logFile.flush()
           print(self.logFile.getvalue())
 
   def hasCdo(self,path=None):
