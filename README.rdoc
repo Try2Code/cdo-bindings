@@ -6,6 +6,8 @@ gridded data. Its main focus if climate data, but it can by used for other
 purposes to. It accepts input formats GRIB1, GRIB2, NetCDF and several Fortran
 binary formats.
 
+"Why the ....":https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-
+
 == Installation
 
 === Ruby Installation
