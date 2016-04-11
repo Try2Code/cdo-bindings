@@ -186,8 +186,10 @@ class Cdo(object):
           operator.append(arg.__str__())
 
       #build the cdo command
-      #1. the cdo command
+      #0. the cdo command
       cmd = [self.CDO]
+      #1. OVERWRITE EXISTING FILES
+      cmd.append('-O')
       #2. options
       if 'options' in kwargs:
           cmd += kwargs['options'].split()
