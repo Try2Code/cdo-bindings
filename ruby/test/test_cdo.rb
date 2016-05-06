@@ -9,11 +9,13 @@ require 'pp'
 #===============================================================================
 def rm(files); files.each {|f| FileUtils.rm(f) if File.exists?(f)};end
 
-@show = ENV.has_key?('SHOW')
 
 class TestCdo < Minitest::Test
 
   DEFAULT_CDO_PATH = 'cdo'
+
+  @@show           = ENV.has_key?('SHOW')
+  @@maintainermode = ENV.has_key?('MAINTAINERMODE')
 
   def setup
     @cdo = Cdo.new
@@ -32,6 +34,9 @@ class TestCdo < Minitest::Test
       assert_equal(true,cdo.check)
       assert_equal(newCDO,cdo.cdo)
     end
+    pp 'MAINTAINERMODE: '
+    pp @@maintainermode
+    pp @@show
   end
   def test_getOperators
     %w[for random stdatm info showlevel sinfo remap geopotheight mask topo thicknessOfLevels].each {|op|
@@ -310,7 +315,7 @@ class TestCdo < Minitest::Test
     assert_equal("File format: GRIB".tr(' ',''),@cdo.sinfov(:input => "-topo", :output => nil)[0].tr(' ',''))
   end
 
-  if 'luthien' == `hostname`.chomp  then
+  if @@maintainermode  then
     def test_readCdf
       input = "-settunits,days  -setyear,2000 -for,1,4"
       cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
@@ -352,7 +357,7 @@ class TestCdo < Minitest::Test
       UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
                             {:y => vFm,  :style => 'points',:title => 'fillmiss'},
                             {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r1x10') if @show
+                            plotConf: {:yrange => '[0:1]'},title: 'r1x10') if @@show
       # check left-right replacement
       rand = @cdo.setname('v',:input => '-random,r10x1 ', :options => ' -f nc',:output => '/tmp/rand.nc')
       cdf  = @cdo.openCdf(rand)
@@ -371,7 +376,7 @@ class TestCdo < Minitest::Test
       UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
                             {:y => vFm,  :style => 'points',:title => 'fillmiss'},
                             {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r10x1') if @show
+                            plotConf: {:yrange => '[0:1]'},title: 'r10x1') if @@show
     end
   end
 

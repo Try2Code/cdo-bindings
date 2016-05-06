@@ -17,6 +17,8 @@ DATA_DIR = os.environ.get('HOME')+'/local/data'
 
 SHOW = 'SHOW' in os.environ
 
+MAINTAINERMODE = 'MAINTAINERMODE' in os.environ
+
 def plot(ary,ofile=False,title=None):
     if not SHOW:
       return
@@ -416,6 +418,7 @@ class CdoTest(unittest.TestCase):
     def test_showMaArray(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = True
+        print(cdo)
         bathy = cdo.setrtomiss(0,10000,
             input = cdo.topo(options='-f nc'),returnMaArray='topo')
         plot(bathy)
@@ -534,7 +537,7 @@ class CdoTest(unittest.TestCase):
         cdo.showLog()
 
 
-    if HOSTNAME == os.popen('hostname').read().strip():
+    if MAINTAINERMODE:
         def test_icon_coords(self):
             cdo = Cdo(cdfMod=CDF_MOD)
             ifile = DATA_DIR +'/icon/oce_AquaAtlanticBoxACC.nc'
