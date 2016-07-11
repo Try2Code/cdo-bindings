@@ -401,10 +401,10 @@ class CdoTest(unittest.TestCase):
         rm(files)
 
         # manual setup to nc2 via operator call
-        cdo.splitname(input=ifile,output=tag,env={"CDO_FILE_SUFFIX": ".nc2"})
+        cdo.splitname(input=ifile,output=tag,env={"CDO_FILE_SUFFIX": ".bar"})
         files = glob.glob(tag+'*')
         files.sort()
-        self.assertEqual(['__env_testP.nc2', '__env_testT.nc2'],files)
+        self.assertEqual(['__env_testP.bar', '__env_testT.bar'],files)
         rm(files)
 
         # manual setup to nc2 via object setup
