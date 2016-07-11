@@ -43,14 +43,14 @@ class Cdo
   # split arguments into hash-like args and the rest
   def Cdo.parseArgs(args)
     operatorArgs = args.reject {|a| a.class == Hash}
-    opts = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
+    opArguments = operatorArgs.empty? ? '' : ',' + operatorArgs.join(',')
     io   = args.find {|a| a.class == Hash}
     io   = {} if io.nil?
-    args.delete_if   {|a| a.class == Hash}
+    #args.delete_if   {|a| a.class == Hash}
     # join input streams together if possible
     io[:input] = io[:input].join(' ') if io[:input].respond_to?(:join)
 
-    return [io,opts]
+    return [io,opArguments]
   end
 
   # collect the complete list of possible operators
@@ -82,10 +82,11 @@ class Cdo
 
 
   # Execute the given cdo call and return all outputs
-  def _call(cmd)
+  def _call(cmd,env={})
     if (@debug)
       puts '# DEBUG ====================================================================='
       pp @env unless @env.empty?
+      pp  env unless  env.empty?
       puts 'CMD: '
       puts cmd
       puts '# DEBUG ====================================================================='
@@ -93,7 +94,7 @@ class Cdo
 
     @logger.info(cmd+"\n") if @logging
 
-    stdin, stdout, stderr, wait_thr = Open3.popen3(@env,cmd)
+    stdin, stdout, stderr, wait_thr = Open3.popen3(@env.merge(env),cmd)
     {
       :stdout     => stdout.read,
       :stderr     => stderr.read,
@@ -118,7 +119,7 @@ class Cdo
   end
 
   # command execution wrapper, which handles the possible return types
-  def _run(cmd,ofile='',options=nil,returnCdf=false,force=nil,returnArray=nil,returnMaArray=nil)
+  def _run(cmd,ofile='',options=nil,returnCdf=false,force=nil,returnArray=nil,returnMaArray=nil,env=nil)
     options = options.to_s
 
     options << '-f nc' if options.empty? and ( \
@@ -128,9 +129,12 @@ class Cdo
                                              )
     cmd = "#{@cdo} -O #{options} #{cmd} "
 
+    # use an empty hash for non-given environment
+    env = {} if env.nil?
+
     case ofile
     when $stdout
-      retvals = _call(cmd)
+      retvals = _call(cmd,env)
       unless _hasError(cmd,retvals)
         return retvals[:stdout].split($/).map {|l| l.chomp.strip}
       else
@@ -145,7 +149,7 @@ class Cdo
       if force or not File.exists?(ofile.to_s)
         ofile = MyTempfile.path if ofile.nil?
         cmd << "#{ofile}"
-        retvals = _call(cmd)
+        retvals = _call(cmd,env)
         if _hasError(cmd,retvals)
           if @returnNilOnError then
             return nil
@@ -180,9 +184,9 @@ class Cdo
     if @operators.include?(sym.to_s)
       io, opts = Cdo.parseArgs(args)
       if OutputOperatorsPattern.match(sym.to_s)
-        _run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout)
+        _run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout,nil,nil,nil,nil,nil,env)
       else
-        _run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray],io[:returnMaArray])
+        _run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray],io[:returnMaArray],io[:env])
       end
     else
       return false if @returnFalseOnError
