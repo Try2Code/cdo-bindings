@@ -122,7 +122,10 @@ Please use the forum or ticket system of CDOs official web page: http://code.zma
 * next:
    - return arrays/lists of output files, which are created by split* operators
      suggestion from Karl-Hermann Wieners
-   
+
+* 1.3.1
+   - fix environment handling per call (ruby version)
+
 * 1.3.0
    - require ruby-2.*
    - support for upcomming CDO release 1.7.1
