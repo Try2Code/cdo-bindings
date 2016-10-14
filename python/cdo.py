@@ -76,7 +76,9 @@ class Cdo(object):
                env={},
                debug=False,
                logging=False,
-               logFile=StringIO()):
+               logFile=StringIO(),
+               print_stdout=False,
+               print_stderr=False):
 
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
@@ -116,7 +118,8 @@ class Cdo(object):
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
     self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes|vct)'
-
+    self.print_stdout = print_stdout
+    self.print_stderr = print_stderr
     self.libs        = self.getSupportedLibs()
 
     self.logging                = logging
@@ -157,8 +160,17 @@ class Cdo(object):
 
     retvals = proc.communicate()
 
-    return {"stdout"     : retvals[0].decode("utf-8")
-           ,"stderr"     : retvals[1].decode("utf-8")
+    stdout_output = retvals[0].decode("utf-8")
+    stderr_output = retvals[1].decode("utf-8")
+
+    if self.print_stdout and stdout_output:
+        print(stdout_output)
+
+    if self.print_stderr and stderr_output:
+        print(stderr_output)
+
+    return {"stdout"     : stdout_output
+           ,"stderr"     : stderr_output
            ,"returncode" : proc.returncode}
 
   def hasError(self,method_name,cmd,retvals):
