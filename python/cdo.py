@@ -115,7 +115,7 @@ class Cdo(object):
     self.cdfMod                 = cdfMod.lower()
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
-    self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)'
+    self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes|vct)'
 
     self.libs        = self.getSupportedLibs()
 
