@@ -76,9 +76,7 @@ class Cdo(object):
                env={},
                debug=False,
                logging=False,
-               logFile=StringIO(),
-               print_stdout=False,
-               print_stderr=False):
+               logFile=StringIO()):
 
     # Since cdo-1.5.4 undocumented operators are given with the -h option. For
     # earlier version, they have to be provided manually
@@ -118,9 +116,7 @@ class Cdo(object):
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
     self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes|vct)'
-    self.print_stdout = print_stdout
-    self.print_stderr = print_stderr
-    self.libs        = self.getSupportedLibs()
+    self.libs                   = self.getSupportedLibs()
 
     self.logging                = logging
     self.logFile                = logFile
@@ -139,14 +135,6 @@ class Cdo(object):
           return isinstance(myString,str)
 
   def call(self,cmd):
-    if self.debug:
-      print('# DEBUG =====================================================================')
-      if {} != self.env:
-        for k,v in list(self.env.items()):
-          print("ENV: " + k + " = " + v)
-      print('CALL:'+' '.join(cmd))
-      print('# DEBUG =====================================================================')
-
     if self.logging and '-h' != cmd[1]:
       self.logger.info(u' '.join(cmd))
 
@@ -159,18 +147,23 @@ class Cdo(object):
                             stdout = subprocess.PIPE)
 
     retvals = proc.communicate()
+    stdout  = retvals[0].decode("utf-8")
+    stderr  = retvals[1].decode("utf-8")
 
-    stdout_output = retvals[0].decode("utf-8")
-    stderr_output = retvals[1].decode("utf-8")
+    if self.debug:
+      print('# DEBUG - start =============================================================')
+      if {} != self.env:
+        for k,v in list(self.env.items()):
+          print("ENV: " + k + " = " + v)
+      print('CALL  :' + ' '.join(cmd))
+      print('STDOUT:')
+      print(stdout)
+      print('STDERR:')
+      print(stderr)
+      print('# DEBUG - end ===============================================================')
 
-    if self.print_stdout and stdout_output:
-        print(stdout_output)
-
-    if self.print_stderr and stderr_output:
-        print(stderr_output)
-
-    return {"stdout"     : stdout_output
-           ,"stderr"     : stderr_output
+    return {"stdout"     : stdout
+           ,"stderr"     : stderr
            ,"returncode" : proc.returncode}
 
   def hasError(self,method_name,cmd,retvals):
@@ -179,7 +172,9 @@ class Cdo(object):
     if ( 0 != retvals["returncode"] ):
       print("Error in calling operator " + method_name + " with:")
       print(">>> "+' '.join(cmd)+"<<<")
-      print(retvals["stderr"])
+      print('STDOUT:' + retvals["stdout"])
+      print('STDERR:' + retvals["stderr"])
+
       if self.logging:
           self.logger.error(cmd + " with:" + retvals["stderr"])
       return True
