@@ -157,9 +157,11 @@ class Cdo(object):
           print("ENV: " + k + " = " + v)
       print('CALL  :' + ' '.join(cmd))
       print('STDOUT:')
-      print(stdout)
+      if (0 != len(stdout.strip())):
+        print(stdout)
       print('STDERR:')
-      print(stderr)
+      if (0 != len(stderr.strip())):
+        print(stderr)
       print('# DEBUG - end ===============================================================')
 
     return {"stdout"     : stdout

@@ -83,23 +83,28 @@ class Cdo
 
   # Execute the given cdo call and return all outputs
   def _call(cmd,env={})
-    if (@debug)
-      puts '# DEBUG ====================================================================='
-      pp @env unless @env.empty?
-      pp  env unless  env.empty?
-      puts 'CMD: '
-      puts cmd
-      puts '# DEBUG ====================================================================='
-    end
-
     @logger.info(cmd+"\n") if @logging
 
     stdin, stdout, stderr, wait_thr = Open3.popen3(@env.merge(env),cmd)
-    {
+    status = {
       :stdout     => stdout.read,
       :stderr     => stderr.read,
       :returncode => wait_thr.value.exitstatus
     }
+
+    if (@debug)
+      puts '# DEBUG - start ============================================================='
+      pp @env unless @env.empty?
+      pp  env unless  env.empty?
+      puts 'CALL:' + cmd
+      puts 'STDOUT:'
+      puts status[:stdout] unless status[:stdout].strip.empty?
+      puts 'STDERR:'
+      puts status[:stderr] unless status[:stderr].strip.empty?
+      puts '# DEBUG - end ==============================================================='
+    end
+
+    status
   end
 
   # Error handling for the given command
