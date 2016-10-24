@@ -115,7 +115,7 @@ class Cdo(object):
     self.cdfMod                 = cdfMod.lower()
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
-    self.outputOperatorsPattern = '(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes|vct)'
+    self.outputOperators        = ['cdiread','cmor','codetab','conv_cmor_table','diff','diffc','diffn','diffp','diffv','dump_cmor_table','dumpmap','filedes','ggstat','ggstats','gmtcells','gmtxyz','gradsdes','griddes','griddes2','gridverify','info','infoc','infon','infop','infos','infov','map','ncode','ncode','ndate','ngridpoints','ngrids','nlevel','nmon','npar','ntime','nvar','nyear','output','outputarr','outputbounds','outputboundscpt','outputcenter','outputcenter2','outputcentercpt','outputext','outputf','outputfld','outputint','outputkey','outputsrv','outputtab','outputtri','outputts','outputvector','outputvrml','outputxyz','pardes','partab','partab2','seinfo','seinfoc','seinfon','seinfop','showcode','showdate','showformat','showlevel','showltype','showmon','showname','showparam','showstdname','showtime','showtimestamp','showunit','showvar','showyear','sinfo','sinfoc','sinfon','sinfop','sinfov','spartab','specinfo','tinfo','vardes','vct','vct2','verifygrid','vlist','zaxisdes']
     self.libs                   = self.getSupportedLibs()
 
     self.logging                = logging
@@ -188,7 +188,7 @@ class Cdo(object):
     @auto_doc(method_name, self)
     def get(self, *args,**kwargs):
       operator          = [method_name]
-      operatorPrintsOut = re.search(self.outputOperatorsPattern,method_name)
+      operatorPrintsOut = method_name in self.outputOperators
 
       if args.__len__() != 0:
         for arg in args:

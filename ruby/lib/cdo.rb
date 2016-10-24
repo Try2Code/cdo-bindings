@@ -6,6 +6,18 @@ require 'stringio'
 class Cdo
   OutputOperatorsPattern = /(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)/
 
+  OutputOperators = %w[cdiread cmor codetab conv_cmor_table diff diffc diffn diffp
+  diffv dump_cmor_table dumpmap filedes ggstat ggstats gmtcells gmtxyz gradsdes
+  griddes griddes2 gridverify info infoc infon infop infos infov map ncode
+  ncode ndate ngridpoints ngrids nlevel nmon npar ntime nvar nyear output
+  outputarr outputbounds outputboundscpt outputcenter outputcenter2
+  outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
+  outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab
+  partab2 seinfo seinfoc seinfon seinfop showcode showdate showformat showlevel
+  showltype showmon showname showparam showstdname showtime showtimestamp
+  showunit showvar showyear sinfo sinfoc sinfon sinfop sinfov
+spartab specinfo tinfo vardes vct vct2 verifygrid vlist zaxisdes]
+
   attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug, :logging, :logFile
   attr_reader   :operators, :filetypes
 
@@ -188,7 +200,7 @@ class Cdo
 
     if @operators.include?(sym.to_s)
       io, opts = Cdo.parseArgs(args)
-      if OutputOperatorsPattern.match(sym.to_s)
+      if OutputOperators.include?(sym.to_s)
         _run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout,nil,nil,nil,nil,nil,env)
       else
         _run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray],io[:returnMaArray],io[:env])
