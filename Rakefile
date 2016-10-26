@@ -43,3 +43,5 @@ desc "execute one/all lib-test(s) with ruby or the given env: RubyInterpreter"
 task :testRubyLib, :name do |t,args|
   sh rubyTest(name: args.name,testFile: 'test/test_cdo_lib.rb')
 end
+
+task :default => :testRuby
