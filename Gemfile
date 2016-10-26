@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'gnuplot'
-gem 'unifiedPlot'
+gem 'narray'
+gem 'ruby-netcdf'
 gem 'minitest'
 gem 'rake'

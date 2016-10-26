@@ -2,7 +2,6 @@ $:.unshift File.join(File.dirname(__FILE__),"..","lib")
 
 require 'minitest/autorun'
 require 'cdo'
-require 'unifiedPlot'
 require 'pp'
 
 
@@ -316,6 +315,7 @@ class TestCdo < Minitest::Test
   end
 
   if @@maintainermode  then
+    require 'unifiedPlot'
     def test_readCdf
       input = "-settunits,days  -setyear,2000 -for,1,4"
       cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
