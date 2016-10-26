@@ -111,50 +111,6 @@ class TestCdo < Minitest::Test
                  @cdo.thicknessOfLevels(:input => ofile))
   end
 
-  def test_combine
-    ofile0, ofile1 = MyTempfile.path, MyTempfile.path
-    @cdo.fldsum(:input => @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:options => "-f nc"),:output => ofile0)
-    @cdo.fldsum(:input => "-stdatm,25,100,250,500,875,1400,2100,3000,4000,5000",:options => "-f nc",:output => ofile1)
-    @cdo.returnCdf = true
-    MyTempfile.showFiles
-    diff = @cdo.sub(:input => [ofile0,ofile1].join(' ')).var('T').get
-    assert_equal(0.0,diff.min)
-    assert_equal(0.0,diff.max)
-    @cdo.returnCdf = false
-  end
-
-  def test_tempfile
-    ofile0, ofile1 = MyTempfile.path, MyTempfile.path
-    assert(ofile0 != ofile1, "Found equal tempfiles!")
-    # Tempfile should not disappeare even if the GC was started
-    puts ofile0
-    assert(File.exist?(ofile0))
-    GC.start
-    assert(File.exist?(ofile0))
-  end
-
-  def test_returnCdf
-    ofile = rand(0xfffff).to_s + '_test_returnCdf.nc'
-    vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
-    assert_equal(ofile,vals)
-    @cdo.returnCdf = true
-    vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
-    assert_equal(["lon","lat","level","P","T"],vals.var_names)
-    assert_equal(276,vals.var("T").get.flatten.mean.floor)
-    @cdo.returnCdf = false
-    vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
-    assert_equal(ofile,vals)
-    FileUtils.rm(ofile)
-  end
-  def test_simple_returnCdf
-    ofile0, ofile1 = MyTempfile.path, MyTempfile.path
-    sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),
-               :returnCdf => true).var("P").get
-    assert_equal(1013.25,sum.min)
-    sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),:output => ofile0)
-    assert_equal(ofile0,sum)
-    test_returnCdf
-  end
   def test_force
     outs = []
     # tempfiles
@@ -226,38 +182,6 @@ class TestCdo < Minitest::Test
     pp [io,opts]
   end 
 
-  def test_returnArray
-    temperature = @cdo.stdatm(0,:options => '-f nc',:returnCdf => true).var('T').get.flatten[0]
-    assert_raises ArgumentError do
-      @cdo.stdatm(0,:options => '-f nc',:returnArray => 'TT')
-    end
-    temperature = @cdo.stdatm(0,:options => '-f nc',:returnArray => 'T')
-    assert_equal(288.0,temperature.flatten[0])
-    pressure = @cdo.stdatm(0,1000,:options => '-f nc -b F64',:returnArray => 'P')
-    assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
-  end
-  def test_returnMaArray
-    @cdo.debug = true
-    topo = @cdo.topo(:options => '-f nc',:returnMaArray => 'topo')
-    assert_equal(-1890.0,topo.mean.round)
-    bathy = @cdo.setrtomiss(0,10000,
-        :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
-    assert_equal(-3386.0,bathy.mean.round)
-    oro = @cdo.setrtomiss(-10000,0,
-        :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
-    assert_equal(1142.0,oro.mean.round)
-    bathy = @cdo.remapnn('r2x2',:input => @cdo.topo(:options => '-f nc'), :returnMaArray => 'topo')
-    assert_equal(-4298.0,bathy[0,0])
-    assert_equal(-2669.0,bathy[1,0])
-    ta = @cdo.remapnn('r2x2',:input => @cdo.topo(:options => '-f nc'))
-    tb = @cdo.subc(-2669.0,:input => ta)
-    withMask = @cdo.div(:input => ta+" "+tb,:returnMaArray => 'topo')
-    assert(-8.0e+33 > withMask[1,0])
-    assert(0 < withMask[0,0])
-    assert(0 < withMask[0,1])
-    assert(0 < withMask[1,1])
-  end
-
   def test_errorException
     @cdo.debug = true
     # stdout operators get get wrong input
@@ -316,6 +240,82 @@ class TestCdo < Minitest::Test
 
   if @@maintainermode  then
     require 'unifiedPlot'
+
+    def test_returnArray
+      temperature = @cdo.stdatm(0,:options => '-f nc',:returnCdf => true).var('T').get.flatten[0]
+      assert_raises ArgumentError do
+        @cdo.stdatm(0,:options => '-f nc',:returnArray => 'TT')
+      end
+      temperature = @cdo.stdatm(0,:options => '-f nc',:returnArray => 'T')
+      assert_equal(288.0,temperature.flatten[0])
+      pressure = @cdo.stdatm(0,1000,:options => '-f nc -b F64',:returnArray => 'P')
+      assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
+    end
+    def test_returnMaArray
+      @cdo.debug = true
+      topo = @cdo.topo(:options => '-f nc',:returnMaArray => 'topo')
+      assert_equal(-1890.0,topo.mean.round)
+      bathy = @cdo.setrtomiss(0,10000,
+          :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
+      assert_equal(-3386.0,bathy.mean.round)
+      oro = @cdo.setrtomiss(-10000,0,
+          :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
+      assert_equal(1142.0,oro.mean.round)
+      bathy = @cdo.remapnn('r2x2',:input => @cdo.topo(:options => '-f nc'), :returnMaArray => 'topo')
+      assert_equal(-4298.0,bathy[0,0])
+      assert_equal(-2669.0,bathy[1,0])
+      ta = @cdo.remapnn('r2x2',:input => @cdo.topo(:options => '-f nc'))
+      tb = @cdo.subc(-2669.0,:input => ta)
+      withMask = @cdo.div(:input => ta+" "+tb,:returnMaArray => 'topo')
+      assert(-8.0e+33 > withMask[1,0])
+      assert(0 < withMask[0,0])
+      assert(0 < withMask[0,1])
+      assert(0 < withMask[1,1])
+    end
+    def test_combine
+      ofile0, ofile1 = MyTempfile.path, MyTempfile.path
+      @cdo.fldsum(:input => @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:options => "-f nc"),:output => ofile0)
+      @cdo.fldsum(:input => "-stdatm,25,100,250,500,875,1400,2100,3000,4000,5000",:options => "-f nc",:output => ofile1)
+      @cdo.returnCdf = true
+      MyTempfile.showFiles
+      diff = @cdo.sub(:input => [ofile0,ofile1].join(' ')).var('T').get
+      assert_equal(0.0,diff.min)
+      assert_equal(0.0,diff.max)
+      @cdo.returnCdf = false
+    end
+
+    def test_tempfile
+      ofile0, ofile1 = MyTempfile.path, MyTempfile.path
+      assert(ofile0 != ofile1, "Found equal tempfiles!")
+      # Tempfile should not disappeare even if the GC was started
+      puts ofile0
+      assert(File.exist?(ofile0))
+      GC.start
+      assert(File.exist?(ofile0))
+    end
+
+    def test_returnCdf
+      ofile = rand(0xfffff).to_s + '_test_returnCdf.nc'
+      vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
+      assert_equal(ofile,vals)
+      @cdo.returnCdf = true
+      vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
+      assert_equal(["lon","lat","level","P","T"],vals.var_names)
+      assert_equal(276,vals.var("T").get.flatten.mean.floor)
+      @cdo.returnCdf = false
+      vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
+      assert_equal(ofile,vals)
+      FileUtils.rm(ofile)
+    end
+    def test_simple_returnCdf
+      ofile0, ofile1 = MyTempfile.path, MyTempfile.path
+      sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),
+                 :returnCdf => true).var("P").get
+      assert_equal(1013.25,sum.min)
+      sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),:output => ofile0)
+      assert_equal(ofile0,sum)
+      test_returnCdf
+    end
     def test_readCdf
       input = "-settunits,days  -setyear,2000 -for,1,4"
       cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
