@@ -111,8 +111,7 @@ instead to avoid possible segmentation faults:
     cdf = cdo.fldmin(input = ifile,returnCdf = True)
     temperatures = cdf.variables['T'][:]
 
-More examples can be found in test/cdo-examples.rb and on the homepage:
-https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D
+More examples can be found in test/cdo-examples.rb and [on the homepage](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D)
 
 ### Tempfile helpers
 
