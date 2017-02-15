@@ -127,7 +127,7 @@ http://code.zmaw.de/projects/cdo
 ## Changelog
 *   next:
         - return arrays/lists of output files, which are created by split* operators
-          suggestion from Karl-Hermann Wieners
+          suggestion from Karl-Hermann Wieners :ocean:
 
 *   1.3.2 [2016-10-24]
         - improvened stdout/stderr handling, thx to jvegasbsc
