@@ -74,9 +74,12 @@ Please check the documentation for constructor paramaters
         cdo.remap([gridfile,weightfile],input => ifile, output => ofile) (python)
 
 *   logging
-
-        cdo = Cdo.new(logging: true, logFile: 'cdo_commands.log') [ruby-2.x]
-        cdo = Cdo(logging=True, logFile='cdo_commands.log')       [python]
+```ruby
+        cdo = Cdo.new(logging: true, logFile: 'cdo_commands.log') #ruby-2.x
+```
+```python
+        cdo = Cdo(logging=True, logFile='cdo_commands.log')       #python
+```
 
 *   Set global CDO options
 
@@ -93,7 +96,8 @@ Please check the documentation for constructor paramaters
         cdo.splitname(input = ' '.join(ifiles) ,  output =  'splitTag', env={"CDO_FILE_SUFFIX": ".nc"})   (python)
         or Cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
 
-*   Return multi-dimension arrrays ```
+*   Return multi-dimension arrrays
+```
         temperatures = Cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
         temperatures = cdo.fldmin(input = ifile,returnArray = True).variables['T'][:] (py, version < 1.2.0)
 
