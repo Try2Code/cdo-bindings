@@ -189,6 +189,14 @@ http://code.zmaw.de/projects/cdo
           output file is presen, default: false
 
 
+## Thanks to contributors
+
+* @martinclaus
+* @illing2005
+* @jvegasbsc
+* @guziy
+
+
 ## License
 
 Cdo.{rb,py} makes use of the GPLv2 License, see COPYING
