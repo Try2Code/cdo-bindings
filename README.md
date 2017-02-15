@@ -40,20 +40,17 @@ The Ruby module can be used directly after loading it. For python and the ruby
 class interface an instance has to be created first
 
 ```ruby
-    cdo = Cdo.new
+    cdo = Cdo.new   #ruby
 ```
 ```python
-    cdo = Cdo()
+    cdo = Cdo()     #python
 ```
 
 Please check the documentation for constructor paramaters
 
 *   File information
 ```ruby
-        Cdo.infov(:input => ifile)       #ruby, module interface
-        Cdo.showlevels(:input => ifile)
-
-        cdo.infov(input: ifile)          #ruby-2.*, class interface
+        cdo.infov(input: ifile)        #ruby
         cdo.showlevels(input: ifile)
 
 ```
@@ -64,8 +61,7 @@ Please check the documentation for constructor paramaters
 
 *   Operators with user defined regular output files
 ```ruby
-        Cdo.timmin(:input => ifile ,:output => ofile) #ruby
-        cdo.timmin(input: ifile ,output: ofile)       #ruby-2.*, class interface
+        cdo.timmin(input: ifile ,output: ofile)       #ruby
 ```
 ```python
         cdo.timmin(input = ifile,output = ofile)      #python
@@ -73,8 +69,7 @@ Please check the documentation for constructor paramaters
 
 *   Use temporary output files
 ```ruby
-        tminFile = Cdo.timmin(:input => ifile) #ruby
-        tminFile = cdo.timmin(input: ifile)    #ruby-2.*, class interface
+        tminFile = cdo.timmin(input: ifile)  #ruby
 ```
 ```python
         tminFile = cdo.timmin(input = ifile) #python
@@ -82,8 +77,7 @@ Please check the documentation for constructor paramaters
 
 *   Operators with options
 ```ruby
-        Cdo.remap([gridfile,weightfile],:input => ifile, :output => ofile) #ruby
-        cdo.remap([gridfile,weightfile],input:   ifile, output:   ofile)   #ruby-2.x, class interface
+        cdo.remap([gridfile,weightfile],input:   ifile, output: ofile)   #ruby
 ```
 ```python
         cdo.remap([gridfile,weightfile],input => ifile, output => ofile) #python
@@ -91,7 +85,7 @@ Please check the documentation for constructor paramaters
 
 *   logging
 ```ruby
-        cdo = Cdo.new(logging: true, logFile: 'cdo_commands.log') #ruby-2.x
+        cdo = Cdo.new(logging: true, logFile: 'cdo_commands.log') #ruby
 ```
 ```python
         cdo = Cdo(logging=True, logFile='cdo_commands.log')       #python
