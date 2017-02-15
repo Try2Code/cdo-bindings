@@ -68,10 +68,13 @@ Please check the documentation for constructor paramaters
         tminFile = cdo.timmin(input = ifile) (python)
 
 *   Operators with options
-
-        Cdo.remap([gridfile,weightfile],:input => ifile, :output => ofile) (ruby)
-        cdo.remap([gridfile,weightfile],input:   ifile, output:   ofile) (ruby-2.x, class interface)
-        cdo.remap([gridfile,weightfile],input => ifile, output => ofile) (python)
+```ruby
+        Cdo.remap([gridfile,weightfile],:input => ifile, :output => ofile) #ruby
+        cdo.remap([gridfile,weightfile],input:   ifile, output:   ofile)   #ruby-2.x, class interface
+```
+```python
+        cdo.remap([gridfile,weightfile],input => ifile, output => ofile) #python
+```
 
 *   logging
 ```ruby
