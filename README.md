@@ -56,16 +56,22 @@ Please check the documentation for constructor paramaters
         cdo.showlevels(input=ifile)
 
 *   Operators with user defined regular output files
-
-        Cdo.timmin(:input => ifile ,:output => ofile) (ruby)
-        cdo.timmin(input: ifile ,output: ofile) (ruby-2.*, class interface
+```ruby
+        Cdo.timmin(:input => ifile ,:output => ofile) #ruby
+        cdo.timmin(input: ifile ,output: ofile)       #ruby-2.*, class interface
+```
+```python
         cdo.timmin(input = ifile,output = ofile)    (python)
+```
 
 *   Use temporary output files
-
-        tminFile = Cdo.timmin(:input => ifile) (ruby)
-        tminFile = cdo.timmin(input: ifile) (ruby-2.*, class interface)
-        tminFile = cdo.timmin(input = ifile) (python)
+```ruby
+        tminFile = Cdo.timmin(:input => ifile) #ruby
+        tminFile = cdo.timmin(input: ifile)    #ruby-2.*, class interface
+```
+```python
+        tminFile = cdo.timmin(input = ifile) #python
+```
 
 *   Operators with options
 ```ruby
