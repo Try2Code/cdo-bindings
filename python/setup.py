@@ -15,4 +15,5 @@ setup (name   = 'cdo',
         "Operating System :: POSIX",
         "Programming Language :: Python",
     ],
+  install_requires=['six'],
   )

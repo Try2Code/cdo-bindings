@@ -1,7 +1,7 @@
 from __future__ import print_function
 import unittest,os,tempfile,sys,glob,subprocess,multiprocessing
 from stat import *
-from testcdo import *
+from cdo import *
 import numpy as np
 from matplotlib import pylab as pl
 
@@ -523,6 +523,14 @@ class CdoTest(unittest.TestCase):
         cmd = '-fldmean -mul -random,r20x20 -topo,r20x20'
         print('# logging with a real file')
         cdo = Cdo(cdfMod=CDF_MOD,logging = True,logFile='foo.log')
+        cdo.topo()
+        cdo.temp()
+        cdo.sinfov(input=cmd)
+        cdo.showLog()
+
+        cmd = '-fldmean -mul -random,r20x20 -topo,r20x20'
+        print('# logging with a real file, passed as unicode string')
+        cdo = Cdo(cdfMod=CDF_MOD, logging=True, logFile=u'foo.log')
         cdo.topo()
         cdo.temp()
         cdo.sinfov(input=cmd)

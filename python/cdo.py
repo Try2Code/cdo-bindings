@@ -3,6 +3,7 @@ import os,re,subprocess,tempfile,random,sys
 from pkg_resources import parse_version
 from io import StringIO
 import logging as pyLog
+import six
 try:
     from string import strip
 except ImportError:
@@ -42,7 +43,7 @@ def setupLogging(logFile):
     logger = pyLog.getLogger(__name__)
     logger.setLevel(pyLog.INFO)
 
-    if isinstance(logFile,str):
+    if isinstance(logFile, six.string_types):
         handler = pyLog.FileHandler(logFile)
     else:
         handler = pyLog.StreamHandler(stream=logFile)
@@ -128,12 +129,6 @@ class Cdo(object):
     res.extend(self.operators)
     return res
 
-  def isString(self,myString):
-      if (2 == sys.version_info[0]):
-          return isinstance(myString,basestring)
-      else:
-          return isinstance(myString,str)
-
   def call(self,cmd):
     if self.logging and '-h' != cmd[1]:
       self.logger.info(u' '.join(cmd))
@@ -206,7 +201,7 @@ class Cdo(object):
       cmd.append(','.join(operator))
       #4. input files or operators
       if 'input' in kwargs:
-        if self.isString(kwargs["input"]):
+        if isinstance(kwargs["input"], six.string_types):
             cmd.append(kwargs["input"])
         else:
             #we assume it's either a list, a tuple or any iterable.
@@ -354,7 +349,7 @@ class Cdo(object):
       self.setReturnArray(False)
 
   def collectLogs(self):
-      if isinstance(self.logFile,str):
+      if isinstance(self.logFile, six.string_types):
           content = []
           with open(self.logFile,'r') as f:
               content.append(f.read())
