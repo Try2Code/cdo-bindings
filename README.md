@@ -94,7 +94,7 @@ Please check the documentation for constructor paramaters
         or Cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
 
 *   Return multi-dimension arrrays
-
+```
         temperatures = Cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
         temperatures = cdo.fldmin(input = ifile,returnArray = True).variables['T'][:] (py, version < 1.2.0)
 
@@ -103,6 +103,7 @@ Please check the documentation for constructor paramaters
 
         temperatures = Cdo.fldmin(:input => ifile,:returnArray => 'T')                (rb, version >= 1.2.0)
         temperatures = cdo.fldmin(input = ifile,returnArray = 'T')                   (py, version >= 1.2.0)
+```
 
 
 *) If you use scipy >= 0.14 as netcdf backend, you have use following code
@@ -189,12 +190,7 @@ http://code.zmaw.de/projects/cdo
           output file is presen, default: false
 
 
-## Thanks to contributors
-
-* @martinclaus
-* @illing2005
-* @jvegasbsc
-* @guziy
+## [Thanks to all contributors!](https://github.com/Try2Code/cdo-bindings/graphs/contributors)
 
 
 ## License
