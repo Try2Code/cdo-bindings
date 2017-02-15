@@ -39,21 +39,28 @@ ruby-netcdf for ruby.
 The Ruby module can be used directly after loading it. For python and the ruby
 class interface an instance has to be created first
 
+```ruby
     cdo = Cdo.new
+```
+```python
     cdo = Cdo()
+```
 
 Please check the documentation for constructor paramaters
 
 *   File information
-
-        Cdo.infov(:input => ifile)       (ruby, module interface)
+```ruby
+        Cdo.infov(:input => ifile)       #ruby, module interface
         Cdo.showlevels(:input => ifile)
 
-        cdo.infov(input: ifile)       (ruby-2.*, class interface)
+        cdo.infov(input: ifile)          #ruby-2.*, class interface
         cdo.showlevels(input: ifile)
 
-        cdo.infov(input=ifile)         (python)
+```
+```python
+        cdo.infov(input=ifile)         #python
         cdo.showlevels(input=ifile)
+```
 
 *   Operators with user defined regular output files
 ```ruby
@@ -61,7 +68,7 @@ Please check the documentation for constructor paramaters
         cdo.timmin(input: ifile ,output: ofile)       #ruby-2.*, class interface
 ```
 ```python
-        cdo.timmin(input = ifile,output = ofile)    (python)
+        cdo.timmin(input = ifile,output = ofile)      #python
 ```
 
 *   Use temporary output files
