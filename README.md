@@ -92,39 +92,41 @@ Please check the documentation for constructor paramaters
 ```
 
 *   Set global CDO options
-
-        Cdo.copy(:input => ifile, :output => ofile,:options => "-f nc4") (ruby)
-        cdo.copy(input:  ifile, output:  ofile,options:  "-f nc4")     (ruby-2.x, class interface)
-        cdo.copy(input = ifile, output = ofile,options = "-f nc4")     (python)
+```ruby
+        cdo.copy(input:  ifile, output:  ofile,options:  "-f nc4")     #ruby
+```
+```python
+        cdo.copy(input = ifile, output = ofile,options = "-f nc4")     #python
+```
 
 *   Set environment variables
-
-        Cdo.splitname(:input => ifile.join(' '), :output => 'splitTag',:env {'CDO_FILE_SUFFIX' => '.nc'}) (ruby)
-        or Cdo.env = {'CDO_FILE_SUFFIX' => '.nc'}
-        xdo.splitname(input:    ifile.join(' '), output:    'splitTag',env: {'CDO_FILE_SUFFIX' => '.nc'}) (ruby-2.x, class interface)
-        or Cdo.env = {'CDO_FILE_SUFFIX' => '.nc'}
-        cdo.splitname(input = ' '.join(ifiles) ,  output =  'splitTag', env={"CDO_FILE_SUFFIX": ".nc"})   (python)
-        or Cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
+```ruby
+        cdo.splitname(input:    ifile.join(' '), output:    'splitTag',env: {'CDO_FILE_SUFFIX' => '.nc'}) #or
+        cdo.env = {'CDO_FILE_SUFFIX' => '.nc'}
+```
+```python
+        cdo.splitname(input = ' '.join(ifiles) ,  output =  'splitTag', env={"CDO_FILE_SUFFIX": ".nc"})   #or
+        cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
+```
 
 *   Return multi-dimension arrrays
+```ruby
+        temperatures = cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
+        temperatures = cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    (rb, version >= 1.2.0)
+        temperatures = cdo.fldmin(:input => ifile,:returnArray => 'T')                (rb, version >= 1.2.0)
 ```
-        temperatures = Cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
+```python
         temperatures = cdo.fldmin(input = ifile,returnArray = True).variables['T'][:] (py, version < 1.2.0)
-
-        temperatures = Cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    (rb, version >= 1.2.0)
-        temperatures = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]   (py, version >= 1.2.0)*
-
-        temperatures = Cdo.fldmin(:input => ifile,:returnArray => 'T')                (rb, version >= 1.2.0)
+        temperatures = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]   (py, version >= 1.2.0)
         temperatures = cdo.fldmin(input = ifile,returnArray = 'T')                   (py, version >= 1.2.0)
 ```
 
-
 *) If you use scipy >= 0.14 as netcdf backend, you have use following code
 instead to avoid possible segmentation faults:
-
+```python
     cdf = cdo.fldmin(input = ifile,returnCdf = True)
     temperatures = cdf.variables['T'][:]
-
+```
 More examples can be found in test/cdo-examples.rb and [on the homepage](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D)
 
 ### Tempfile helpers
@@ -138,73 +140,62 @@ Please use the forum or ticket system of CDOs official web page:
 http://code.zmaw.de/projects/cdo
 
 ## Changelog
-*   next:
-        - return arrays/lists of output files, which are created by split* operators
-          suggestion from Karl-Hermann Wieners :ocean:
+* next:
+  - return arrays/lists of output files, which are created by split* operators suggestion from Karl-Hermann Wieners :ocean:
+* **1.3.2** [2016-10-24]
+  - improvened stdout/stderr handling, thx to jvegasbsc
+* **1.3.1**
+  - fix environment handling per call (ruby version)
+* **1.3.0**
+  - require ruby-2.*
+  - support for upcomming CDO release 1.7.1
+  - improve loggin for ruby
+  - introduce logging for python
+  - unicode bugfix - thanks to Sebastian Illing (illing2005) [python-only]
+* **1.2.7**
+  - Added class interface for ruby version 2.x, mainly for thread safety
+* **1.2.6**
+  - bugfix for autocompletion in interactive usage [python-only]
+* **1.2.5**
+  - bugfix for environment handling (Thanks philipp) [python-only]
+  - add logging [ruby-only]
+* **1.2.4**
+  - support python3: Thanks to @jhamman
+  - bugfix for scipy: Thanks to @martinclaus
+  - docu fixes: Thanks to @guziy
+  - allow environment setting via call and object construction (see test_env in test_cdo.py)
+* **1.2.3**
+  - bugfix release: adjust library/feature check to latest cdo-1.6.2  release
+* **1.2.2**
+  - allow arrays in additions to strings for input argument
+  - add methods for checking the IO libraries of CDO and their versions
+  - optionally return None on error (suggestion from Alex Loew, python only)
+* **1.2.1**
+  - new return option: Masked Arrays
+    if the new keyword returnMaArray is given, its value is taken as variable
+    name and a masked array wrt to its FillValues is returned
+    contribution for python by Alex Loew
+  - error handling: return stderr in case of non-zero return value + raise exception
+    contribution for python from Estanislao Gonzalez
+  - autocompletion and built-in documentation through help() for interactive use
+    contribution from Estanislao Gonzalez [python]
+  - Added help operator for displaying help interactively [ruby]
+* **1.2.0** API change:
+  - Ruby now uses the same keys like the python interface, i.e. :input and :output
+    instead of :in and :out
+  - :returnArray will accept a variable name, for which the multidimesional
+    array is returned
+* **1.1.0** API change:
+  - new option :returnCdf : will return the netcdf file handle, which was formerly
+    done via :returnArray
+  - new options :force : if set to true the cdo call will be run even if the given
+    output file is presen, default: false
 
-*   1.3.2 [2016-10-24]
-        - improvened stdout/stderr handling, thx to jvegasbsc
-
-*   1.3.1
-        - fix environment handling per call (ruby version)
-
-*   1.3.0
-        - require ruby-2.*
-        - support for upcomming CDO release 1.7.1
-        - improve loggin for ruby
-        - introduce logging for python
-        - unicode bugfix - thanks to Sebastian Illing (illing2005) [python-only]
-
-*   1.2.7
-        - Added class interface for ruby version 2.x, mainly for thread safety
-
-*   1.2.6
-        - bugfix for autocompletion in interactive usage [python-only]
-
-*   1.2.5
-        - bugfix for environment handling (Thanks philipp) [python-only]
-        - add logging [ruby-only]
-
-*   1.2.4
-        - support python3: Thanks to @jhamman
-        - bugfix for scipy: Thanks to @martinclaus
-        - docu fixes: Thanks to @guziy
-        - allow environment setting via call and object construction (see test_env in test_cdo.py)
-
-*   1.2.3
-        - bugfix release: adjust library/feature check to latest cdo-1.6.2  release
-
-*   1.2.2
-        - allow arrays in additions to strings for input argument
-        - add methods for checking the IO libraries of CDO and their versions
-        - optionally return None on error (suggestion from Alex Loew, python only)
-
-*   1.2.1:
-        - new return option: Masked Arrays
-          if the new keyword returnMaArray is given, its value is taken as variable
-          name and a masked array wrt to its FillValues is returned
-          contribution for python by Alex Loew
-        - error handling: return stderr in case of non-zero return value + raise exception
-          contribution for python from Estanislao Gonzalez
-        - autocompletion and built-in documentation through help() for interactive use
-          contribution from Estanislao Gonzalez [python]
-        - Added help operator for displaying help interactively [ruby]
-
-*   1.2.0: API change:
-        - Ruby now uses the same keys like the python interface, i.e. :input and :output
-          instead of :in and :out
-        - :returnArray will accept a variable name, for which the multidimesional
-          array is returned
-
-*   1.1.0: API change:
-        - new option :returnCdf : will return the netcdf file handle, which was formerly
-          done via :returnArray
-        - new options :force : if set to true the cdo call will be run even if the given
-          output file is presen, default: false
-
+---
 
 ## [Thanks to all contributors!](https://github.com/Try2Code/cdo-bindings/graphs/contributors)
 
+---
 
 ## License
 
