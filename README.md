@@ -48,7 +48,7 @@ class interface an instance has to be created first
 
 Please check the documentation for constructor paramaters
 
-*   File information
+#### File information
 ```ruby
         cdo.infov(input: ifile)        #ruby
         cdo.showlevels(input: ifile)
@@ -59,7 +59,7 @@ Please check the documentation for constructor paramaters
         cdo.showlevels(input=ifile)
 ```
 
-*   Operators with user defined regular output files
+#### Operators with user defined regular output files
 ```ruby
         cdo.timmin(input: ifile ,output: ofile)       #ruby
 ```
@@ -67,7 +67,7 @@ Please check the documentation for constructor paramaters
         cdo.timmin(input = ifile,output = ofile)      #python
 ```
 
-*   Use temporary output files
+#### Use temporary output files
 ```ruby
         tminFile = cdo.timmin(input: ifile)  #ruby
 ```
@@ -75,7 +75,7 @@ Please check the documentation for constructor paramaters
         tminFile = cdo.timmin(input = ifile) #python
 ```
 
-*   Operators with options
+#### Operators with options
 ```ruby
         cdo.remap([gridfile,weightfile],input:   ifile, output: ofile)   #ruby
 ```
@@ -83,7 +83,7 @@ Please check the documentation for constructor paramaters
         cdo.remap([gridfile,weightfile],input => ifile, output => ofile) #python
 ```
 
-*   logging
+#### logging
 ```ruby
         cdo = Cdo.new(logging: true, logFile: 'cdo_commands.log') #ruby
 ```
@@ -91,7 +91,7 @@ Please check the documentation for constructor paramaters
         cdo = Cdo(logging=True, logFile='cdo_commands.log')       #python
 ```
 
-*   Set global CDO options
+#### Set global CDO options
 ```ruby
         cdo.copy(input:  ifile, output:  ofile,options:  "-f nc4")     #ruby
 ```
@@ -99,7 +99,7 @@ Please check the documentation for constructor paramaters
         cdo.copy(input = ifile, output = ofile,options = "-f nc4")     #python
 ```
 
-*   Set environment variables
+#### Set environment variables
 ```ruby
         cdo.splitname(input:    ifile.join(' '), output:    'splitTag',env: {'CDO_FILE_SUFFIX' => '.nc'}) #or
         cdo.env = {'CDO_FILE_SUFFIX' => '.nc'}
@@ -109,7 +109,7 @@ Please check the documentation for constructor paramaters
         cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
 ```
 
-*   Return multi-dimension arrrays
+#### Return multi-dimension arrrays
 ```ruby
         temperatures = cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
         temperatures = cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    (rb, version >= 1.2.0)
@@ -194,8 +194,6 @@ http://code.zmaw.de/projects/cdo
 ---
 
 ## [Thanks to all contributors!](https://github.com/Try2Code/cdo-bindings/graphs/contributors)
-
----
 
 ## License
 
