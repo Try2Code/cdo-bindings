@@ -203,6 +203,6 @@ Cdo.{rb,py} makes use of the GPLv2 License, see COPYING
 
 # Other stuff
 
-| Author | Ralf Mueller <stark.dreamdetective@gmail.com> |
-| Requires | CDO version 1.5.x or newer |
-| License | Copyright 2011-2017 by Ralf Mueller Released under GPLv2 license.  See the COPYING file included in the distribution |
+Author | Ralf Mueller <stark.dreamdetective@gmail.com>
+Requires | CDO version 1.5.x or newer
+License | Copyright 2011-2017 by Ralf Mueller Released under GPLv2 license.  See the COPYING file included in the distribution
