@@ -1,36 +1,34 @@
 # Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
-This package contains the module Cdo, which implements a ruby/python style
-access to the Climate Data operators CDO. CDO is a command line tool for
-processing gridded data. Its main focus if climate data, but it can by used
-for other purposes to. It accepts input formats GRIB1, GRIB2, NetCDF and
-several Fortran binary formats.
+Welcome to the scripting interfaces of [CDO](https://code.zmaw.de/projects/cdo/wiki)!
 
+This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or note, please have a look here:
 [Why the .... should I use this???](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
 
 ## Installation
 
-### Ruby Installation
+Just use the main OS-independent package manager
 
-Download and install cdo.rb via rubygems:
-
+*  Ruby
+```
     gem install cdo
-
-### Python Installation
-
-Download and install cdo.py via pypi:
-
+```
+*  Python
+```
     pip install cdo
+```
 
 ### Requirements
 
 Cdo.{rb,py} requires a working CDO binary, but has not special requirement to
 ruby or python. Both python2 and python3 are fully supported. The class
 interface of the ruby version requires at least ruby-2.x, the module interface
-(available in 'cdo_lib') works with ruby-1.9.x, too. For returning
-multi-dimensional arrays (numpy for python, narray for ruby) addtional
+(available in 'cdo_lib') works with ruby-1.9.x, too.  **Please note, that the
+module interface will be removed in the future.**
+
+For returning multi-dimensional arrays (numpy for python, narray for ruby) addtional
 netcdf-io modules are needed. These are scipy/netcdf4 for python and
-ruby-netcdf for ruby.
+ruby-netcdf for ruby. Because scipy has some difficulties with netcdf, I strongly recommend python-netcdf4. 
 
 ## Usage
 
@@ -75,7 +73,7 @@ Please check the documentation for constructor paramaters
         tminFile = cdo.timmin(input = ifile) #python
 ```
 
-#### Operators with options
+#### Operators with parameter
 ```ruby
         cdo.remap([gridfile,weightfile],input:   ifile, output: ofile)   #ruby
 ```
@@ -121,7 +119,7 @@ Please check the documentation for constructor paramaters
         temperatures = cdo.fldmin(input = ifile,returnArray = 'T')                   (py, version >= 1.2.0)
 ```
 
-*) If you use scipy >= 0.14 as netcdf backend, you have use following code
+*) If you use scipy >= 0.14 as netcdf backend, you have to use following code
 instead to avoid possible segmentation faults:
 ```python
     cdf = cdo.fldmin(input = ifile,returnCdf = True)
