@@ -63,76 +63,80 @@ The default is false of cause.
 
 #### File information
 ```ruby
-        cdo.infov(input: ifile)        #ruby
-        cdo.showlevels(input: ifile)
+    cdo.infov(input: ifile)        #ruby
+    cdo.showlevels(input: ifile)
 
 ```
 ```python
-        cdo.infov(input=ifile)         #python
-        cdo.showlevels(input=ifile)
+    cdo.infov(input=ifile)         #python
+    cdo.showlevels(input=ifile)
 ```
 
 #### Operators with user defined regular output files
 ```ruby
-        cdo.timmin(input: ifile ,output: ofile)       #ruby
+    cdo.timmin(input: ifile ,output: ofile)       #ruby
 ```
 ```python
-        cdo.timmin(input = ifile,output = ofile)      #python
+    cdo.timmin(input = ifile,output = ofile)      #python
 ```
 By default the return value of each call is the name of the output files (no matter if its a temporary file or not)
 
 #### Use temporary output files
 ```ruby
-        tminFile = cdo.timmin(input: ifile)  #ruby
+    tminFile = cdo.timmin(input: ifile)  #ruby
 ```
 ```python
-        tminFile = cdo.timmin(input = ifile) #python
+    tminFile = cdo.timmin(input = ifile) #python
 ```
 
 #### Operators with parameter
 ```ruby
-        cdo.remap([gridfile,weightfile],input:   ifile, output: ofile)   #ruby
+    cdo.remap([gridfile,weightfile],input:   ifile, output: ofile)   #ruby
 ```
 ```python
-        cdo.remap([gridfile,weightfile],input => ifile, output => ofile) #python
+    cdo.remap([gridfile,weightfile],input => ifile, output => ofile) #python
 ```
 
 #### logging
 ```ruby
-        cdo = Cdo.new(logging: true, logFile: 'cdo_commands.log') #ruby
+    cdo = Cdo.new(logging: true, logFile: 'cdo_commands.log') #ruby
 ```
 ```python
-        cdo = Cdo(logging=True, logFile='cdo_commands.log')       #python
+    cdo = Cdo(logging=True, logFile='cdo_commands.log')       #python
 ```
 
 #### Set global CDO options
 ```ruby
-        cdo.copy(input:  ifile, output:  ofile,options:  "-f nc4")     #ruby
+    cdo.copy(input:  ifile, output:  ofile,options:  "-f nc4")     #ruby
 ```
 ```python
-        cdo.copy(input = ifile, output = ofile,options = "-f nc4")     #python
+    cdo.copy(input = ifile, output = ofile,options = "-f nc4")     #python
 ```
 
 #### Set environment variables
 ```ruby
-        cdo.splitname(input:    ifile.join(' '), output:    'splitTag',env: {'CDO_FILE_SUFFIX' => '.nc'}) #or
-        cdo.env = {'CDO_FILE_SUFFIX' => '.nc'}
+    cdo.splitname(input: ifile.join(' '),
+                  output: 'splitTag',
+                  env: {'CDO_FILE_SUFFIX' => '.nc'}) #or
+    cdo.env = {'CDO_FILE_SUFFIX' => '.nc'}
 ```
 ```python
-        cdo.splitname(input = ' '.join(ifiles) ,  output =  'splitTag', env={"CDO_FILE_SUFFIX": ".nc"})   #or
-        cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
+    cdo.splitname(input = ' '.join(ifiles),
+                  output =  'splitTag', 
+                  env={"CDO_FILE_SUFFIX": ".nc"})   #or
+    cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
 ```
 
 #### Return multi-dimension arrrays
 ```ruby
-        temperatures = cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
-        temperatures = cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    (rb, version >= 1.2.0)
-        temperatures = cdo.fldmin(:input => ifile,:returnArray => 'T')                (rb, version >= 1.2.0)
+    temperatures = cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
+    temperatures = cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    (rb, version >= 1.2.0)
+    temperatures = cdo.fldmin(:input => ifile,:returnArray => 'T')                (rb, version >= 1.2.0)
 ```
 ```python
-        temperatures = cdo.fldmin(input = ifile,returnArray = True).variables['T'][:] (py, version < 1.2.0)
-        temperatures = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]   (py, version >= 1.2.0)
-        temperatures = cdo.fldmin(input = ifile,returnArray = 'T')                   (py, version >= 1.2.0)
+    temperatures = cdo.fldmin(input = ifile,returnArray = True).variables['T'][:] (py, version < 1.2.0)
+    temperatures = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]   (py, version >= 1.2.0)
+    temperatures = cdo.fldmin(input = ifile,returnArray = 'T')                   (py, version >= 1.2.0)
 ```
 
 *) If you use scipy >= 0.14 as netcdf backend, you have to use following code
