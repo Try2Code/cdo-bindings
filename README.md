@@ -1,13 +1,12 @@
 # Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
 Welcome to the scripting interfaces of [CDO](https://code.zmaw.de/projects/cdo/wiki)!
-
 This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or note, please have a look here:
 [Why the .... should I use this???](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
 
 ## Installation
 
-Just use the main OS-independent package manager
+Releases are distributed via [pypi](https://pypi.org/project/cdo) and [rubygems](https://rubygems.org/gems/cdo):
 
 *  Ruby
 ```
@@ -20,15 +19,14 @@ Just use the main OS-independent package manager
 
 ### Requirements
 
-Cdo.{rb,py} requires a working CDO binary, but has not special requirement to
-ruby or python. Both python2 and python3 are fully supported. The class
-interface of the ruby version requires at least ruby-2.x, the module interface
-(available in 'cdo_lib') works with ruby-1.9.x, too.  **Please note, that the
-module interface will be removed in the future.**
+Cdo.{rb,py} requires a working CDO binary and Ruby 2.x or Python 2.7/3.x
+The Ruby module interface (available as 'cdo_lib') works with ruby-1.9.x, too.
+**Please note, that it will be removed in the future.** -- It's not thread-safe and can be 
+fully replaced by the class interface.
 
-For returning multi-dimensional arrays (numpy for python, narray for ruby) addtional
-netcdf-io modules are needed. These are scipy/netcdf4 for python and
-ruby-netcdf for ruby. Because scipy has some difficulties with netcdf, I strongly recommend python-netcdf4. 
+Multi-dimensional arrays (numpy for python, narray for ruby) require addtional
+netcdf-io modules. These are [scipy](https://docs.scipy.org/doc/scipy/reference/io.html) or [python-netcdf4](https://pypi.python.org/pypi/netCDF4) for python and
+[ruby-netcdf](https://rubygems.org/gems/ruby-netcdf) for ruby. Because scipy has some difficulties with netcdf, I strongly recommend python-netcdf4. 
 
 ## Usage
 
