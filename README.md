@@ -164,6 +164,7 @@ http://code.zmaw.de/projects/cdo
 ## Changelog
 * next:
   - return arrays/lists of output files, which are created by split* operators suggestion from Karl-Hermann Wieners :ocean:
+  - use [six](https://pypi.python.org/pypi/six) for python2 and 3 compatibility (thanks to @jvegasbsc)
 * **1.3.2** [2016-10-24]
   - improvened stdout/stderr handling, thx to jvegasbsc
 * **1.3.1**
