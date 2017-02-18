@@ -1,7 +1,7 @@
 # Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
 Welcome to the scripting interfaces of [CDO](https://code.zmaw.de/projects/cdo/wiki)!
-This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or note, please have a look here:
+This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
 [Why the .... should I use this???](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
 
 ## Installation
@@ -30,10 +30,14 @@ netcdf-io modules. These are [scipy](https://docs.scipy.org/doc/scipy/reference/
 
 ## Usage
 
+You can find a lot of examples in the unit tests for both languages. Here are the direct links to the [ruby tests](https://github.com/Try2Code/cdo-bindings/blob/master/ruby/test/test_cdo.rb) and the [python tests](https://github.com/Try2Code/cdo-bindings/blob/master/python/test/test_cdo.py).
+
+The following describes the basic features for both languages
+
 ### Run operators
 
-The Ruby module can be used directly after loading it. For python and the ruby
-class interface an instance has to be created first
+The Ruby module can be used directly after loading it. For python and ruby
+class interfaces an instance has to be created first
 
 ```ruby
     cdo = Cdo.new   #ruby
@@ -42,7 +46,20 @@ class interface an instance has to be created first
     cdo = Cdo()     #python
 ```
 
-Please check the documentation for constructor paramaters
+Please check the documentation for constructor paramaters. I try to have equal interfaces in both languages for all public methods.
+
+#### Debugging
+
+For debugging purpose, both interfaces provide a "debug" attribute. If it is set to a boolian true, the complete commands and the return values will be printed during execution
+
+```ruby
+    cdo.debug = true    #ruby
+```
+```python
+    cdo.debug = True    #python
+```
+
+The default is false of cause.
 
 #### File information
 ```ruby
@@ -62,6 +79,7 @@ Please check the documentation for constructor paramaters
 ```python
         cdo.timmin(input = ifile,output = ofile)      #python
 ```
+By default the return value of each call is the name of the output files (no matter if its a temporary file or not)
 
 #### Use temporary output files
 ```ruby
@@ -125,10 +143,14 @@ instead to avoid possible segmentation faults:
 ```
 More examples can be found in test/cdo-examples.rb and [on the homepage](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D)
 
-### Tempfile helpers
+### Avoid re-processing
 
-Cdo.{rb,py} includes a simple tempfile wrapper, which make live easier, when
-write your own scripts
+If you do not want to re-compute files, you can set
+
+*  the instance attribute 'forceOutput' to false: this will effect all later call of that instance **or**
+*  the operator option 'forceOutput' to false: this will only effect this operator call of this instance
+
+For more information, please have a look at the unit tests.
 
 ## Support, Issues, Bugs, ...
 
