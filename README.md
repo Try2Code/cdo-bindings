@@ -129,14 +129,14 @@ By default the return value of each call is the name of the output files (no mat
 
 #### Return multi-dimension arrrays
 ```ruby
-    temperatures = cdo.fldmin(:input => ifile,:returnArray => true).var('T').get   (rb, version < 1.2.0)
-    temperatures = cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    (rb, version >= 1.2.0)
-    temperatures = cdo.fldmin(:input => ifile,:returnArray => 'T')                (rb, version >= 1.2.0)
+    t = cdo.fldmin(:input => ifile,:returnArray => true).var('T').get  #rb, version <  1.2.0
+    t = cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    #rb, version >= 1.2.0
+    t = cdo.fldmin(:input => ifile,:returnArray => 'T')                #rb, version >= 1.2.0
 ```
 ```python
-    temperatures = cdo.fldmin(input = ifile,returnArray = True).variables['T'][:] (py, version < 1.2.0)
-    temperatures = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]   (py, version >= 1.2.0)
-    temperatures = cdo.fldmin(input = ifile,returnArray = 'T')                   (py, version >= 1.2.0)
+    t = cdo.fldmin(input = ifile,returnArray = True).variables['T'][:] #py, version <  1.2.0
+    t = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]   #py, version >= 1.2.0
+    t = cdo.fldmin(input = ifile,returnArray = 'T')                    #py, version >= 1.2.0
 ```
 
 *) If you use scipy >= 0.14 as netcdf backend, you have to use following code
