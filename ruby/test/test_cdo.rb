@@ -29,7 +29,8 @@ class TestCdo < Minitest::Test
     end
     newCDO="#{ENV['HOME']}/local/bin/cdo-dev"
     if File.exist?(newCDO) then
-      cdo = Cdo.new(:cdo => newCDO)
+      cdo = Cdo.new
+      cdo.cdo = newCDO
       assert_equal(true,cdo.check)
       assert_equal(newCDO,cdo.cdo)
     end
