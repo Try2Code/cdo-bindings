@@ -92,7 +92,7 @@ class Cdo(object):
     self.cdfMod                 = cdfMod.lower()
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
-    self.noOutputOperators        = self.getNoOutputOperators()
+    self.noOutputOperators      = self.getNoOutputOperators()
     self.libs                   = self.getSupportedLibs()
 
     self.logging                = logging
@@ -190,7 +190,11 @@ class Cdo(object):
         retvals = self.call(cmd)
         if ( not self.hasError(method_name,cmd,retvals) ):
           r = list(map(strip,retvals["stdout"].split(os.linesep)))
-          return r[:len(r)-1]
+          if "autoSplit" in kwargs:
+            splitString = kwargs["autoSplit"]
+            return [x.split(splitString) for x in r[:len(r)-1]]
+          else:
+           return r[:len(r)-1]
         else:
           if self.returnNoneOnError:
             return None
