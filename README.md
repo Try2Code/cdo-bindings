@@ -165,7 +165,7 @@ http://code.zmaw.de/projects/cdo
 * next:
   - return arrays/lists of output files, which are created by split* operators suggestion from Karl-Hermann Wieners :ocean:
   - use [six](https://pypi.python.org/pypi/six) for python2 and 3 compatibility (thanks to @jvegasbsc)
-* **1.3.2** [2016-10-24]
+* **1.3.2**
   - improvened stdout/stderr handling, thx to jvegasbsc
 * **1.3.1**
   - fix environment handling per call (ruby version)
@@ -229,5 +229,5 @@ Cdo.{rb,py} makes use of the GPLv2 License, see COPYING
 Author   | Ralf Mueller <stark.dreamdetective@gmail.com>
 Requires | CDO version 1.5.x or newer
 License  | Copyright 2011-2017 by Ralf Mueller Released under GPLv2 license
-         | See the COPYING file included in the distribution
+         | See the LICENSE file included in the distribution
 ```
