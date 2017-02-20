@@ -68,7 +68,7 @@ class TestCdo < Minitest::Test
   end
   def test_CDO_version
     assert("1.4.3.1" < @cdo.version,"Version too low: #{@cdo.version}")
-    assert("1.8.0" > @cdo.version,"Version too high: #{@cdo.version}")
+    assert("1.8.1" > @cdo.version,"Version too high: #{@cdo.version}")
   end
   def test_args
     ofile0 = @cdo.stdatm(0,20,40,80,200,230,400,600,1100)
@@ -225,7 +225,7 @@ class TestCdo < Minitest::Test
   end
 
   def test_filetypes
-    assert(@cdo.filetypes.include?("grb"),"GRIB support missing")
+    assert(@cdo.filetypes.find{|ft| /^grb/.match(ft)},"GRIB support missing")
     assert(@cdo.filetypes.include?("nc4"),"NETCDF4 support missing")
     assert(@cdo.filetypes.include?("ext"),"EXTRA support missing")
     assert_raises ArgumentError do
