@@ -180,7 +180,7 @@ class TestCdo < Minitest::Test
     assert_equal(true,io[:force])
     assert_equal("T",io[:returnCdf])
     pp [io,opts]
-  end 
+  end
 
   def test_errorException
     @cdo.debug = true
@@ -230,6 +230,15 @@ class TestCdo < Minitest::Test
     assert(@cdo.filetypes.include?("ext"),"EXTRA support missing")
     assert_raises ArgumentError do
       @cdo.filetypes("foo")
+    end
+  end
+
+  def test_noOutputOps
+    case
+    when "1.8.0" == @cdo.version then
+      assert_equal(Cdo::NoOutputOperators,@cdo.noOutputOps)
+    when "1.8.0" < @cdo.version
+      assert((Cdo::NoOutputOperators - @cdo.noOutputOps).empty?)
     end
   end
 
@@ -464,7 +473,7 @@ end
 #  ths.each {|th| th.join}
 #  # another example with sub:
 #  @cdo.sub(:input => [oldfile,newfile].join(' '), :output => diff)
-#  
+#
 #  # It is possible too use the 'send' method
 #  operator  = /grb/.match(File.extname(ifile)) ? :showcode : :showname
 #  inputVars = @cdo.send(operator,:input => ifile)
@@ -478,7 +487,7 @@ end
 #               warn "Wrong usage of variable identifier for '#{var}' (class #{var.class})!"
 #             end
 #  @cdo.send(operator,var,:input => @ifile, :output => varfile)
-#  
+#
 #  # Pass an array for operators with multiple options:
 #  #   Perform conservative remapping with pregenerated weights
 #  @cdo.remap([gridfile,weightfile],:input => copyfile,:output => outfile)
@@ -486,7 +495,7 @@ end
 #  @cdo.ml2hl([0,20,50,100,200,400,800,1200].join(','),:input => hybridlayerfile, :output => reallayerfile)
 #  # or use multiple arguments directly
 #  @cdo.remapeta(vctfile,orofile,:input => ifile,:output => hybridlayerfile)
-#  
+#
 #  # the powerfull expr operator:
 #  # taken from the tutorial in https://code.zmaw.de/projects/cdo/wiki/Tutorial#The-_expr_-Operator
 #  SCALEHEIGHT  = 10000.0
@@ -494,12 +503,12 @@ end
 #  # function for later computation of hydrostatic atmosphere pressure
 #  PRES_EXPR    = lambda {|height| "101325.0*exp((-1)*(1.602769777072154)*log((exp(#{height}/#{SCALEHEIGHT})*213.15+75.0)/288.15))"}
 #  TEMP_EXPR    = lambda {|height| "213.0+75.0*exp(-#{height}/#{SCALEHEIGHT})"}
-#  
+#
 #  # Create Pressure and Temperature out of a height field 'geopotheight' from ifile
 #  @cdo.expr("'p=#{PRES_EXPR['geopotheight']}'", :input => ifile, :output => presFile)
 #  @cdo.expr("'t=#{TEMP_EXPR['geopotheight']}'", :input => ifile, :output => tempFile)
-#  
-#  
+#
+#
 #  # TIPS: I often work with temporary files and for getting rid of handling them manually the MyTempfile module can be used:
 #  #       Simply include the following methods into you scripts and use tfile for any temporary variable
 #  def tfile
@@ -510,8 +519,8 @@ end
 #  @cdo.expr("'p=#{PRES_EXPR['geopotheight']}'", :input => ifile, :output => presFile)
 #  @cdo.expr("'t=#{TEMP_EXPR['geopotheight']}'", :input => ifile, :output => tempFile)
 #  @cdo.chainCall("setname,#{rho} -divc,#{C_R} -div",in: [presFile,tempFile].join(' '), out: densityFile)
-#  
+#
 #  # For debugging, it is helpfull, to avoid the automatic cleanup at the end of the scripts:
 #  MyTempfile.setPersist(true)
-#  # creates randomly names files. Switch on debugging with 
+#  # creates randomly names files. Switch on debugging with
 #  @cdo.Debug = true

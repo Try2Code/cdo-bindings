@@ -4,9 +4,10 @@ require 'logger'
 require 'stringio'
 
 class Cdo
-  OutputOperatorsPattern = /(diff|info|output|griddes|zaxisdes|show|ncode|ndate|nlevel|nmon|nvar|nyear|ntime|npar|gradsdes|pardes)/
 
-  OutputOperators = %w[cdiread cmor codetab conv_cmor_table diff diffc diffn diffp
+  # hardcoded fallback list of output operators - from 1.8.0 there is an
+  # options for this: --operators_no_output
+  NoOutputOperators = %w[cdiread cmor codetab conv_cmor_table diff diffc diffn diffp
   diffv dump_cmor_table dumpmap filedes ggstat ggstats gmtcells gmtxyz gradsdes
   griddes griddes2 gridverify info infoc infon infop infos infov map ncode
   ncode ndate ngridpoints ngrids nlevel nmon npar ntime nvar nyear output
@@ -16,7 +17,7 @@ class Cdo
   partab2 seinfo seinfoc seinfon seinfop showcode showdate showformat showlevel
   showltype showmon showname showparam showstdname showtime showtimestamp
   showunit showvar showyear sinfo sinfoc sinfon sinfop sinfov
-spartab specinfo tinfo vardes vct vct2 verifygrid vlist zaxisdes]
+  spartab specinfo tinfo vardes vct vct2 verifygrid vlist zaxisdes]
 
   attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug, :logging, :logFile
   attr_reader   :operators, :filetypes
@@ -34,11 +35,12 @@ spartab specinfo tinfo vardes vct vct2 verifygrid vlist zaxisdes]
     # setup path to cdo executable
     @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
 
-    @operators              = getOperators(binary=@cdo)
+    @operators              = getOperators(@cdo)
     @returnCdf              = returnCdf
     @forceOutput            = forceOutput
     @env                    = env
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
+    @noOutputOperators      = getNoOuputOperators(@cdo)
     @returnNilOnError       = returnNilOnError
 
     @filetypes              = getFiletypes
@@ -81,6 +83,15 @@ spartab specinfo tinfo vardes vct vct2 verifygrid vlist zaxisdes]
       cmd = "#{path2cdo} --operators"
 
       @operators = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
+    end
+  end
+
+  def getNoOuputOperators(path2cdo)
+    if version > '1.8.0' then
+      puts 'CMD:'+path2cdo+' --operators_no_output' if @debug
+      IO.popen(path2cdo+' --operators_no_output').readlines.map{|line| line.split(' ')[0]}.flatten
+    else
+      NoOutputOperators
     end
   end
 
@@ -200,7 +211,7 @@ spartab specinfo tinfo vardes vct vct2 verifygrid vlist zaxisdes]
 
     if @operators.include?(sym.to_s)
       io, opts = Cdo.parseArgs(args)
-      if OutputOperators.include?(sym.to_s)
+      if @noOutputOperators.include?(sym.to_s)
         _run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout,nil,nil,nil,nil,nil,env)
       else
         _run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray],io[:returnMaArray],io[:env])
@@ -297,6 +308,9 @@ spartab specinfo tinfo vardes vct vct2 verifygrid vlist zaxisdes]
     end
   end
 
+  def noOutputOps
+    getNoOuputOperators(@cdo)
+  end
   # }}}
 
   # Addional operators: {{{
