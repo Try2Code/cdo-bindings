@@ -79,30 +79,6 @@ class Cdo(object):
                logging=False,
                logFile=StringIO()):
 
-    # Since cdo-1.5.4 undocumented operators are given with the -h option. For
-    # earlier version, they have to be provided manually
-    self.undocumentedOperators = ['anomaly','beta','boxavg','change_e5lsm','change_e5mask',
-        'change_e5slm','chisquare','chvar','cloudlayer','cmd','com','command','complextorect',
-        'covar0','covar0r','daycount','daylogs','del29feb','delday','delete','deltap','deltap_fl',
-        'delvar','diffv','divcoslat','dumplogo','dumplogs','duplicate','eca_r1mm','enlargegrid',
-        'ensrkhistspace','ensrkhisttime','eof3d','eof3dspatial','eof3dtime','export_e5ml',
-        'export_e5res','fc2gp','fc2sp','fillmiss','fisher','fldcovar','fldrms','fourier','fpressure',
-        'gather','gengrid','geopotheight','ggstat','ggstats','globavg','gp2fc','gradsdes',
-        'gridverify','harmonic','hourcount','hpressure','ifs2icon','import_e5ml','import_e5res',
-        'import_obs','imtocomplex','infos','infov','interpolate','intgrid','intgridbil',
-        'intgridtraj','intpoint','isosurface','lmavg','lmean','lmmean','lmstd','log','lsmean',
-        'meandiff2test','mergegrid','mod','moncount','monlogs','mrotuv','mrotuvb','mulcoslat','ncode',
-        'ncopy','nmltest','normal','nvar','outputbounds','outputboundscpt','outputcenter',
-        'outputcenter2','outputcentercpt','outputkey','outputtri','outputvector','outputvrml',
-        'pardup','parmul','pinfo','pinfov','pressure_fl','pressure_hl','read_e5ml','remapcon1',
-        'remapdis1','retocomplex','scalllogo','scatter','seascount','select','selgridname',
-        'seloperator','selvar','selzaxisname','setrcaname','setvar','showvar','sinfov','smemlogo',
-        'snamelogo','sort','sortcode','sortlevel','sortname','sorttaxis','sorttimestamp','sortvar',
-        'sp2fc','specinfo','spectrum','sperclogo','splitvar','stimelogo','studentt','template1',
-        'template2','test','test2','testdata','thinout','timcount','timcovar','tinfo','transxy','trms',
-        'tstepcount','vardes','vardup','varmul','varquot2test','varrms','vertwind','write_e5ml',
-        'writegrid','writerandom','yearcount']
-
     if 'CDO' in os.environ:
       self.CDO = os.environ['CDO']
     else:
@@ -288,7 +264,7 @@ class Cdo(object):
         s    = ' '.join(ops[:endI]).strip()
         s    = re.sub("\s+" , " ", s)
 
-        return list(set(s.split(" ") + self.undocumentedOperators))
+        return list(set(s.split(" ")))
 
   def loadCdf(self):
     if self.cdfMod == CDF_MOD_SCIPY:
