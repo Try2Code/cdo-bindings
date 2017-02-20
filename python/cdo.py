@@ -11,11 +11,11 @@ except ImportError:
 
 # Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
 # See COPYING file for copying and redistribution conditions.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; version 2 of the License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -92,7 +92,7 @@ class Cdo(object):
     self.cdfMod                 = cdfMod.lower()
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
-    self.outputOperators        = ['cdiread','cmor','codetab','conv_cmor_table','diff','diffc','diffn','diffp','diffv','dump_cmor_table','dumpmap','filedes','ggstat','ggstats','gmtcells','gmtxyz','gradsdes','griddes','griddes2','gridverify','info','infoc','infon','infop','infos','infov','map','ncode','ncode','ndate','ngridpoints','ngrids','nlevel','nmon','npar','ntime','nvar','nyear','output','outputarr','outputbounds','outputboundscpt','outputcenter','outputcenter2','outputcentercpt','outputext','outputf','outputfld','outputint','outputkey','outputsrv','outputtab','outputtri','outputts','outputvector','outputvrml','outputxyz','pardes','partab','partab2','seinfo','seinfoc','seinfon','seinfop','showcode','showdate','showformat','showlevel','showltype','showmon','showname','showparam','showstdname','showtime','showtimestamp','showunit','showvar','showyear','sinfo','sinfoc','sinfon','sinfop','sinfov','spartab','specinfo','tinfo','vardes','vct','vct2','verifygrid','vlist','zaxisdes']
+    self.noOutputOperators        = self.getNoOutputOperators()
     self.libs                   = self.getSupportedLibs()
 
     self.logging                = logging
@@ -159,7 +159,7 @@ class Cdo(object):
     @auto_doc(method_name, self)
     def get(self, *args,**kwargs):
       operator          = [method_name]
-      operatorPrintsOut = method_name in self.outputOperators
+      operatorPrintsOut = method_name in self.noOutputOperators
 
       if args.__len__() != 0:
         for arg in args:
@@ -265,6 +265,27 @@ class Cdo(object):
         s    = re.sub("\s+" , " ", s)
 
         return list(set(s.split(" ")))
+
+  def getNoOutputOperators(self):
+    import os
+    if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.8.0')):
+      proc = subprocess.Popen([self.CDO,'--operators_no_output'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      return list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+    else:
+      return ['cdiread','cmor','codetab','conv_cmor_table','diff','diffc','diffn','diffp'
+              ,'diffv','dump_cmor_table','dumpmap','filedes','ggstat','ggstats','gmtcells'
+              ,'gmtxyz','gradsdes','griddes','griddes2','gridverify','info','infoc','infon'
+              ,'infop','infos','infov','map','ncode','ncode','ndate','ngridpoints','ngrids'
+              ,'nlevel','nmon','npar','ntime','nvar','nyear','output','outputarr','outputbounds'
+              ,'outputboundscpt','outputcenter','outputcenter2','outputcentercpt','outputext'
+              ,'outputf','outputfld','outputint','outputkey','outputsrv','outputtab','outputtri'
+              ,'outputts','outputvector','outputvrml','outputxyz','pardes','partab','partab2'
+              ,'seinfo','seinfoc','seinfon','seinfop','showcode','showdate','showformat','showlevel'
+              ,'showltype','showmon','showname','showparam','showstdname','showtime','showtimestamp'
+              ,'showunit','showvar','showyear','sinfo','sinfoc','sinfon','sinfop','sinfov'
+              ,'spartab','specinfo','tinfo','vardes','vct','vct2','verifygrid','vlist','zaxisdes']
+
 
   def loadCdf(self):
     if self.cdfMod == CDF_MOD_SCIPY:
@@ -482,5 +503,5 @@ class MyTempfile(object):
 
       return t.name
     else:
-      N =10000000 
+      N =10000000
       t = "_"+random.randint(N).__str__()
