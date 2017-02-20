@@ -546,85 +546,86 @@ class CdoTest(unittest.TestCase):
 
     if MAINTAINERMODE:
         def test_icon_coords(self):
-            cdo = Cdo(cdfMod=CDF_MOD)
-            ifile = DATA_DIR +'/icon/oce_AquaAtlanticBoxACC.nc'
-            ivar  = 't_acc'
-            varIn = cdo.readCdf(ifile)
-            varIn = varIn.variables[ivar]
-            if ('scipy' == cdo.cdfMod ):
-              expected = b'clon clat'
-            else:
-              expected =  u'clon clat'
-            self.assertEqual(expected,varIn.coordinates)
+          cdo = Cdo(cdfMod=CDF_MOD)
+          ifile = DATA_DIR +'/icon/oce_AquaAtlanticBoxACC.nc'
+          ivar  = 't_acc'
+          varIn = cdo.readCdf(ifile)
+          varIn = varIn.variables[ivar]
+          if ('scipy' == cdo.cdfMod ):
+            expected = b'clon clat'
+          else:
+            expected =  u'clon clat'
+          self.assertEqual(expected,varIn.coordinates)
 
-            varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
-            varOut = varOut.variables[ivar]
-            expected =  u'clat clon'
-            self.assertEqual(expected,varOut.coordinates)
+          varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
+          varOut = varOut.variables[ivar]
+          expected =  u'clat clon'
+          self.assertEqual(expected,varOut.coordinates)
         def testCall(self):
-            cdo = Cdo(cdfMod=CDF_MOD)
-            print(cdo.sinfov(input=DATA_DIR+'/icon/oce.nc'))
+          cdo = Cdo(cdfMod=CDF_MOD)
+          print(cdo.sinfov(input=DATA_DIR+'/icon/oce.nc'))
         def test_readCdf(self):
-            cdo = Cdo(cdfMod=CDF_MOD)
-            input= "-settunits,days  -setyear,2000 -for,1,4"
-            cdfFile = cdo.copy(options="-f nc",input=input)
-            cdf     = cdo.readCdf(cdfFile)
+          cdo = Cdo(cdfMod=CDF_MOD)
+          input= "-settunits,days  -setyear,2000 -for,1,4"
+          cdfFile = cdo.copy(options="-f nc",input=input)
+          cdf     = cdo.readCdf(cdfFile)
 
-            self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
+          self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
 
 
         def test_phc(self):
-            ifile = DATA_DIR+'/icon/phc.nc'
-            cdo = Cdo(cdfMod=CDF_MOD)
-            cdo.debug = True
-            #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
-            #          output=ifile,
-            #          options='-O')
-            s = cdo.sellonlatbox(0,30,0,90, input="-chname,SO,s,TempO,t " + ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
-            plot(np.flipud(s[0,:,:]),ofile='org',title='original')
-            sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-            plot(np.flipud(sfmo[0,:,:]),ofile='fm',title='fillmiss')
-            sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss2 -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-            plot(np.flipud(sfm[0,:,:]),ofile='fm2',title='fillmiss2')
-            ssetmisstonn = cdo.sellonlatbox(0,30,0,90, input="-setmisstonn -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-            plot(np.flipud(ssetmisstonn[0,:,:]),ofile='setmisstonn',title='setmisstonn')
+          ifile = DATA_DIR+'/icon/phc.nc'
+          cdo = Cdo(cdfMod=CDF_MOD)
+          cdo.debug = True
+          #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
+          #          output=ifile,
+          #          options='-O')
+          s = cdo.sellonlatbox(0,30,0,90, input="-chname,SO,s,TempO,t " + ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
+          plot(np.flipud(s[0,:,:]),ofile='org',title='original')
+          sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          plot(np.flipud(sfmo[0,:,:]),ofile='fm',title='fillmiss')
+          sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss2 -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          plot(np.flipud(sfm[0,:,:]),ofile='fm2',title='fillmiss2')
+          ssetmisstonn = cdo.sellonlatbox(0,30,0,90, input="-setmisstonn -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          plot(np.flipud(ssetmisstonn[0,:,:]),ofile='setmisstonn',title='setmisstonn')
+          if (parse_version(cdo.version()) >= parse_version('1.7.2')):
             smooth = cdo.sellonlatbox(0,30,0,90, input="-smooth -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
             plot(np.flipud(ssetmisstonn[0,:,:]),ofile='smooth',title='smooth')
-            #global plot
-           #s_global = cdo.chname('SO,s,TempO,t',input=ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
-           #plot(s_global[0,:,:],ofile='org_global',title='org_global')
-           #sfmo_global = cdo.fillmiss(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-           #plot(sfmo_global[0,:,:],ofile='fm_global',title='fm_global')
-           #sfm_global = cdo.fillmiss2(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-           #plot(sfm_global[0,:,:],ofile='fm2_global',title='fm2_global')
-           #ssetmisstonn_global = cdo.setmisstonn(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-           #plot(ssetmisstonn_global[0,:,:],ofile='setmisstonn_global',title='setmisstonn_global')
+          #global plot
+          #s_global = cdo.chname('SO,s,TempO,t',input=ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
+          #plot(s_global[0,:,:],ofile='org_global',title='org_global')
+          #sfmo_global = cdo.fillmiss(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          #plot(sfmo_global[0,:,:],ofile='fm_global',title='fm_global')
+          #sfm_global = cdo.fillmiss2(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          #plot(sfm_global[0,:,:],ofile='fm2_global',title='fm2_global')
+          #ssetmisstonn_global = cdo.setmisstonn(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          #plot(ssetmisstonn_global[0,:,:],ofile='setmisstonn_global',title='setmisstonn_global')
 
         def test_smooth(self):
-            cdo = Cdo(cdfMod='netcdf4')
+          cdo = Cdo(cdfMod='netcdf4')
+          if (parse_version(cdo.version()) >= parse_version('1.7.2')):
             ifile = DATA_DIR+'/icon/phc.nc'
             cdo = Cdo(cdfMod=CDF_MOD)
             cdo.debug = True
             #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
             #          output=ifile,
             #          options='-O')
-            smooth = cdo.smooth(input=" -sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile,
-                returnMaArray='s',options='-f nc')
+            smooth = cdo.smooth(input=" -sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
             plot(np.flipud(smooth[0,:,:]),ofile='smooth',title='smooth')
-            smooth2 = cdo.smooth('nsmooth=2',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile,
-                returnMaArray='s',options='-f nc')
+
+            smooth2 = cdo.smooth('nsmooth=2',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
             plot(np.flipud(smooth2[0,:,:]),ofile='smooth2',title='smooth,nsmooth=2')
-            smooth4 = cdo.smooth('nsmooth=4',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile,
-                returnMaArray='s',options='-f nc')
+
+            smooth4 = cdo.smooth('nsmooth=4',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
             plot(np.flipud(smooth4[0,:,:]),ofile='smooth4',title='smooth,nsmooth=4')
-            smooth9 = cdo.smooth9(input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile,
-                returnMaArray='s',options='-f nc')
+
+            smooth9 = cdo.smooth9(input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
             plot(np.flipud(smooth9[0,:,:]),ofile='smooth9',title='smooth9')
-            smooth3deg = cdo.smooth('radius=6deg',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile,
-                returnMaArray='s',options='-f nc')
+
+            smooth3deg = cdo.smooth('radius=6deg',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
             plot(np.flipud(smooth3deg[0,:,:]),ofile='smooth3deg',title='smooth,radius=6deg')
-            smooth20 = cdo.smooth('nsmooth=20',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile,
-                returnMaArray='s',options='-f nc')
+
+            smooth20 = cdo.smooth('nsmooth=20',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
             plot(np.flipud(smooth20[0,:,:]),ofile='smooth20',title='smooth,nsmooth=20')
 
 
