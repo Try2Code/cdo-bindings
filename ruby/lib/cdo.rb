@@ -78,7 +78,7 @@ class Cdo
         exit
       end
 
-      @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/}) - 2].join(' ').split
+      @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/ }) - 2].join(' ').split
     else
       cmd = "#{path2cdo} --operators"
 
@@ -147,7 +147,15 @@ class Cdo
   end
 
   # command execution wrapper, which handles the possible return types
-  def _run(cmd,ofile='',options=nil,returnCdf=false,force=nil,returnArray=nil,returnMaArray=nil,env=nil)
+  def _run(cmd,
+           output:        nil,
+           options:       nil,
+           returnCdf:     false,
+           force:         nil,
+           returnArray:   nil,
+           returnMaArray: nil,
+           env:           nil,
+           autoSplit:     nil)
     options = options.to_s
 
     options << '-f nc' if options.empty? and ( \
@@ -160,11 +168,14 @@ class Cdo
     # use an empty hash for non-given environment
     env = {} if env.nil?
 
-    case ofile
+    case output
     when $stdout
       retvals = _call(cmd,env)
       unless _hasError(cmd,retvals)
-        return retvals[:stdout].split($/).map {|l| l.chomp.strip}
+        _output = retvals[:stdout].split($/).map {|l| l.chomp.strip}
+#       if 
+#       return (1 == _output.size ) ? _output[0] : _output
+        return _output
       else
         if @returnNilOnError then
           return nil
@@ -174,9 +185,9 @@ class Cdo
       end
     else
       force = @forceOutput if force.nil?
-      if force or not File.exists?(ofile.to_s)
-        ofile = MyTempfile.path if ofile.nil?
-        cmd << "#{ofile}"
+      if force or not File.exists?(output.to_s)
+        output = MyTempfile.path if output.nil?
+        cmd << "#{output}"
         retvals = _call(cmd,env)
         if _hasError(cmd,retvals)
           if @returnNilOnError then
@@ -186,18 +197,18 @@ class Cdo
           end
         end
       else
-        warn "Use existing file '#{ofile}'" if @debug
+        warn "Use existing file '#{output}'" if @debug
       end
     end
 
     if not returnArray.nil?
-      readArray(ofile,returnArray)
+      readArray(output,returnArray)
     elsif not returnMaArray.nil?
-      readMaArray(ofile,returnMaArray)
+      readMaArray(output,returnMaArray)
     elsif returnCdf or @returnCdf
-      readCdf(ofile)
+      readCdf(output)
     else
-      ofile
+      output
     end
   end
 
@@ -207,19 +218,27 @@ class Cdo
   #   [opt1,...,optN,:input => iStream,:output => oStream, :options => ' ']
   #   where iStream could be another CDO call (timmax(selname(Temp,U,V,ifile.nc))
   def method_missing(sym, *args, &block)
-    puts "Operator #{sym.to_s} is called" if @debug
+    operatorName = sym.to_s
+    puts "Operator #{operatorName} is called" if @debug
 
-    if @operators.include?(sym.to_s)
-      io, opts = Cdo.parseArgs(args)
-      if @noOutputOperators.include?(sym.to_s)
-        _run(" -#{sym.to_s}#{opts} #{io[:input]} ",$stdout,nil,nil,nil,nil,nil,env)
-      else
-        _run(" -#{sym.to_s}#{opts} #{io[:input]} ",io[:output],io[:options],io[:returnCdf],io[:force],io[:returnArray],io[:returnMaArray],io[:env])
-      end
-    else
+    # exit eary on missing operator
+    unless @operators.include?(operatorName)
       return false if @returnFalseOnError
-      raise ArgumentError,"Operator #{sym.to_s} not found"
+      raise ArgumentError,"Operator #{operatorName} not found"
     end
+
+    io, opts = Cdo.parseArgs(args)
+
+    # setup basic execution command
+    cmd = " -#{operatorName}#{opts} #{io[:input]} "
+
+    # remote input setup from the config because its passed to the execution command
+    io.delete(:input)
+
+    # mark calls for operators without output files
+    io[:output] = $stdout if @noOutputOperators.include?(operatorName)
+
+    _run(cmd,io)
   end
 
   # load the netcdf bindings
