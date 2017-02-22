@@ -118,7 +118,7 @@ class CdoTest(unittest.TestCase):
         levels = cdo.showlevel(input="-stdatm,0,10,20",autoSplit=' ')
         self.assertEqual([['0','10','20'],['0','10','20']],levels)
 
-        timesExpected = [['2001-01-01T12:00:00',
+        timesExpected = ['2001-01-01T12:00:00',
           '2001-01-01T13:00:00',
           '2001-01-01T14:00:00',
           '2001-01-01T15:00:00',
@@ -127,13 +127,12 @@ class CdoTest(unittest.TestCase):
           '2001-01-01T18:00:00',
           '2001-01-01T19:00:00',
           '2001-01-01T20:00:00',
-          '2001-01-01T21:00:00']]
+          '2001-01-01T21:00:00']
         self.assertEqual(timesExpected,
                          cdo.showtimestamp(input="-settaxis,2001-01-01,12:00,1hour -for,1,10", autoSplit='  '))
 
         self.assertEqual(['P T'],cdo.showname(input="-stdatm,0"))
-        self.assertEqual([['P','T']],cdo.showname(input="-stdatm,0",autoSplit=' '))
-        self.assertEqual(['P','T'],cdo.showname(input="-stdatm,0",autoSplit=' ')[0])
+        self.assertEqual(['P','T'],cdo.showname(input="-stdatm,0",autoSplit=' '))
 
     def test_bndLevels(self):
         cdo = Cdo(cdfMod=CDF_MOD)
