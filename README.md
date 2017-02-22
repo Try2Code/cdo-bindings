@@ -166,6 +166,7 @@ http://code.zmaw.de/projects/cdo
   - return arrays/lists of output files, which are created by split* operators suggestion from Karl-Hermann Wieners :ocean:
   - use [six](https://pypi.python.org/pypi/six) for python2 and 3 compatibility (thanks to @jvegasbsc)
   - drop full support of CDO version older then 1.5.4: undocumented operators in these version will not be callable
+  - new keyword for operators which write to stdout: autoSplit. When set, each line will be split with the given value of the keyword to avoid the need for manual splitting. Nested return arrays of (outer) size 1 are flattened. See #11, thx to @beatorizu
 * **1.3.2**
   - improvened stdout/stderr handling, thx to jvegasbsc
 * **1.3.1**
