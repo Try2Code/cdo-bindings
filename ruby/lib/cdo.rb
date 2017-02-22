@@ -147,7 +147,9 @@ class Cdo
   end
 
   # command execution wrapper, which handles the possible return types
-  def _run(cmd,
+  def _run(operatorName,
+           operatorParameters,
+           input:         nil,
            output:        nil,
            options:       nil,
            returnCdf:     false,
@@ -163,7 +165,9 @@ class Cdo
                                               ( not returnArray.nil? ) or \
                                               ( not returnMaArray.nil?) \
                                              )
-    cmd = "#{@cdo} -O #{options} #{cmd} "
+    #
+    # setup basic operator execution command
+    cmd = "#{@cdo} -O #{options} -#{operatorName}#{operatorParameters} #{input} "
 
     # use an empty hash for non-given environment
     env = {} if env.nil?
@@ -227,18 +231,12 @@ class Cdo
       raise ArgumentError,"Operator #{operatorName} not found"
     end
 
-    io, opts = Cdo.parseArgs(args)
-
-    # setup basic execution command
-    cmd = " -#{operatorName}#{opts} #{io[:input]} "
-
-    # remote input setup from the config because its passed to the execution command
-    io.delete(:input)
+    io, operatorParameters = Cdo.parseArgs(args)
 
     # mark calls for operators without output files
     io[:output] = $stdout if @noOutputOperators.include?(operatorName)
 
-    _run(cmd,io)
+    _run(operatorName,operatorParameters,io)
   end
 
   # load the netcdf bindings
