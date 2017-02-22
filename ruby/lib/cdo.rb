@@ -177,8 +177,10 @@ class Cdo
       retvals = _call(cmd,env)
       unless _hasError(cmd,retvals)
         _output = retvals[:stdout].split($/).map {|l| l.chomp.strip}
-#       if 
-#       return (1 == _output.size ) ? _output[0] : _output
+        unless autoSplit.nil?
+          _output.map! {|line| line.split(autoSplit)}
+          _output = _output[0] if 1 == _output.size
+        end
         return _output
       else
         if @returnNilOnError then

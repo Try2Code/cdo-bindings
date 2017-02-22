@@ -165,29 +165,28 @@ class TestCdo < Minitest::Test
     assert_equal(sourceLevels,
                  @cdo.showlevel(:input => "-selname,T #{@cdo.stdatm(*sourceLevels,:options => '-f nc')}")[0].split)
     
-   ## test autoSplit usage
-   #levels = @cdo.showlevel(input: "-stdatm,0,10,20",autoSplit: ' ')
-   #assert_equal([['0','10','20'],['0','10','20']],levels)
-   #assert_equal(sourceLevels,
-   #             @cdo.showlevel(:input => "-selname,T #{@cdo.stdatm(*sourceLevels,:options => '-f nc')}",
-   #                            :autoSplit => ' '))
+   # test autoSplit usage
+   levels = @cdo.showlevel(input: "-stdatm,0,10,20",autoSplit: ' ')
+   assert_equal([['0','10','20'],['0','10','20']],levels)
+   assert_equal(sourceLevels,
+                @cdo.showlevel(:input => "-selname,T #{@cdo.stdatm(*sourceLevels,:options => '-f nc')}",
+                               :autoSplit => ' '))
 
-   #timesExpected = ['2001-01-01T12:00:00',
-   #                 '2001-01-01T13:00:00',
-   #                 '2001-01-01T14:00:00',
-   #                 '2001-01-01T15:00:00',
-   #                 '2001-01-01T16:00:00',
-   #                 '2001-01-01T17:00:00',
-   #                 '2001-01-01T18:00:00',
-   #                 '2001-01-01T19:00:00',
-   #                 '2001-01-01T20:00:00',
-   #                 '2001-01-01T21:00:00']
-   #assert_equal(timesExpected,
-   #                 @cdo.showtimestamp(input: "-settaxis,2001-01-01,12:00,1hour -for,1,10", autoSplit: '  '))
+   timesExpected = ['2001-01-01T12:00:00',
+                    '2001-01-01T13:00:00',
+                    '2001-01-01T14:00:00',
+                    '2001-01-01T15:00:00',
+                    '2001-01-01T16:00:00',
+                    '2001-01-01T17:00:00',
+                    '2001-01-01T18:00:00',
+                    '2001-01-01T19:00:00',
+                    '2001-01-01T20:00:00',
+                    '2001-01-01T21:00:00']
+   assert_equal(timesExpected,
+                    @cdo.showtimestamp(input: "-settaxis,2001-01-01,12:00,1hour -for,1,10", autoSplit: '  '))
 
-   #assert_equal(['P T'],@cdo.showname(input: "-stdatm,0"))
-   #assert_equal([['P','T']],@cdo.showname(input: "-stdatm,0",autoSplit: ' '))
-   #assert_equal(['P','T'],@cdo.showname(input: "-stdatm,0",autoSplit: ' ')[0])
+   assert_equal(['P T'],@cdo.showname(input: "-stdatm,0"))
+   assert_equal(['P','T'],@cdo.showname(input: "-stdatm,0",autoSplit: ' '))
   end
 
   def test_verticalLevels
