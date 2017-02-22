@@ -192,7 +192,11 @@ class Cdo(object):
           r = list(map(strip,retvals["stdout"].split(os.linesep)))
           if "autoSplit" in kwargs:
             splitString = kwargs["autoSplit"]
-            return [x.split(splitString) for x in r[:len(r)-1]]
+            _output = [x.split(splitString) for x in r[:len(r)-1]]
+            if (1 == len(_output)):
+                return _output[0]
+            else:
+                return _output
           else:
            return r[:len(r)-1]
         else:
