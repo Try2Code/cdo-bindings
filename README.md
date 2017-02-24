@@ -163,6 +163,8 @@ http://code.zmaw.de/projects/cdo
 
 ## Changelog
 * next:
+  - **remove module interface from the ruby version**
+* **1.3.3**:
   - return arrays/lists of output files, which are created by split* operators suggestion from Karl-Hermann Wieners :ocean:
     **NOTE**: __this is done by simple globbing! Any other files with the appropriate name will be included in the list!__
   - use [six](https://pypi.python.org/pypi/six) for python2 and 3 compatibility (thanks to @jvegasbsc)

@@ -23,7 +23,7 @@ except ImportError:
 
 CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
-CDO_PY_VERSION  = "1.3.0"
+CDO_PY_VERSION  = "1.3.3"
 
 def auto_doc(tool, cdo_self):
     """Generate the __doc__ string of the decorated function by calling the cdo help command"""
