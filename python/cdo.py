@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os,re,subprocess,tempfile,random,sys
+import os,re,subprocess,tempfile,random,sys,glob
 from pkg_resources import parse_version
 from io import StringIO
 import logging as pyLog
@@ -234,6 +234,8 @@ class Cdo(object):
         return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
       elif self.returnCdf or kwargs["returnCdf"]:
         return self.readCdf(kwargs["output"])
+      elif ('split' == method_name[0:5]):
+        return glob.glob(kwargs["output"]+'*')
       else:
         return kwargs["output"]
 

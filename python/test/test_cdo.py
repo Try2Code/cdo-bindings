@@ -355,6 +355,26 @@ class CdoTest(unittest.TestCase):
         self.assertEqual([],cdo.diffv(input = ["-stdatm,0",fileB]))
         rm([fileA, fileB])
 
+    def test_splitOps(self):
+        cdo = Cdo(cdfMod=CDF_MOD)
+        pattern = 'stdAtm'
+        resultsFiles = cdo.splitname(input = '-stdatm,0',output = pattern)
+        self.assertTrue(2 <= len(resultsFiles))
+        for var in ['T','P']:
+          self.assertTrue(pattern+var+'.grb' in resultsFiles)
+
+        pattern = 'sel'
+        resultsFiles = cdo.splitsel(1,input = '-for,0,9',output = pattern)
+        self.assertTrue(10 <= len(resultsFiles))
+        for var in range(0,10):
+          self.assertTrue(pattern+'00000'+str(var)+'.grb' in resultsFiles)
+
+        pattern = 'lev'
+        resultsFiles = cdo.splitlevel(input = '-stdatm,100,2000,5000',output = pattern)
+        self.assertTrue(3 <= len(resultsFiles))
+        for var in ['0100','2000','5000']:
+          self.assertTrue(pattern+'00'+str(var)+'.grb' in resultsFiles)
+
     def test_output_set_to_none(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         self.assertEqual(str,type(cdo.topo(output = None)))
