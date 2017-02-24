@@ -272,6 +272,29 @@ class TestCdo < Minitest::Test
     assert_equal("File format: GRIB".tr(' ',''),@cdo.sinfov(:input => "-topo", :output => nil)[0].tr(' ',''))
   end
 
+  def test_splitOps
+    pattern = 'stdAtm'
+    resultsFiles = @cdo.splitname(input: '-stdatm,0',output: pattern)
+    assert_equal(2,resultsFiles.size)
+    %w[T P].each {|var|
+      assert(resultsFiles.include?("#{pattern}#{var}.grb"))
+    }
+
+    pattern = 'sel'
+    resultsFiles = @cdo.splitsel(1,input: '-for,0,9',output: pattern)
+    assert_equal(10,resultsFiles.size)
+    (0..9).each {|var|
+      assert(resultsFiles.include?("#{pattern}00000#{var}.grb"))
+    }
+
+    pattern = 'lev'
+    resultsFiles = @cdo.splitlevel(input: '-stdatm,100,2000,5000',output: pattern)
+    assert_equal(3,resultsFiles.size)
+    %w[0100 2000 5000].each {|var|
+      assert(resultsFiles.include?("#{pattern}00#{var}.grb"))
+    }
+  end
+
   if @@maintainermode  then
     require 'unifiedPlot'
 

@@ -103,7 +103,6 @@ class Cdo
     supported.grep(/(Filetypes)/)[0].split(':')[1].split.map(&:downcase)
   end
 
-
   # Execute the given cdo call and return all outputs
   def _call(cmd,env={})
     @logger.info(cmd+"\n") if @logging
@@ -192,9 +191,14 @@ class Cdo
     else
       force = @forceOutput if force.nil?
       if force or not File.exists?(output.to_s)
+        # create a tempfile if output is not given
         output = MyTempfile.path if output.nil?
+
+        #finalize the execution command
         cmd << "#{output}"
+
         retvals = _call(cmd,env)
+
         if _hasError(cmd,retvals)
           if @returnNilOnError then
             return nil
@@ -213,6 +217,8 @@ class Cdo
       readMaArray(output,returnMaArray)
     elsif returnCdf or @returnCdf
       readCdf(output)
+    elsif /^split/.match(operatorName)
+      Dir.glob("#{output}*")
     else
       output
     end
