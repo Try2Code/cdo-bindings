@@ -668,6 +668,32 @@ class CdoTest(unittest.TestCase):
             smooth20 = cdo.smooth('nsmooth=20',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
             plot(np.flipud(smooth20[0,:,:]),ofile='smooth20',title='smooth,nsmooth=20')
 
+        def test_xarray(self):
+          cdo = Cdo(cdfMod='netcdf4')
+          try:
+            import xarray
+          except:
+            print("no xarray installation available!")
+            return
+
+          dataSet = xarray.open_dataset(cdo.topo('global_0.1',options = '-f nc'))
+
+          dataSet['topo'] = 1.0 + np.abs(dataSet['topo'])
+
+          #check the changes withing xarray
+          self.assertEqual(1.0,np.min(dataSet['topo']))
+
+          xarrayFile = 'test_xarray_topoAbs.nc'
+          dataSet.to_netcdf(xarrayFile)
+
+          #check change via cdo
+          minByCdo = cdo.fldmin(input=xarrayFile,returnArray='topo').min()
+          self.assertEqual(1.0,minByCdo)
+
+          #do the same without explicit tempfile
+          self.assertEqual(1.0,cdo.fldmin(input=dataSet,returnArray='topo').min())
+
+
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)

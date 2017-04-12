@@ -4,6 +4,7 @@ from pkg_resources import parse_version
 from io import StringIO
 import logging as pyLog
 import six
+import xarray
 try:
     from string import strip
 except ImportError:
@@ -179,9 +180,19 @@ class Cdo(object):
       if 'input' in kwargs:
         if isinstance(kwargs["input"], six.string_types):
             cmd.append(kwargs["input"])
+        elif type(kwargs["input"]) == list:
+            cmd.append(' '.join(kwargs["input"]))
+        elif type(kwargs["input"] == xarray):
+            # creata a temp nc file from input data
+            tempfile = MyTempfile()
+            _tpath = tempfile.path()
+            kwargs["input"].to_netcdf(_tpath)
+            kwargs["input"] = _tpath
+            print(kwargs['input'])
+            cmd.append(kwargs["input"])
         else:
             #we assume it's either a list, a tuple or any iterable.
-            cmd += kwargs["input"]
+            cmd.append(kwargs["input"])
 
       if not kwargs.__contains__("force"):
         kwargs["force"] = self.forceOutput
