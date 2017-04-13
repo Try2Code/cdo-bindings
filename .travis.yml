@@ -31,4 +31,3 @@ before_install:
 script:
   - set
   - rake testPython
-  - rake testRuby
