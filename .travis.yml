@@ -26,7 +26,6 @@ before_install:
   # Make Conda test environment
   - conda env create --file .travis-py$TRAVIS_PYTHON_VERSION.yml
   - source activate test_env
-  - python setup.py install
 
 # commands
 script:
