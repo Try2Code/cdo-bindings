@@ -1,35 +1,42 @@
-# author: jhamman
-language: python
-
-python:
-  - "2.7"
-  - "3.6"
-
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install libnetcdf-dev ruby rake ruby-netcdf ruby-narray ruby-narray-miss rubygems
-  # We do this conditionally because it saves us some downloading if the
-  # version is the same.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  # Useful for debugging any issues with conda
-  - conda info -a
-
-  # Make Conda test environment
-  - conda env create --file .travis-py$TRAVIS_PYTHON_VERSION.yml
-  - source activate test_env
-  - python setup.py install
-
-# commands
-script:
-  - set
-  - rake testPython
-  - rake testRuby
+language: ruby
+rvm:
+ - 2.2
+ - jruby
+ - rbx-2
+# uncomment and edit the following line if your project needs to run something other than `rake`:
+script: bundle exec rspec spec
+## author: jhamman
+#language: python
+#
+#python:
+#  - "2.7"
+#  - "3.6"
+#
+#before_install:
+#  - sudo apt-get update
+#  - sudo apt-get install libnetcdf-dev ruby rake ruby-netcdf ruby-narray ruby-narray-miss rubygems
+#  # We do this conditionally because it saves us some downloading if the
+#  # version is the same.
+#  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+#      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+#    else
+#      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+#    fi
+#  - bash miniconda.sh -b -p $HOME/miniconda
+#  - export PATH="$HOME/miniconda/bin:$PATH"
+#  - hash -r
+#  - conda config --set always_yes yes --set changeps1 no
+#  - conda update -q conda
+#  # Useful for debugging any issues with conda
+#  - conda info -a
+#
+#  # Make Conda test environment
+#  - conda env create --file .travis-py$TRAVIS_PYTHON_VERSION.yml
+#  - source activate test_env
+#  - python setup.py install
+#
+## commands
+#script:
+#  - set
+#  - rake testPython
+#  - rake testRuby
