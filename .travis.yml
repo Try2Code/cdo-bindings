@@ -29,5 +29,6 @@ before_install:
 
 # command to run tests
 script:
+  - set
   - rake testPython
   - rake testRuby
