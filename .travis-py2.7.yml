@@ -7,3 +7,4 @@ dependencies:
   - six
   - numpy
   - cdo
+  - xarray
