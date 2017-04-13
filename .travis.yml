@@ -27,7 +27,7 @@ before_install:
   - source activate test_env
   - python setup.py install
 
-# command to run tests
+# commands
 script:
   - set
   - rake testPython
