@@ -4,5 +4,6 @@ channels:
 dependencies:
   - python=2.7
   - netCDF4
+  - six
   - numpy
   - cdo

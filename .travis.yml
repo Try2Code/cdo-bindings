@@ -7,7 +7,7 @@ python:
 
 before_install:
   - sudo apt-get update
-  - sudo apt-get install libnetcdf-dev ruby rake ruby-netcdf ruby-narray ruby-narray-miss rubygems
+  - sudo apt-get install libnetcdf-dev rake
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -29,5 +29,5 @@ before_install:
 
 # commands
 script:
-  - set
+# - set
   - rake testPython
