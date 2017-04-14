@@ -31,3 +31,13 @@ before_install:
 script:
   - set
   - rake testPython
+
+language: ruby
+rvm:
+  - 2.2
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install libnetcdf-dev
+script:
+  - gem install narray narray_miss ruby-netcdf minitest rake
+  - rake testRuby
