@@ -29,5 +29,5 @@ before_install:
 
 # commands
 script:
-# - set
+  - set
   - rake testPython

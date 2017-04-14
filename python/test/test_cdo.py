@@ -357,6 +357,7 @@ class CdoTest(unittest.TestCase):
 
     def test_splitOps(self):
         cdo = Cdo(cdfMod=CDF_MOD)
+        cdo.debug = True
         pattern = 'stdAtm'
         resultsFiles = cdo.splitname(input = '-stdatm,0',output = pattern)
         self.assertTrue(2 <= len(resultsFiles))
@@ -386,7 +387,6 @@ class CdoTest(unittest.TestCase):
         print(cdo.libs)
         self.assertTrue(cdo.hasLib("cdi"),"CDI support missing")
         self.assertTrue(cdo.hasLib("extra"),"netcdf4 support missing")
-        self.assertTrue(cdo.hasLib("sz"),"netcdf4 support missing")
         self.assertTrue(cdo.hasLib("nc4"),"netcdf4 support missing")
         self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
         self.assertTrue(cdo.hasLib("udunits2"),"netcdf support missing")

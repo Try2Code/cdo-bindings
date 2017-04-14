@@ -5,6 +5,8 @@ dependencies:
   - python=2.7
   - netCDF4
   - six
+  - matplotlib
   - numpy
+  - xarray
   - cdo
   - xarray
