@@ -38,6 +38,14 @@ rvm:
 before_install:
   - sudo apt-get update
   - sudo apt-get install libnetcdf-dev
+  - wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda env create --file .travis-py2.7.yml
 script:
   - gem install narray narray_miss ruby-netcdf minitest rake
   - rake testRuby
