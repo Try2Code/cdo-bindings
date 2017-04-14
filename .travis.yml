@@ -34,7 +34,10 @@ script:
 
 language: ruby
 rvm:
-  - 2.2
+  # - 2.0
+  # - 2.1
+  # - 2.2
+  - 2.3
 before_install:
   - sudo apt-get update
   - sudo apt-get install libnetcdf-dev
@@ -46,6 +49,7 @@ before_install:
   - conda update -q conda
   - conda info -a
   - conda env create --file .travis-py2.7.yml
+  - source activate test_env
 script:
   - gem install narray narray_miss ruby-netcdf minitest rake
   - rake testRuby
