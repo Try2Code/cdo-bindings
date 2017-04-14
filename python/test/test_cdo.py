@@ -454,6 +454,7 @@ class CdoTest(unittest.TestCase):
         # manual setup to nc2 via object setup
         cdo.env = {"CDO_FILE_SUFFIX": ".foo"}
         cdo.splitname(input=ifile,output=tag)
+        cdo.env = {}
         files = glob.glob(tag+'*')
         files.sort()
         self.assertEqual(['__env_testP.foo', '__env_testT.foo'],files)
