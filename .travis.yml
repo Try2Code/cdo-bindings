@@ -51,8 +51,8 @@ before_install:
   - conda env create --file .travis-py3.6.yml
 script:
   - gem install narray narray_miss ruby-netcdf minitest rake
-  - rake testRuby
   - source activate test_env_py27
   - rake testPython
   - source activate test_env_py36
   - rake testPython
+  - rake testRuby
