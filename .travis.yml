@@ -52,7 +52,9 @@ before_install:
 script:
   - gem install narray narray_miss ruby-netcdf minitest rake
   - source activate test_env_py27
+  - python --version
   - rake testPython
   - source activate test_env_py36
+  - python --version
   - rake testPython
   - rake testRuby
