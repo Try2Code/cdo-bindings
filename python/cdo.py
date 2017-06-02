@@ -4,7 +4,7 @@ from pkg_resources import parse_version
 from io import StringIO
 import logging as pyLog
 import six
-import xarray
+
 try:
     from string import strip
 except ImportError:
@@ -110,13 +110,11 @@ class Cdo(object):
     if self.logging and '-h' != cmd[1]:
       self.logger.info(u' '.join(cmd))
 
-    for k,v in self.env.items():
-      os.environ[k] = v
-
     proc = subprocess.Popen(' '.join(cmd),
                             shell  = True,
                             stderr = subprocess.PIPE,
-                            stdout = subprocess.PIPE)
+                            stdout = subprocess.PIPE,
+                            env    = self.env)
 
     retvals = proc.communicate()
     stdout  = retvals[0].decode("utf-8")
@@ -222,9 +220,10 @@ class Cdo(object):
             kwargs["output"] = self.tempfile.path()
 
           cmd.append(kwargs["output"])
+
           if kwargs.__contains__("env"):
             for k,v in kwargs["env"].items():
-              os.environ[k] = v
+              self.env[k] = v
 
           retvals = self.call(cmd)
           if self.hasError(method_name,cmd,retvals):
@@ -268,7 +267,6 @@ class Cdo(object):
           raise AttributeError("Unknown method '" + method_name +"'!")
 
   def getOperators(self):
-    import os
     if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.7.0')):
         proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
         ret  = proc.communicate()
@@ -288,7 +286,6 @@ class Cdo(object):
         return list(set(s.split(" ")))
 
   def getNoOutputOperators(self):
-    import os
     if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.8.0')):
       proc = subprocess.Popen([self.CDO,'--operators_no_output'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
       ret  = proc.communicate()
