@@ -9,7 +9,7 @@ PythonInterpreter = ENV.has_key?('PYTHON') ? ENV['PYTHON'] : 'python'
 RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
 
 def pythonTest(name: nil,interpreter: PythonInterpreter)
-  cmd = "cd python; [[ ! -f testcdo.py ]] && ln -s -f cdo.py testcdo.py ; PYTHONPATH='.' #{interpreter} test/test_cdo.py"
+  cmd = "cd python; #{interpreter} test/test_cdo.py"
   cmd << " CdoTest.#{name}" unless name.nil?
   cmd
 end
