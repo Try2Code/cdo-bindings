@@ -1,5 +1,6 @@
 from __future__ import print_function
 import unittest,os,tempfile,sys,glob,subprocess,multiprocessing
+sys.path.append(os.path.dirname(sys.path[0]))
 from pkg_resources import parse_version
 from stat import *
 from cdo import Cdo,CDOException
@@ -266,16 +267,6 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(1013.25,sum.variables["P"][:])
         cdo.unsetReturnArray()
 
-#   def test_XrDataset(self):
-#       cdo = Cdo(cdfMod=CDF_MOD)
-#       self.assertTrue(hasattr(cdo, "cdf"))# not in cdo.__dict__)
-#       cdo.setReturnArray()
-#       self.assertTrue(hasattr(cdo, "cdf"))#"cdf" in cdo.__dict__)
-#       cdo.setReturnArray(False)
-#       sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnXrDataset=True)
-#       self.assertEqual(1013.25,sum.variables["P"][:])
-#       cdo.unsetReturnArray()
-
     def test_cdf_mod(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.setReturnArray()
@@ -334,6 +325,16 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(False,withMask.mask[1,0])
         self.assertEqual(False,withMask.mask[1,1])
         self.assertEqual(True,withMask.mask[0,1])
+
+#   def test_XrDataset(self):
+#       cdo = Cdo(cdfMod=CDF_MOD)
+#       self.assertTrue(hasattr(cdo, "cdf"))# not in cdo.__dict__)
+#       cdo.setReturnArray()
+#       self.assertTrue(hasattr(cdo, "cdf"))#"cdf" in cdo.__dict__)
+#       cdo.setReturnArray(False)
+#       sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnXrDataset=True)
+#       self.assertEqual(1013.25,sum.variables["P"][:])
+#       cdo.unsetReturnArray()
 
 #   def test_returnXrArray(self):
 #       cdo = Cdo(cdfMod=CDF_MOD)
@@ -740,6 +741,7 @@ class CdoTest(unittest.TestCase):
             return
 
           dataSet = xarray.open_dataset(cdo.topo('global_0.1',options = '-f nc'))
+          print(type(dataSet).__name__)
 
           dataSet['topo'] = 1.0 + np.abs(dataSet['topo'])
 
