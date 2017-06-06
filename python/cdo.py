@@ -110,8 +110,7 @@ class Cdo(object):
     if self.logging and '-h' != cmd[1]:
       self.logger.info(u' '.join(cmd))
 
-    env = {}
-    env.update(self.env)
+    env = dict(self.env)
     env.update(envOfCall)
 
     proc = subprocess.Popen(' '.join(cmd),
@@ -190,8 +189,9 @@ class Cdo(object):
             cmd.append(kwargs["input"])
         elif type(kwargs["input"]) == list:
             cmd.append(' '.join(kwargs["input"]))
-        elif type(kwargs["input"] == xarray):
-            # creata a temp nc file from input data
+        elif type(kwargs["input"]).__name__ == 'Dataset':
+
+            # create a temp nc file from input data
             tempfile = MyTempfile()
             _tpath = tempfile.path()
             kwargs["input"].to_netcdf(_tpath)
