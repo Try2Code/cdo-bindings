@@ -61,11 +61,12 @@ class CdoTest(unittest.TestCase):
             cdo.setCdo('cdo')
 
     def testDbg(self):
-        cdo = Cdo(cdfMod=CDF_MOD)
-        self.assertEqual(False,cdo.debug)
-        cdo.debug = True
-        self.assertEqual(True,cdo.debug)
-        cdo.debug = False
+        if not 'DEBUG' in os.environ:
+          cdo = Cdo(cdfMod=CDF_MOD)
+          self.assertEqual(False,cdo.debug)
+          cdo.debug = True
+          self.assertEqual(True,cdo.debug)
+          cdo.debug = False
 
     def testOps(self):
         cdo = Cdo(cdfMod=CDF_MOD)
