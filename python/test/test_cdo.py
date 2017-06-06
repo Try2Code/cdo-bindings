@@ -360,6 +360,7 @@ class CdoTest(unittest.TestCase):
 
     def test_errorException(self):
         cdo = Cdo(cdfMod=CDF_MOD)
+        cdo.__print__('test_errorException')
         self.assertFalse(hasattr(cdo, 'nonExistingMethod'))
         self.failUnlessRaises(CDOException, cdo.max)
         try:
@@ -395,25 +396,32 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = DEBUG
         pattern = 'stdAtm'
+        cdo.__print__('test_splitOps')
         resultsFiles = cdo.splitname(input = '-stdatm,0',output = pattern)
         self.assertTrue(2 <= len(resultsFiles))
         print(resultsFiles)
-#       for var in ['T','P']:
-#         self.assertTrue(pattern+var+'.grb' in resultsFiles)
+        for var in ['T','P']:
+          print(pattern+var+'.grb')
+          self.assertTrue(pattern+var+'.grb' in resultsFiles)
+        rm(resultsFiles)
 
         pattern = 'sel'
         resultsFiles = cdo.splitsel(1,input = '-for,0,9',output = pattern)
         print(resultsFiles)
         self.assertTrue(10 <= len(resultsFiles))
-#       for var in range(0,10):
-#         self.assertTrue(pattern+'00000'+str(var)+'.grb' in resultsFiles)
+        rm(resultsFiles)
+        for var in range(0,10):
+          self.assertTrue(pattern+'00000'+str(var)+'.grb' in resultsFiles)
+        rm(resultsFiles)
 
         pattern = 'lev'
         resultsFiles = cdo.splitlevel(input = '-stdatm,100,2000,5000',output = pattern)
         self.assertTrue(3 <= len(resultsFiles))
         print(resultsFiles)
-#       for var in ['0100','2000','5000']:
-#         self.assertTrue(pattern+'00'+str(var)+'.grb' in resultsFiles)
+        rm(resultsFiles)
+        for var in ['0100','2000','5000']:
+          self.assertTrue(pattern+'00'+str(var)+'.grb' in resultsFiles)
+        rm(resultsFiles)
 
     def test_output_set_to_none(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -471,6 +479,7 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = DEBUG
 
+        cdo.__print__('test_env')
         # cdf default
         ifile = cdo.stdatm(10,20,50,100,options='-f nc')
         cdo.splitname(input=ifile,output=tag)
@@ -480,20 +489,25 @@ class CdoTest(unittest.TestCase):
         rm(files)
 
         # manual setup to nc2 via operator call
-        cdo.splitname(input=ifile,output=tag,env={"CDO_FILE_SUFFIX": ".bar"})
+        cdo.splitname(input=ifile,output=tag,env={"CDO_FILE_SUFFIX": ".foo"})
+        cdo.env = {}
         files = glob.glob(tag+'*')
         files.sort()
-        self.assertEqual(['__env_testP.bar', '__env_testT.bar'],files)
+        self.assertEqual(['__env_testP.foo', '__env_testT.foo'],files)
         rm(files)
 
         # manual setup to nc2 via object setup
+        cdo.__print__('test_env:VOR BLA')
         cdo.env = {"CDO_FILE_SUFFIX": ".bla"}
         cdo.splitname(input=ifile,output=tag)
+        cdo.splitname(input=ifile,output='bla')
+        cdo.__print__('test_env:NACH BLA')
         cdo.env = {}
         files = glob.glob(tag+'*')
         files.sort()
         self.assertEqual(['__env_testP.bla', '__env_testT.bla'],files)
         rm(files)
+        cdo.__print__('test_env:ENDE')
 
     def test_showMaArray(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -623,6 +637,15 @@ class CdoTest(unittest.TestCase):
         cdo.sinfov(input=cmd)
         cdo.showLog()
 
+    def test_zzzz(self):
+      cdo = Cdo(cdfMod=CDF_MOD)
+      cdo.__print__('test_zzzz')
+      self.assertEqual({},cdo.env)
+
+    def test_AAAA(self):
+      cdo = Cdo(cdfMod=CDF_MOD)
+      cdo.__print__('test_AAAA')
+      self.assertEqual({},cdo.env)
 
     if MAINTAINERMODE:
         def test_icon_coords(self):
