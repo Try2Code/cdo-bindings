@@ -264,6 +264,16 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(1013.25,sum.variables["P"][:])
         cdo.unsetReturnArray()
 
+#   def test_XrDataset(self):
+#       cdo = Cdo(cdfMod=CDF_MOD)
+#       self.assertTrue(hasattr(cdo, "cdf"))# not in cdo.__dict__)
+#       cdo.setReturnArray()
+#       self.assertTrue(hasattr(cdo, "cdf"))#"cdf" in cdo.__dict__)
+#       cdo.setReturnArray(False)
+#       sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnXrDataset=True)
+#       self.assertEqual(1013.25,sum.variables["P"][:])
+#       cdo.unsetReturnArray()
+
     def test_cdf_mod(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.setReturnArray()
@@ -322,6 +332,29 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(False,withMask.mask[1,0])
         self.assertEqual(False,withMask.mask[1,1])
         self.assertEqual(True,withMask.mask[0,1])
+
+#   def test_returnXrArray(self):
+#       cdo = Cdo(cdfMod=CDF_MOD)
+#       cdo.debug = DEBUG
+#       topo = cdo.topo(options='-f nc',returnXrArray='topo')
+#       self.assertEqual(-1890.0,round(topo.mean()))
+#       bathy = cdo.setrtomiss(0,10000,
+#           input = cdo.topo(options='-f nc'),returnXrArray='topo')
+#       self.assertEqual(-3386.0,round(bathy.mean()))
+#       oro = cdo.setrtomiss(-10000,0,
+#           input = cdo.topo(options='-f nc'),returnXrArray='topo')
+#       self.assertEqual(1142.0,round(oro.mean()))
+#       bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnXrArray = 'topo')
+#       self.assertEqual(-4298.0,bathy[0,0])
+#       self.assertEqual(-2669.0,bathy[0,1])
+#       ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
+#       tb = cdo.subc(-2669.0,input = ta)
+#       withMask = cdo.div(input=ta+" "+tb,returnXrArray='topo')
+#       self.assertEqual('--',withMask[0,1].__str__())
+#       self.assertEqual(False,withMask.mask[0,0])
+#       self.assertEqual(False,withMask.mask[1,0])
+#       self.assertEqual(False,withMask.mask[1,1])
+#       self.assertEqual(True,withMask.mask[0,1])
 
     def test_errorException(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -452,12 +485,12 @@ class CdoTest(unittest.TestCase):
         rm(files)
 
         # manual setup to nc2 via object setup
-        cdo.env = {"CDO_FILE_SUFFIX": ".foo"}
+        cdo.env = {"CDO_FILE_SUFFIX": ".bla"}
         cdo.splitname(input=ifile,output=tag)
         cdo.env = {}
         files = glob.glob(tag+'*')
         files.sort()
-        self.assertEqual(['__env_testP.foo', '__env_testT.foo'],files)
+        self.assertEqual(['__env_testP.bla', '__env_testT.bla'],files)
         rm(files)
 
     def test_showMaArray(self):

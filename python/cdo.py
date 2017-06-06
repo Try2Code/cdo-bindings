@@ -106,15 +106,19 @@ class Cdo(object):
     res.extend(self.operators)
     return res
 
-  def call(self,cmd):
+  def call(self,cmd,envOfCall={}):
     if self.logging and '-h' != cmd[1]:
       self.logger.info(u' '.join(cmd))
+
+    env = {}
+    env.update(self.env)
+    env.update(envOfCall)
 
     proc = subprocess.Popen(' '.join(cmd),
                             shell  = True,
                             stderr = subprocess.PIPE,
                             stdout = subprocess.PIPE,
-                            env    = self.env)
+                            env    = env)
 
     retvals = proc.communicate()
     stdout  = retvals[0].decode("utf-8")
@@ -122,8 +126,8 @@ class Cdo(object):
 
     if self.debug:
       print('# DEBUG - start =============================================================')
-      if {} != self.env:
-        for k,v in list(self.env.items()):
+      if {} != env:
+        for k,v in list(env.items()):
           print("ENV: " + k + " = " + v)
       print('CALL  :' + ' '.join(cmd))
       print('STDOUT:')
@@ -160,6 +164,8 @@ class Cdo(object):
       operator          = [method_name]
       operatorPrintsOut = method_name in self.noOutputOperators
 
+      self.envByCall = {}
+
       if args.__len__() != 0:
         for arg in args:
           operator.append(arg.__str__())
@@ -167,13 +173,17 @@ class Cdo(object):
       #build the cdo command
       #0. the cdo command
       cmd = [self.CDO]
+
       #1. OVERWRITE EXISTING FILES
       cmd.append('-O')
+
       #2. options
       if 'options' in kwargs:
           cmd += kwargs['options'].split()
+
       #3. operator(s)
       cmd.append(','.join(operator))
+
       #4. input files or operators
       if 'input' in kwargs:
         if isinstance(kwargs["input"], six.string_types):
@@ -192,11 +202,18 @@ class Cdo(object):
             #we assume it's either a list, a tuple or any iterable.
             cmd.append(kwargs["input"])
 
+      #5. handle rewrite of existing output files
       if not kwargs.__contains__("force"):
         kwargs["force"] = self.forceOutput
 
+      #6. handle environment setup per call
+      envOfCall = {}
+      if kwargs.__contains__("env"):
+        for k,v in kwargs["env"].items():
+          envOfCall[k] = v
+
       if operatorPrintsOut:
-        retvals = self.call(cmd)
+        retvals = self.call(cmd,envOfCall)
         if ( not self.hasError(method_name,cmd,retvals) ):
           r = list(map(strip,retvals["stdout"].split(os.linesep)))
           if "autoSplit" in kwargs:
@@ -221,11 +238,7 @@ class Cdo(object):
 
           cmd.append(kwargs["output"])
 
-          if kwargs.__contains__("env"):
-            for k,v in kwargs["env"].items():
-              self.env[k] = v
-
-          retvals = self.call(cmd)
+          retvals = self.call(cmd,envOfCall)
           if self.hasError(method_name,cmd,retvals):
             if self.returnNoneOnError:
               return None
@@ -496,6 +509,13 @@ class Cdo(object):
 
   def __version__(self):
     return CDO_PY_VERSION
+
+  def __print__(self,context=''):
+    if '' != context:
+      print('CDO:CONTEXT '+context)
+    print("CDO:ID  = "+str(id(self)))
+    print("CDO:ENV = "+str(self.env))
+
 # Helper module for easy temp file handling
 class MyTempfile(object):
 
