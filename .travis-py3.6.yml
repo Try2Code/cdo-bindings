@@ -9,3 +9,4 @@ dependencies:
   - numpy
   - xarray
   - cdo
+  - xarray
