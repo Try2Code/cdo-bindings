@@ -1,7 +1,8 @@
 from __future__ import print_function
 import unittest,os,tempfile,sys,glob,subprocess,multiprocessing
+from pkg_resources import parse_version
 from stat import *
-from cdo import *
+from cdo import Cdo,CDOException
 import numpy as np
 from matplotlib import pylab as pl
 
