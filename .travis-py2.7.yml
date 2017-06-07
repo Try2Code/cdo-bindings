@@ -3,10 +3,9 @@ channels:
   - conda-forge
 dependencies:
   - python=2.7
+  - cdo
   - netCDF4
   - six
   - matplotlib
   - numpy
-  - xarray
-  - cdo
   - xarray
