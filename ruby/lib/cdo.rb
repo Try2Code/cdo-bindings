@@ -295,8 +295,13 @@ class Cdo
     return true
   end
 
-  def version
-    IO.popen("#{@cdo} -V 2>&1").readlines.first.split(/version/i).last.strip.split(' ').first
+  def version(verbose=false)
+    info = IO.popen("#{@cdo} -V 2>&1").readlines
+    if verbose then
+      return info.join
+    else
+      return info.first.split(/version/i).last.strip.split(' ').first
+    end
   end
 
   # return cdf handle to given file readonly

@@ -38,6 +38,9 @@ class TestCdo < Minitest::Test
     pp @@maintainermode
     pp @@show
   end
+  def test_V
+    puts @cdo.version(verbose=true)
+  end
   def test_getOperators
     %w[for random stdatm info showlevel sinfo remap geopotheight mask topo thicknessOfLevels].each {|op|
       if ["thicknessOfLevels"].include?(op)

@@ -70,6 +70,10 @@ class CdoTest(unittest.TestCase):
           self.assertEqual(True,cdo.debug)
           cdo.debug = False
 
+    def test_V(self):
+        cdo = Cdo(cdfMod=CDF_MOD)
+        print(cdo.version(verbose=True))
+
     def testOps(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         self.assertTrue("sinfov" in cdo.operators)

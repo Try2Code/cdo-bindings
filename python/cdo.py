@@ -33,10 +33,12 @@ def auto_doc(tool, cdo_self):
         return func
     return desc
 
-def getCdoVersion(path2cdo):
+def getCdoVersion(path2cdo,verbose=False):
     proc = subprocess.Popen([path2cdo,'-V'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
     ret  = proc.communicate()
     cdo_help   = ret[1].decode("utf-8")
+    if verbose:
+        return cdo_help
     match = re.search("Climate Data Operators version (\d.*) .*",cdo_help)
     return match.group(1)
 
@@ -430,9 +432,9 @@ class Cdo(object):
   #==================================================================
   # Addional operators:
   #------------------------------------------------------------------
-  def version(self):
+  def version(self,verbose=False):
     # return CDO's version
-    return getCdoVersion(self.CDO)
+    return getCdoVersion(self.CDO,verbose)
 
   def boundaryLevels(self,**kwargs):
     ilevels         = list(map(float,self.showlevel(input = kwargs['input'])[0].split()))
