@@ -23,7 +23,10 @@ script:
   - cdo -V
   - type -p cdo
   - python --version
+  - rake testPython CDO=$(type -p cdo)
   - source activate test_env_py36
   - cdo -V
   - type -p cdo
   - python --version
+  - rake testPython CDO=$(type -p cdo)
+  - rake testRuby CDO=$(type -p cdo)
