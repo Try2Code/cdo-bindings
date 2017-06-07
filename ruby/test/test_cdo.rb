@@ -72,7 +72,8 @@ class TestCdo < Minitest::Test
   end
   def test_CDO_version
     assert("1.4.3.1" < @cdo.version,"Version too low: #{@cdo.version}")
-    assert("1.8.1" > @cdo.version,"Version too high: #{@cdo.version}")
+    assert("1.8.1" < @cdo.version,"Version too low: #{@cdo.version}")
+    assert("3.0" > @cdo.version,"Version too high: #{@cdo.version}")
   end
   def test_args
     ofile0 = @cdo.stdatm(0,20,40,80,200,230,400,600,1100)
@@ -262,12 +263,13 @@ class TestCdo < Minitest::Test
   end
 
   def test_noOutputOps
-    case
-    when "1.8.0" == @cdo.version then
-      assert_equal(Cdo::NoOutputOperators,@cdo.noOutputOps)
-    when "1.8.0" < @cdo.version
-      assert((Cdo::NoOutputOperators - @cdo.noOutputOps).empty?)
-    end
+    %w[griddes griddes2 gridverify info infoc infon infop infos infov map ncode
+       ncode ndate ngridpoints ngrids nlevel nmon npar ntime nvar nyear output
+       outputarr outputbounds outputboundscpt outputcenter outputcenter2
+       outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
+       outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab].each {|op|
+      assert(@cdo.noOutputOps.include?(op))
+    }
   end
 
   def test_output_set_to_nil
