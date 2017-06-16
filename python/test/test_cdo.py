@@ -736,7 +736,7 @@ class CdoTest(unittest.TestCase):
             smooth20 = cdo.smooth('nsmooth=20',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
             plot(np.flipud(smooth20[0,:,:]),ofile='smooth20',title='smooth,nsmooth=20')
 
-        def test_xarray(self):
+        def test_xarray_input(self):
           cdo = Cdo(cdfMod='netcdf4')
           try:
             import xarray
