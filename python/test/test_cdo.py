@@ -102,7 +102,7 @@ class CdoTest(unittest.TestCase):
         cdo.debug = DEBUG
         s   = cdo.sinfov(input="-topo",options="-f nc")
         s   = cdo.sinfov(input="-remapnn,r36x18 -topo",options="-f nc")
-        f   = 'ofile.nc'
+        f   = 'test_ofile.nc'
         cdo.expr("'z=log(abs(topo+1))*9.81'",input="-topo", output=f, options="-f nc")
         s   = cdo.infov(input=f)
         cdo.stdatm("0",output=f,options="-f nc")
@@ -187,7 +187,7 @@ class CdoTest(unittest.TestCase):
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
         cdo.setReturnArray()
-        outfile = 'test.nc'
+        outfile = 'test_returnCdf.nc'
         cdf = cdo.stdatm("0",output=outfile,options="-f nc")
         press = cdf.variables["P"][:]
         self.assertEqual(1013.25,press.min())
@@ -474,7 +474,7 @@ class CdoTest(unittest.TestCase):
 
     def test_env(self):
         # clean up
-        tag = '__env_test'
+        tag = 'test___env_test'
         files = glob.glob(tag+'*')
         rm(files)
         files = glob.glob(tag+'*')
@@ -490,7 +490,7 @@ class CdoTest(unittest.TestCase):
         cdo.splitname(input=ifile,output=tag)
         files = glob.glob(tag+'*')
         files.sort()
-        self.assertEqual(['__env_testP.nc', '__env_testT.nc'],files)
+        self.assertEqual(['%sP.nc'%(tag), '%sT.nc'%(tag)],files)
         rm(files)
 
         # manual setup to nc2 via operator call
@@ -498,7 +498,7 @@ class CdoTest(unittest.TestCase):
         cdo.env = {}
         files = glob.glob(tag+'*')
         files.sort()
-        self.assertEqual(['__env_testP.foo', '__env_testT.foo'],files)
+        self.assertEqual(['%sP.foo'%(tag), '%sT.foo'%(tag)],files)
         rm(files)
 
         # manual setup to nc2 via object setup
@@ -510,7 +510,7 @@ class CdoTest(unittest.TestCase):
         cdo.env = {}
         files = glob.glob(tag+'*')
         files.sort()
-        self.assertEqual(['__env_testP.bla', '__env_testT.bla'],files)
+        self.assertEqual(['%sP.bla'%(tag), '%sT.bla'%(tag)],files)
         rm(files)
         cdo.__print__('test_env:ENDE')
 
@@ -558,13 +558,13 @@ class CdoTest(unittest.TestCase):
         cdf.close()
 
         missRange = '0.25,0.85'
-        withMissRange = 'withMissRange.nc'
+        withMissRange = 'test_withMissRange.nc'
         arOrg = cdo.copy(input = rand,returnMaArray = 'v')
         arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
         arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
-        arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v',output='foo.nc')
+        arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
         if 'setmisstonn' in cdo.operators:
-          arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='foo.nc')
+          arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
 
         pool = multiprocessing.Pool(8)
         pool.apply_async(plot, (arOrg, ),{"title":'org'      })#ofile='fmOrg')
@@ -688,7 +688,7 @@ class CdoTest(unittest.TestCase):
           #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
           #          output=ifile,
           #          options='-O')
-          s = cdo.sellonlatbox(0,30,0,90, input="-chname,SO,s,TempO,t " + ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
+          s = cdo.sellonlatbox(0,30,0,90, input="-chname,SO,s,TempO,t " + ifile,output='test_my_phc.nc',returnMaArray='s',options='-f nc')
           plot(np.flipud(s[0,:,:]),ofile='org',title='original')
           sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
           plot(np.flipud(sfmo[0,:,:]),ofile='fm',title='fillmiss')
