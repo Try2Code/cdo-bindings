@@ -762,6 +762,29 @@ class CdoTest(unittest.TestCase):
           #do the same without explicit tempfile
           self.assertEqual(1.0,cdo.fldmin(input=dataSet,returnArray='topo').min())
 
+
+        def test_xarray_output(self):
+          cdo = Cdo(cdfMod='netcdf4')
+          try:
+            import xarray
+          except:
+            print("no xarray installation available!")
+            return
+
+          tArray = cdo.topo('global_10.0',options = '-f nc',returnXArray = 'topo')
+          print(tArray)
+
+        def test_xdataset_output(self):
+          cdo = Cdo(cdfMod='netcdf4')
+          try:
+            import xarray
+          except:
+            print("no xarray installation available!")
+            return
+
+          tDataset = cdo.topo('global_10.0',options = '-f nc',returnXDataset = True)
+          print(tDataset)
+
 #===============================================================================
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)

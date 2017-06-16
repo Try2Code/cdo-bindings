@@ -262,12 +262,22 @@ class Cdo(object):
 
       if not None == kwargs.get("returnArray"):
         return self.readArray(kwargs["output"],kwargs["returnArray"])
+
       elif not None == kwargs.get("returnMaArray"):
         return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
+
       elif self.returnCdf or kwargs["returnCdf"]:
         return self.readCdf(kwargs["output"])
+
+      elif loadedXarray and not None == kwargs.get("returnXArray"):
+        return self.readXArray(kwargs["output"],kwargs.get("returnXArray"))
+
+      elif self.returnCdf or kwargs["returnXDataset"]:
+        return self.readXDataset(kwargs["output"])
+
       elif ('split' == method_name[0:5]):
         return glob.glob(kwargs["output"]+'*')
+
       else:
         return kwargs["output"]
 
@@ -515,6 +525,13 @@ class Cdo(object):
       retval = np.ma.array(data,mask=data != data )
 
     return retval
+
+  def readXArray(self,ifile,varname):
+    dataSet = xarray.open_dataset(ifile)
+    return dataSet[varname]
+
+  def readXDataset(self,ifile):
+    return xarray.open_dataset(ifile)
 
   def __version__(self):
     return CDO_PY_VERSION
