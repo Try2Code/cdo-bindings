@@ -10,6 +10,13 @@ try:
 except ImportError:
     strip = str.strip
 
+try:
+    import xarray
+    loadedXarray = True
+except:
+    print("Could not load xarray")
+    loadedXarray = False
+
 # Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
 # See COPYING file for copying and redistribution conditions.
 #
@@ -191,7 +198,7 @@ class Cdo(object):
             cmd.append(kwargs["input"])
         elif type(kwargs["input"]) == list:
             cmd.append(' '.join(kwargs["input"]))
-        elif type(kwargs["input"]).__name__ == 'Dataset':
+        elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
 
             # create a temp nc file from input data
             tempfile = MyTempfile()
