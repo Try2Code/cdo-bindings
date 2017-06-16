@@ -29,4 +29,4 @@ script:
   - type -p cdo
   - python --version
   - rake testPython CDO=$(type -p cdo) DEBUG=1
-  - rake testRuby CDO=$(type -p cdo) DEBUG=1
+  - rake testRuby   CDO=$(type -p cdo) DEBUG=1
