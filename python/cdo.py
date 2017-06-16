@@ -272,7 +272,7 @@ class Cdo(object):
       elif loadedXarray and not None == kwargs.get("returnXArray"):
         return self.readXArray(kwargs["output"],kwargs.get("returnXArray"))
 
-      elif self.returnCdf or kwargs["returnXDataset"]:
+      elif loadedXarray and not None == kwargs.get("returnXDataset"):
         return self.readXDataset(kwargs["output"])
 
       elif ('split' == method_name[0:5]):

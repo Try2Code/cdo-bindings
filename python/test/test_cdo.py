@@ -745,6 +745,7 @@ class CdoTest(unittest.TestCase):
             return
 
           dataSet = xarray.open_dataset(cdo.topo('global_0.1',options = '-f nc'))
+
           print(type(dataSet).__name__)
 
           dataSet['topo'] = 1.0 + np.abs(dataSet['topo'])
