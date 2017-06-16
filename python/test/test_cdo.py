@@ -762,8 +762,7 @@ class CdoTest(unittest.TestCase):
           #do the same without explicit tempfile
           self.assertEqual(1.0,cdo.fldmin(input=dataSet,returnArray='topo').min())
 
-
-
+#===============================================================================
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)
 #   print(suite)
