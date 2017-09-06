@@ -318,7 +318,9 @@ class Cdo(object):
         return list(set(s.split(" ")))
 
   def getNoOutputOperators(self):
-    if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.8.0')):
+    if ( \
+            parse_version(getCdoVersion(self.CDO)) > parse_version('1.8.0') and \
+            parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.0') ):
       proc = subprocess.Popen([self.CDO,'--operators_no_output'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
       ret  = proc.communicate()
       return list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))

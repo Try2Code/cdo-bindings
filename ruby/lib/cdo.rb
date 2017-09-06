@@ -40,7 +40,7 @@ class Cdo
     @forceOutput            = forceOutput
     @env                    = env
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
-    @noOutputOperators      = getNoOuputOperators(@cdo)
+    @noOutputOperators      = getNoOuputOperators(@cdo) # operators without output files (write to stdout)
     @returnNilOnError       = returnNilOnError
 
     @filetypes              = getFiletypes
@@ -87,7 +87,7 @@ class Cdo
   end
 
   def getNoOuputOperators(path2cdo)
-    if version > '1.8.0' then
+    if version > '1.8.0' and version < '1.9.0' then
       puts 'CMD:'+path2cdo+' --operators_no_output' if @debug
       IO.popen(path2cdo+' --operators_no_output').readlines.map{|line| line.split(' ')[0]}.flatten
     else

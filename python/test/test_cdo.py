@@ -119,7 +119,7 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(["1013.25", "288"],values)
         values = cdo.outputkey("value",input="-stdatm,0,10000")[1::]
         self.assertEqual(["1013.25", "271.913", "288", "240.591"],values)
-        values = cdo.outputkey("level",input="-stdatm,0,10000")[1::]
+        values = cdo.outputkey("lev",input="-stdatm,0,10000")[1::]
         self.assertEqual(["0", "10000","0", "10000"],values)
 
         # test autoSplit usage
@@ -256,10 +256,10 @@ class CdoTest(unittest.TestCase):
         cdo.debug = DEBUG
         stdatm  = cdo.stdatm("0",options = "-f nc")
         stdatm_ = cdo.stdatm("0",options = "-f nc")
-        print(cdo.diff(input=stdatm + " " + stdatm_))
-        sum = cdo.fldsum(input = stdatm)
-        sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
-        self.assertEqual(288.0,sum.variables["T"][:])
+       #print(cdo.diff(input=stdatm + " " + stdatm_))
+       #sum = cdo.fldsum(input = stdatm)
+       #sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
+       #self.assertEqual(288.0,sum.variables["T"][:])
 
     def test_cdf(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -651,6 +651,12 @@ class CdoTest(unittest.TestCase):
       cdo = Cdo(cdfMod=CDF_MOD)
       cdo.__print__('test_AAAA')
       self.assertEqual({},cdo.env)
+
+    def test_noOutputOps(self):
+      cdo = Cdo(cdfMod=CDF_MOD)
+      opCount = len(cdo.noOutputOperators)
+      self.assertTrue(opCount > 50)
+      self.assertTrue(opCount < 200)
 
     if MAINTAINERMODE:
         def test_icon_coords(self):

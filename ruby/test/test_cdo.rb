@@ -500,6 +500,12 @@ class TestCdo < Minitest::Test
     @cdo.sinfov(input: cmd)
     puts @cdo.showLog
   end
+  def test_noOutputOps
+    c = Cdo.new
+    opsCounf = c.noOutputOps.size
+    assert(opsCounf > 50)
+    assert(opsCounf < 200)
+  end
 end
 
 #  # Calling simple operators
