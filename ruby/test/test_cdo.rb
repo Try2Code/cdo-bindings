@@ -127,7 +127,7 @@ class TestCdo < Minitest::Test
     outs.clear
     outs << @cdo.stdatm(0,10,20,:output => 'test_force')
     mtime0 = File.stat(outs[-1]).mtime
-    sleep 0.2
+    sleep(1)
     outs << @cdo.stdatm(0,10,20,:output => 'test_force')
     mtime1 = File.stat(outs[-1]).mtime
     assert(mtime0 != mtime1)
