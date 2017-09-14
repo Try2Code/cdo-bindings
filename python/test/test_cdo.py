@@ -103,7 +103,7 @@ class CdoTest(unittest.TestCase):
         s   = cdo.sinfov(input="-topo",options="-f nc")
         s   = cdo.sinfov(input="-remapnn,r36x18 -topo",options="-f nc")
         f   = 'test_ofile.nc'
-        cdo.expr("'z=log(abs(topo+1))*9.81'",input="-topo", output=f, options="-f nc")
+        cdo.expr("'z=log(abs(topo)+1)*9.81'",input="-topo", output=f, options="-f nc")
         s   = cdo.infov(input=f)
         cdo.stdatm("0",output=f,options="-f nc")
         rm([f,])
@@ -167,12 +167,10 @@ class CdoTest(unittest.TestCase):
     def test_diff(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = DEBUG
-        diffv = cdo.diffn(input = "-random,r1x1 -random,r1x1")
+        diffv = cdo.diffn(input = "-random,global_0.1 -random,global_0.1")
         print(diffv)
         self.assertEqual(diffv[1].split(' ')[-1],"random")
-        self.assertEqual(diffv[1].split(' ')[-3],"0.53060")
-        diff  = cdo.diff(input = "-random,r1x1 -random,r1x1")
-        self.assertEqual(diff[1].split(' ')[-3],"0.53060")
+        self.assertEqual(diffv[1].split(' ')[-3],"1.0000")
 
     def test_returnCdf(self):
         cdo = Cdo(cdfMod=CDF_MOD)
