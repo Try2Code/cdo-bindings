@@ -1,4 +1,5 @@
 require 'rake/clean'
+require 'pp'
 
 CLEAN.include("**/*.pyc")
 CLEAN.include("**/*.log")
@@ -19,6 +20,19 @@ def rubyTest(name: nil,interpreter: RubyInterpreter, testFile: nil)
   cmd << " --name=#{name}" unless name.nil?
   cmd
 end
+
+%w[Ruby Python].each {|lang|
+  fileExtension = {Ruby: 'rb',Python: 'py'}[lang.to_sym]
+  desc "list #{lang} tests"
+  task "list#{lang}".to_sym do
+    File.open("#{lang.downcase}/test/test_cdo.#{fileExtension}").readlines.grep(/^ *def test/).map(&:strip).sort.each {|line|
+      md = /def (test_*\w+)/.match(line)
+      unless md.nil?
+        puts md[1]
+      end
+    }
+  end
+}
 
 desc "execute one/all test(s) with python2"
 task :testPython2, :name do |t,args|
