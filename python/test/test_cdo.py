@@ -51,7 +51,7 @@ class CdoTest(unittest.TestCase):
 
     def testVersions(self):
         cdo = Cdo()
-        self.assertEqual('1.3.3',cdo.__version__())
+        self.assertEqual('1.3.5',cdo.__version__())
         self.assertTrue(parse_version('1.7.0') <= parse_version(cdo.version()))
 
     def testCDO(self):
@@ -655,6 +655,19 @@ class CdoTest(unittest.TestCase):
       opCount = len(cdo.noOutputOperators)
       self.assertTrue(opCount > 50)
       self.assertTrue(opCount < 200)
+
+    def test_cdiMeta(self):
+      cdo = Cdo()
+      ofile = cdo.stdatm("0", options = "-f nc", returnCdf = True)
+      print(ofile)
+      ofile = cdo.stdatm("0", options = "-f nc4", returnCdf = True)
+      print(ofile)
+      ofile = cdo.stdatm("0", options = "-f nc", returnXArray = 'T')
+      print(ofile)
+      print(ofile.attrs)
+      ofile = cdo.stdatm("0", options = "-f nc", returnXDataset=True)
+      print(ofile)
+      print(ofile.attrs)
 
     if MAINTAINERMODE:
         def test_icon_coords(self):
