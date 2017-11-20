@@ -385,7 +385,7 @@ class TestCdo < Minitest::Test
       input = "-settunits,days  -setyear,2000 -for,1,4"
       cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
       cdf     = @cdo.readCdf(cdfFile)
-      assert_equal(['time','lon','lat','for'],cdf.var_names)
+      assert_empty(['lon','lat','for','time'] - cdf.var_names)
     end
     def test_selIndexListFromIcon
       input = "~/data/icon/oce.nc"
