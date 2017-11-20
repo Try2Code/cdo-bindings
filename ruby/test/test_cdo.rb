@@ -25,6 +25,8 @@ class TestCdo < Minitest::Test
     if ENV['CDO']
       assert_equal(ENV['CDO'],@cdo.cdo)
     else
+      pp DEFAULT_CDO_PATH
+      pp @cdo.cdo
       assert_equal(DEFAULT_CDO_PATH,@cdo.cdo)
     end
     newCDO="#{ENV['HOME']}/local/bin/cdo-dev"
@@ -383,7 +385,7 @@ class TestCdo < Minitest::Test
       input = "-settunits,days  -setyear,2000 -for,1,4"
       cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
       cdf     = @cdo.readCdf(cdfFile)
-      assert_equal(['lon','lat','time','for'],cdf.var_names)
+      assert_equal(['time','lon','lat','for'],cdf.var_names)
     end
     def test_selIndexListFromIcon
       input = "~/data/icon/oce.nc"
