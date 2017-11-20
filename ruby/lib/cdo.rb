@@ -3,6 +3,11 @@ require 'open3'
 require 'logger'
 require 'stringio'
 
+class Hash
+  alias :include? :has_key?
+end
+
+
 class Cdo
 
   # hardcoded fallback list of output operators - from 1.8.0 there is an
@@ -69,7 +74,8 @@ class Cdo
 
   # collect the complete list of possible operators
   def getOperators(path2cdo)
-    if version <= '1.7.0' then
+    case
+    when version <= '1.7.0' then
       cmd       = path2cdo + ' 2>&1'
       help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
       if 5 >= help.size
@@ -78,12 +84,21 @@ class Cdo
         exit
       end
 
-      @operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/ }) - 2].join(' ').split
+      operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/ }) - 2].join(' ').split
+    when version <= '1.9.1' then
+      cmd       = "#{path2cdo} --operators"
+      operators = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
     else
-      cmd = "#{path2cdo} --operators"
-
-      @operators = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
+      cmd       = "#{path2cdo} --operators"
+      operators = {}
+      IO.popen(cmd).readlines.map {|line|
+        lineContent = line.chomp.split(' ')
+        name = lineContent[0]
+        iCounter, oCounter = lineContent[-1].tr(')','').tr('(','').split('|')
+        operators[name] = { iStreams: iCounter.to_i,oStreams: oCounter.to_i }
+      }
     end
+    return operators
   end
 
   def getNoOuputOperators(path2cdo)
