@@ -74,6 +74,20 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo(cdfMod=CDF_MOD)
         print(cdo.version(verbose=True))
 
+    def test_hasCdo(self):
+        cdo = Cdo()
+        self.assertTrue(cdo.hasCdo())
+        cdo.CDO='cccccccc'
+        self.assertFalse(cdo.hasCdo())
+        cdo.CDO='/bin/cdo'
+        self.assertTrue(cdo.hasCdo())
+
+    def test_check(self):
+        cdo = Cdo()
+        self.assertTrue(cdo.check())
+        cdo.CDO='cvcvcvcvc'
+        self.assertFalse(cdo.check())
+
     def testOps(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         self.assertTrue("sinfov" in cdo.operators)
