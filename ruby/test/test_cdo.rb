@@ -43,6 +43,14 @@ class TestCdo < Minitest::Test
   def test_V
     puts @cdo.version(verbose=true)
   end
+  def test_hasCdo
+    assert(@cdo.hasCdo)
+    @cdo.cdo = 'cccccccc'
+    assert_equal( false, @cdo.hasCdo)
+
+    @cdo.cdo='/bin/cdo'
+    assert(@cdo.hasCdo) if File.exist?(@cdo.cdo)
+  end
   def test_getOperators
     %w[for random stdatm info showlevel sinfo remap geopotheight mask topo thicknessOfLevels].each {|op|
       if ["thicknessOfLevels"].include?(op)

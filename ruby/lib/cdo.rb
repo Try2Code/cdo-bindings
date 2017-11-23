@@ -95,7 +95,7 @@ class Cdo
         lineContent = line.chomp.split(' ')
         name = lineContent[0]
         iCounter, oCounter = lineContent[-1].tr(')','').tr('(','').split('|')
-        operators[name] = { iStreams: iCounter.to_i,oStreams: oCounter.to_i }
+        operators[name] = { iStreams: iCounter.to_i, oStreams: oCounter.to_i }
       }
     end
     return operators
@@ -300,9 +300,15 @@ class Cdo
     puts collectLogs
   end
 
+  def hasCdo(path=@cdo)
+    executable = system("#{path} -V >/dev/null 2>&1")
+    fullpath   = File.exists?(path) and File.executable?(path)
+
+    return (executable or fullpath)
+  end
   # check if cdo backend is working
   def check
-    return false unless system("#@cdo -h 1>/dev/null 2>&1")
+    return false unless hasCdo
 
     retval = _call("#{@cdo} -V")
     pp retval if @debug
