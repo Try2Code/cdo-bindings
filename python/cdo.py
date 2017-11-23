@@ -395,38 +395,38 @@ class Cdo(object):
 
 
   def unsetReturnArray(self):
-      self.setReturnArray(False)
+    self.setReturnArray(False)
 
   def collectLogs(self):
-      if isinstance(self.logFile, six.string_types):
-          content = []
-          with open(self.logFile,'r') as f:
-              content.append(f.read())
-          return ''.join(content)
-      else:
-          self.logFile.flush()
-          return self.logFile.getvalue()
+    if isinstance(self.logFile, six.string_types):
+      content = []
+      with open(self.logFile,'r') as f:
+        content.append(f.read())
+      return ''.join(content)
+    else:
+      self.logFile.flush()
+      return self.logFile.getvalue()
 
   def showLog(self):
-      print(self.collectLogs())
+    print(self.collectLogs())
 
   def hasCdo(self,path=None):
     if path is None:
       path = self.CDO
 
-    if os.path.isfile(path) and os.access(path, os.X_OK):
-      return True
-    return False
+    cmd = [path," -V",'>/dev/null 2>&1']
 
-  def checkCdo(self):
-    if (self.hasCdo()):
-      call = [self.CDO,' -V']
-      proc = subprocess.Popen(' '.join(call),
-          shell  = True,
-          stderr = subprocess.PIPE,
-          stdout = subprocess.PIPE)
-      retvals = proc.communicate()
-      print(retvals)
+    executable = (0 == self.call(cmd)["returncode"])
+    fullpath = (os.path.isfile(path) and os.access(path, os.X_OK))
+
+    return (executable or fullpath)
+
+  def check(self):
+    if not self.hasCdo():
+      return False
+    if self.debug:
+      print(self.call([self.CDO,' -V']))
+    return True
 
   def setCdo(self,value):
     self.CDO       = value
