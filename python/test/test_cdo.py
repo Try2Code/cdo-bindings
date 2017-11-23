@@ -80,7 +80,7 @@ class CdoTest(unittest.TestCase):
         cdo.CDO='cccccccc'
         self.assertFalse(cdo.hasCdo())
         cdo.CDO='/bin/cdo'
-        if os.isfile(cdo.CDO):
+        if os.path.isfile(cdo.CDO):
           self.assertTrue(cdo.hasCdo())
 
     def test_check(self):
