@@ -8,7 +8,7 @@ setup (name   = 'cdo',
   license     = "GPLv2",
   description = """python bindings to CDO""",
   py_modules  = ["cdo"],
-  url         = "https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D",
+  url         = "https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D",
   classifiers = [
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
