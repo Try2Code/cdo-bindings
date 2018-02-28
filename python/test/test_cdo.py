@@ -451,7 +451,6 @@ class CdoTest(unittest.TestCase):
         cdo.debug = DEBUG
         print(cdo.libs)
         self.assertTrue(cdo.hasLib("cdi"),"CDI support missing")
-        self.assertTrue(cdo.hasLib("extra"),"netcdf4 support missing")
         self.assertTrue(cdo.hasLib("nc4"),"netcdf4 support missing")
         self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
         self.assertTrue(cdo.hasLib("udunits2"),"netcdf support missing")
