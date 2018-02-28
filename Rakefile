@@ -1,4 +1,6 @@
 require 'rake/clean'
+require 'colorize'
+require 'facets/string'
 require 'pp'
 
 CLEAN.include("**/*.pyc")
@@ -22,9 +24,10 @@ def rubyTest(name: nil,interpreter: RubyInterpreter, testFile: nil)
 end
 
 %w[Ruby Python].each {|lang|
+  # create target for listing all tests for a given language
   fileExtension = {Ruby: 'rb',Python: 'py'}[lang.to_sym]
   desc "list #{lang} tests"
-  task "list#{lang}".to_sym do
+  task "list#{lang}Test".to_sym do
     File.open("#{lang.downcase}/test/test_cdo.#{fileExtension}").readlines.grep(/^ *def test/).map(&:strip).sort.each {|line|
       md = /def (test_*\w+)/.match(line)
       unless md.nil?
@@ -32,6 +35,38 @@ end
       end
     }
   end
+
+  # create regression tests for Ruby and Pythonwith different cdo version (managed by spack)
+  desc "run regresssion for multiple CDO releases in #{lang}"
+  task "test#{lang}Regression".to_sym, :name do |t,args|
+    runTests = args.name.nil? ? "rake test#{lang}" : "rake test#{lang}[#{args.name}]"
+    spackEnv = "$HOME/src/tools/spack/share/spack/setup-env.sh"
+    cmd = [". #{spackEnv}" ,
+           "for pkg in $(spack find -s cdo  | tail +2)",
+           "  do echo $pkg; spack load ${pkg}",
+              runTests,
+           "  spack unload ${pkg} ",
+           "done"].join(';')
+    puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
+    sh cmd
+  end
+  %w[2 3].each {|pythonRelease|
+    desc "run regresssion for multiple CDO releases in #{lang}#{pythonRelease}"
+    task "test#{lang}#{pythonRelease}Regression".to_sym, :name do |t,args|
+      runTests = args.name.nil? \
+        ? "rake test#{lang}#{pythonRelease}" \
+        : "rake test#{lang}#{pythonRelease}[#{args.name}]"
+      spackEnv = "$HOME/src/tools/spack/share/spack/setup-env.sh"
+      cmd = [". #{spackEnv}" ,
+             "for pkg in $(spack find -s cdo  | tail +2)",
+             "  do echo $pkg; spack load ${pkg}",
+             runTests,
+             "  spack unload ${pkg} ",
+             "done"].join(';')
+      puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
+      sh cmd
+    end if 'Python' == lang
+  }
 }
 
 desc "execute one/all test(s) with python2"
