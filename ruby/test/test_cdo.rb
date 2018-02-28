@@ -1,6 +1,9 @@
 $:.unshift File.join(File.dirname(__FILE__),"..","lib")
 
 require 'minitest/autorun'
+require 'minitest/pride'
+require 'minitest/hell'
+
 require 'cdo'
 require 'pp'
 
@@ -15,6 +18,7 @@ class TestCdo < Minitest::Test
 
   @@show           = ENV.has_key?('SHOW')
   @@maintainermode = ENV.has_key?('MAINTAINERMODE')
+  @@debug          = ENV.has_key?('DEBUG')
 
   def setup
     @cdo = Cdo.new
@@ -66,7 +70,7 @@ class TestCdo < Minitest::Test
   end
 
   def test_outputOperators
-    @cdo.debug = true
+    @cdo.debug = @@debug
     levels = @cdo.showlevel(:input => "-stdatm,0")
     assert_equal([0,0].map(&:to_s),levels)
 
@@ -82,7 +86,7 @@ class TestCdo < Minitest::Test
   end
   def test_CDO_version
     assert("1.4.3.1" < @cdo.version,"Version too low: #{@cdo.version}")
-    assert("1.8.1" < @cdo.version,"Version too low: #{@cdo.version}")
+    assert("1.7.1" < @cdo.version,"Version too low: #{@cdo.version}")
     assert("3.0" > @cdo.version,"Version too high: #{@cdo.version}")
   end
   def test_args
@@ -94,7 +98,7 @@ class TestCdo < Minitest::Test
     (1...info.size).each {|i| assert_equal(0.0,info[i].split[-1].to_f)}
   end
   def test_operator_options
-    @cdo.debug=true
+    @cdo.debug=@@debug
     targetLevels = [0,10,50,100,200,400,1000]
     levels = @cdo.showlevel(:input => " -stdatm,#{targetLevels.join(',')}")
     [0,1].each {|i| assert_equal(targetLevels.join(' '),levels[i])}
@@ -102,7 +106,7 @@ class TestCdo < Minitest::Test
     assert_equal(["P T"],names)
   end
   def test_chain
-    @cdo.debug = true
+    @cdo.debug = @@debug
     ofile = @cdo.setname('veloc',:input => " -copy -random,r1x1",:options => "-f nc")
     assert_equal(["veloc"],@cdo.showname(:input => ofile))
   end
@@ -205,7 +209,7 @@ class TestCdo < Minitest::Test
   end
 
   def test_verticalLevels
-    @cdo.debug = true
+    @cdo.debug = @@debug
     targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
     sourceLevels = %W{25 100 250 500 875 1400 2100 3000 4000 5000}
     thicknesses = @cdo.thicknessOfLevels(:input => "-selname,T #{@cdo.stdatm(*sourceLevels,:options => '-f nc')}")
@@ -223,7 +227,7 @@ class TestCdo < Minitest::Test
   end
 
   def test_errorException
-    @cdo.debug = true
+    @cdo.debug = @@debug
     # stdout operators get get wrong input
     assert_raises ArgumentError do
       @cdo.showname(:input => '-for,d')
@@ -325,7 +329,7 @@ class TestCdo < Minitest::Test
       assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
     end
     def test_returnMaArray
-      @cdo.debug = true
+      @cdo.debug = @@debug
       topo = @cdo.topo(:options => '-f nc',:returnMaArray => 'topo')
       assert_equal(-1890.0,topo.mean.round)
       bathy = @cdo.setrtomiss(0,10000,
@@ -399,11 +403,11 @@ class TestCdo < Minitest::Test
       input = "~/data/icon/oce.nc"
     end
     def test_readArray
-      @cdo.debug = true
+      @cdo.debug = @@debug
       assert_equal([40,80],@cdo.readArray(@cdo.sellonlatbox(-10,10,-20,20,:input => '-topo',:options => '-f nc'), 'topo').shape)
     end
     def test_doc
-      @cdo.debug = true
+      @cdo.debug = @@debug
       @cdo.help(:remap)
       @cdo.help(:infov)
       @cdo.help(:topo)
@@ -411,7 +415,7 @@ class TestCdo < Minitest::Test
       @cdo.help
     end
     def test_fillmiss
-      @cdo.debug = true
+      @cdo.debug = @@debug
       # check up-down replacement
       rand = @cdo.setname('v',:input => '-random,r1x10 ', :options => ' -f nc',:output => '/tmp/rand.nc')
       cdf  = @cdo.openCdf(rand)
