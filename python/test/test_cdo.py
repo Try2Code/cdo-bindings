@@ -315,8 +315,8 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = DEBUG
         self.assertEqual(False, cdo.stdatm(0,options = '-f nc', returnArray = 'TT'))
-#TODO       temperature = cdo.stdatm(0,options = '-f nc', returnArray = 'T')
-#TODO       self.assertEqual(288.0,temperature.flatten()[0])
+        temperature = cdo.stdatm(0,options = '-f nc', returnArray = 'T')
+        self.assertEqual(288.0,temperature.flatten()[0])
 #TODO       pressure = cdo.stdatm("0,1000",options = '-f nc -b F64',returnArray = 'P')
 #TODO       self.assertEqual("[ 1013.25         898.54345604]",pressure.flatten().__str__())
 
@@ -417,7 +417,8 @@ class CdoTest(unittest.TestCase):
         cdo.__print__('test_splitOps')
         resultsFiles = cdo.splitname(input = '-stdatm,0',output = pattern)
         self.assertTrue(2 <= len(resultsFiles))
-        print(resultsFiles)
+        if DEBUG:
+          print(resultsFiles)
         for var in ['T','P']:
           print(pattern+var+'.grb')
           self.assertTrue(pattern+var+'.grb' in resultsFiles)
@@ -425,7 +426,8 @@ class CdoTest(unittest.TestCase):
 
         pattern = 'sel'
         resultsFiles = cdo.splitsel(1,input = '-for,0,9',output = pattern)
-        print(resultsFiles)
+        if DEBUG:
+          print(resultsFiles)
         self.assertTrue(10 <= len(resultsFiles))
         rm(resultsFiles)
         for var in range(0,10):
@@ -435,7 +437,8 @@ class CdoTest(unittest.TestCase):
         pattern = 'lev'
         resultsFiles = cdo.splitlevel(input = '-stdatm,100,2000,5000',output = pattern)
         self.assertTrue(3 <= len(resultsFiles))
-        print(resultsFiles)
+        if DEBUG:
+          print(resultsFiles)
         rm(resultsFiles)
         for var in ['0100','2000','5000']:
           self.assertTrue(pattern+'00'+str(var)+'.grb' in resultsFiles)
@@ -449,7 +452,8 @@ class CdoTest(unittest.TestCase):
     def test_libs(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = DEBUG
-        print(cdo.libs)
+        if DEBUG:
+          print(cdo.libs)
         self.assertTrue(cdo.hasLib("cdi"),"CDI support missing")
         self.assertTrue(cdo.hasLib("nc4"),"netcdf4 support missing")
         self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
@@ -465,13 +469,15 @@ class CdoTest(unittest.TestCase):
         self.assertTrue(cdo.returnNoneOnError,"'returnNoneOnError' is _not_ True after manual setting")
         ret  = cdo.sinfo(input="-topf")
         self.assertEqual(None,ret)
-        print(ret)
+        if DEBUG:
+          print(ret)
 
         cdo_ = Cdo(cdfMod=CDF_MOD, returnNoneOnError=True)
         self.assertTrue(cdo_.returnNoneOnError)
         ret  = cdo_.sinfo(input=" ifile.grb")
         self.assertEqual(None,ret)
-        print(ret)
+        if DEBUG:
+          print(ret)
 
     def test_initOptions(self):
         cdo = Cdo(cdfMod=CDF_MOD, debug=True)
@@ -495,6 +501,7 @@ class CdoTest(unittest.TestCase):
         # setup
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = DEBUG
+        self.assertEqual(os.environ,cdo.env)
 
         cdo.__print__('test_env')
         # cdf default
@@ -529,7 +536,8 @@ class CdoTest(unittest.TestCase):
     def test_showMaArray(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = DEBUG
-        print(cdo)
+        if DEBUG:
+          print(cdo)
         bathy = cdo.setrtomiss(0,10000,
             input = cdo.topo(options='-f nc'),returnMaArray='topo')
         plot(bathy)
@@ -632,37 +640,33 @@ class CdoTest(unittest.TestCase):
 
     def test_log(self):
         cmd = '-fldmean -mul -random,r20x20 -topo,r20x20'
-        print('# logging with a real file')
+        if DEBUG:
+          print('# logging with a real file')
         cdo = Cdo(cdfMod=CDF_MOD,logging = True,logFile='foo.log')
         cdo.topo()
         cdo.temp()
         cdo.sinfov(input=cmd)
-        cdo.showLog()
+        if DEBUG:
+          cdo.showLog()
 
         cmd = '-fldmean -mul -random,r20x20 -topo,r20x20'
-        print('# logging with a real file, passed as unicode string')
+        if DEBUG:
+          print('# logging with a real file, passed as unicode string')
         cdo = Cdo(cdfMod=CDF_MOD, logging=True, logFile=u'foo.log')
         cdo.topo()
         cdo.temp()
         cdo.sinfov(input=cmd)
-        cdo.showLog()
+        if DEBUG:
+          cdo.showLog()
 
-        print('# logging with in-memory stringio')
+        if DEBUG:
+          print('# logging with in-memory stringio')
         cdo = Cdo(cdfMod=CDF_MOD,logging = True)
         cdo.topo()
         cdo.temp()
         cdo.sinfov(input=cmd)
-        cdo.showLog()
-
-    def test_zzzz(self):
-      cdo = Cdo(cdfMod=CDF_MOD)
-      cdo.__print__('test_zzzz')
-      self.assertEqual({},cdo.env)
-
-    def test_AAAA(self):
-      cdo = Cdo(cdfMod=CDF_MOD)
-      cdo.__print__('test_AAAA')
-      self.assertEqual({},cdo.env)
+        if DEBUG:
+          cdo.showLog()
 
     def test_noOutputOps(self):
       cdo = Cdo(cdfMod=CDF_MOD)
@@ -673,15 +677,19 @@ class CdoTest(unittest.TestCase):
     def test_cdiMeta(self):
       cdo = Cdo()
       ofile = cdo.stdatm("0", options = "-f nc", returnCdf = True)
-      print(ofile)
+      if DEBUG:
+        print(ofile)
       ofile = cdo.stdatm("0", options = "-f nc4", returnCdf = True)
-      print(ofile)
+      if DEBUG:
+        print(ofile)
       ofile = cdo.stdatm("0", options = "-f nc", returnXArray = 'T')
-      print(ofile)
-      print(ofile.attrs)
+      if DEBUG:
+        print(ofile)
+        print(ofile.attrs)
       ofile = cdo.stdatm("0", options = "-f nc", returnXDataset=True)
-      print(ofile)
-      print(ofile.attrs)
+      if DEBUG:
+        print(ofile)
+        print(ofile.attrs)
 
     if MAINTAINERMODE:
         def test_icon_coords(self):
@@ -702,7 +710,8 @@ class CdoTest(unittest.TestCase):
           self.assertEqual(expected,varOut.coordinates)
         def testCall(self):
           cdo = Cdo(cdfMod=CDF_MOD)
-          print(cdo.sinfov(input=DATA_DIR+'/icon/oce.nc'))
+          if DEBUG:
+            print(cdo.sinfov(input=DATA_DIR+'/icon/oce.nc'))
         def test_readCdf(self):
           cdo = Cdo(cdfMod=CDF_MOD)
           input= "-settunits,days  -setyear,2000 -for,1,4"
@@ -777,7 +786,8 @@ class CdoTest(unittest.TestCase):
 
           dataSet = xarray.open_dataset(cdo.topo('global_0.1',options = '-f nc'))
 
-          print(type(dataSet).__name__)
+          if DEBUG:
+            print(type(dataSet).__name__)
 
           dataSet['topo'] = 1.0 + np.abs(dataSet['topo'])
 
@@ -804,7 +814,8 @@ class CdoTest(unittest.TestCase):
             return
 
           tArray = cdo.topo('global_10.0',options = '-f nc',returnXArray = 'topo')
-          print(tArray)
+          if DEBUG:
+            print(tArray)
 
         def test_xdataset_output(self):
           cdo = Cdo(cdfMod='netcdf4')
@@ -815,7 +826,8 @@ class CdoTest(unittest.TestCase):
             return
 
           tDataset = cdo.topo('global_10.0',options = '-f nc',returnXDataset = True)
-          print(tDataset)
+          if DEBUG:
+            print(tDataset)
 
 #===============================================================================
 if __name__ == '__main__':
