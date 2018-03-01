@@ -84,7 +84,7 @@ class Cdo(object):
                returnNoneOnError=False,
                forceOutput=True,
                cdfMod=CDF_MOD_NETCDF4,
-               env={},
+               env=os.environ,
                debug=False,
                logging=False,
                logFile=StringIO()):
