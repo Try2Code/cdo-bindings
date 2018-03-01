@@ -29,5 +29,5 @@ script:
   - cdo -V
   - type -p cdo
   - python --version
-  - rake testPython CDO=$(type -p cdo) DEBUG=1
-  - rake testRuby   CDO=$(type -p cdo) DEBUG=1
+  - rake testPython CDO=$(type -p cdo) NO_COLOR=1
+  - rake testRuby   CDO=$(type -p cdo) NO_COLOR=1
