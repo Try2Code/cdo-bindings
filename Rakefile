@@ -11,6 +11,8 @@ CLEAN.include("{ruby,python}/*.{grb,nc,png,svg}")
 PythonInterpreter = ENV.has_key?('PYTHON') ? ENV['PYTHON'] : 'python'
 RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
 
+String.disable_colorization = (not ENV.has_key?('NO_COLOR'))
+
 def pythonTest(name: nil,interpreter: PythonInterpreter)
   cmd = "cd python; #{interpreter} test/test_cdo.py"
   cmd << " CdoTest.#{name}" unless name.nil?
