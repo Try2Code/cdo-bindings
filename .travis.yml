@@ -19,7 +19,7 @@ before_install:
   - conda env create --file .travis-py2.7.yml
   - conda env create --file .travis-py3.6.yml
 script:
-  - gem install narray narray_miss ruby-netcdf minitest rake
+  - gem install narray narray_miss ruby-netcdf minitest rake colorize
   - source activate test_env_py27
   - cdo -V
   - type -p cdo
