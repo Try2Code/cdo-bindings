@@ -13,6 +13,13 @@ RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
 
 String.disable_colorization = (not ENV.has_key?('NO_COLOR'))
 
+
+@cdoPackages = {
+  "clang@5.0.1" => ["cdo@1.9.0", "cdo@1.9.1", "cdo@1.9.2", "cdo@1.9.3"],
+  "gcc@6.4.1"   => ["cdo@1.7.2", "cdo@1.8.2", "cdo@1.8.2", "cdo@1.9.0", "cdo@1.9.1", "cdo@1.9.2", "cdo@1.9.3"],
+  "gcc@7.2.0"   => ["cdo@1.7.2", "cdo@1.8.2", "cdo@1.9.0", "cdo@1.9.1", "cdo@1.9.2", "cdo@1.9.3"]
+}
+
 def pythonTest(name: nil,interpreter: PythonInterpreter)
   cmd = "cd python; #{interpreter} test/test_cdo.py"
   cmd << " CdoTest.#{name}" unless name.nil?
@@ -43,14 +50,16 @@ end
   task "test#{lang}Regression".to_sym, :name do |t,args|
     runTests = args.name.nil? ? "rake test#{lang}" : "rake test#{lang}[#{args.name}]"
     spackEnv = "$HOME/src/tools/spack/share/spack/setup-env.sh"
-    cmd = [". #{spackEnv}" ,
-           "for pkg in $(spack find -s cdo  | tail +2)",
-           "  do echo $pkg; spack load ${pkg}",
-              runTests,
-           "  spack unload ${pkg} ",
-           "done"].join(';')
-    puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
-    sh cmd
+    @cdoPackages.each {|comp,cdoVersions|
+      cdoVersions.each {|cdoVersion|
+        cmd = [". #{spackEnv}" ,
+               "spack load #{cdoVersion} %#{comp}",
+               runTests,
+               "spack unload #{cdoVersion} %#{comp}"].join(';')
+        puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
+        sh cmd
+      }
+    }
   end
   %w[2 3].each {|pythonRelease|
     desc "run regresssion for multiple CDO releases in #{lang}#{pythonRelease}"
@@ -94,6 +103,20 @@ end
 desc "execute one/all lib-test(s) with ruby or the given env: RubyInterpreter"
 task :testRubyLib, :name do |t,args|
   sh rubyTest(name: args.name,testFile: 'test/test_cdo_lib.rb')
+end
+
+task :checkRegression do |t|
+    spackEnv = "$HOME/src/tools/spack/share/spack/setup-env.sh"
+    @cdoPackages.each {|comp,cdoVersions|
+      cdoVersions.each {|cdoVersion|
+        cmd = [". #{spackEnv}" ,
+               "spack load #{cdoVersion} %#{comp}",
+               "cdo -V",
+               "spack unload #{cdoVersion} %#{comp}"].join(';')
+        puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
+        sh cmd
+      }
+    }
 end
 
 task :default => :testRuby
