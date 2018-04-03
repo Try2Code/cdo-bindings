@@ -179,6 +179,12 @@ class CdoTest(unittest.TestCase):
         ofile = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")
         self.assertEqual(["veloc"],cdo.showname(input = ofile))
 
+    def test_longChain(self):
+        cdo = Cdo(cdfMod=CDF_MOD)
+        ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
+        t = cdo.fldmax(input="-div -sub -timmean -seltimestep,2,3 %s -seltimestep,1 %s -gridarea %s"%(ifile,ifile,ifile),returnArray="T")
+        self.assertEqual(8.9813e-09,t[0])
+
     def test_diff(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = DEBUG

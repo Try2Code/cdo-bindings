@@ -1,11 +1,7 @@
 $:.unshift File.join(File.dirname(__FILE__),"..","lib")
+require 'cdo'
 
 require 'minitest/autorun'
-require 'minitest/pride'
-require 'minitest/hell'
-
-require 'cdo'
-require 'pp'
 
 
 #===============================================================================
@@ -109,6 +105,12 @@ class TestCdo < Minitest::Test
     @cdo.debug = @@debug
     ofile = @cdo.setname('veloc',:input => " -copy -random,r1x1",:options => "-f nc")
     assert_equal(["veloc"],@cdo.showname(:input => ofile))
+
+  end
+  def test_longChain
+    ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
+    t = @cdo.fldmax(input: "-div -sub -timmean -seltimestep,2,3 #{ifile} -seltimestep,1 #{ifile}  -gridarea #{ifile}",returnArray: "t")
+    assert_equal(8.981299259858133e-09,t[0])
   end
 
   def test_diff
