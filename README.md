@@ -165,12 +165,14 @@ http://code.zmaw.de/projects/cdo
 
 ## Changelog
 * next:
-  - **remove module interface from the ruby version**
-  - **drop ruby support for 1.9 and older**
+* **1.3.6**: 
+  - bugfix for non-finding the CDO binary on some systems
   - fix hasCdo (py)
   - add hasCdo (rb)
 * **1.3.5**:
   - read/write support for XArray datasets - thx to @pinplex!
+  - **drop ruby support for 1.9 and older**
+  - **remove module interface from the ruby version**
 * **1.3.3**:
   - return arrays/lists of output files, which are created by split* operators suggestion from Karl-Hermann Wieners :ocean:
     **NOTE**: __this is done by simple globbing! Any other files with the appropriate name will be included in the list!__
