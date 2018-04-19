@@ -12,23 +12,22 @@ Releases are distributed via [pypi](https://pypi.org/project/cdo) and [rubygems]
 
 *  Ruby
 ```
-    gem install cdo
+    gem install cdo (--user-install)
 ```
 *  Python
 ```
-    pip install cdo
+    pip install cdo (--user)
 ```
 
 ### Requirements
 
 Cdo.{rb,py} requires a working CDO binary and Ruby 2.x or Python 2.7/3.x
-The Ruby module interface (available as 'cdo_lib') works with ruby-1.9.x, too.
-**Please note, that it will be removed in the future.** -- It's not thread-safe and can be 
-fully replaced by the class interface.
 
 Multi-dimensional arrays (numpy for python, narray for ruby) require addtional
 netcdf-io modules. These are [scipy](https://docs.scipy.org/doc/scipy/reference/io.html) or [python-netcdf4](https://pypi.python.org/pypi/netCDF4) for python and
-[ruby-netcdf](https://rubygems.org/gems/ruby-netcdf) for ruby. Because scipy has some difficulties with netcdf, I strongly recommend python-netcdf4. 
+[ruby-netcdf](https://rubygems.org/gems/ruby-netcdf) for ruby. Because scipy has some difficulties with netcdf, I strongly recommend python-netCDF4.
+
+Thx to Alexander Winkler there is also an IO option for XArray.
 
 ## Usage
 
