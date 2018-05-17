@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os,re,subprocess,tempfile,random,sys,glob
+import os,re,subprocess,tempfile,random,glob
 from pkg_resources import parse_version
 from io import StringIO
 import logging as pyLog
