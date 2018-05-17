@@ -164,6 +164,7 @@ http://code.zmaw.de/projects/cdo
 
 ## Changelog
 * next:
+  -  use CDOs new (1.9.4) ```--config``` option for implementing propper reflection about the binary
 * **1.3.6**: 
   - bugfix for non-finding the CDO binary on some systems
   - fix hasCdo (py)
