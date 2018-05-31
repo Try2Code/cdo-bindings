@@ -242,6 +242,6 @@ Cdo.{rb,py} makes use of the GPLv2 License, see COPYING
 # Other stuff
 ```
 Requires | CDO version 1.5.x or newer
-License  | Copyright 2011-2017 by Ralf Mueller Released under GPLv2 license
+License  | Copyright 2011-2018 by Ralf Mueller Released under GPLv2 license
          | See the LICENSE file included in the distribution
 ```
