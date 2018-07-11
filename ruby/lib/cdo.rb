@@ -41,11 +41,12 @@ class Cdo
     @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
 
     @operators              = getOperators(@cdo)
+    @noOutputOperators      = @operators.select {|op,io| 0 == io[:oStreams]}.keys
+
     @returnCdf              = returnCdf
     @forceOutput            = forceOutput
     @env                    = env
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
-    @noOutputOperators      = getNoOuputOperators(@cdo) # operators without output files (write to stdout)
     @returnNilOnError       = returnNilOnError
 
     @filetypes              = getFiletypes
@@ -92,10 +93,10 @@ class Cdo
       cmd       = "#{path2cdo} --operators"
       operators = {}
       IO.popen(cmd).readlines.map {|line|
-        lineContent = line.chomp.split(' ')
-        name = lineContent[0]
+        lineContent        = line.chomp.split(' ')
+        name               = lineContent[0]
         iCounter, oCounter = lineContent[-1].tr(')','').tr('(','').split('|')
-        operators[name] = { iStreams: iCounter.to_i, oStreams: oCounter.to_i }
+        operators[name]    = { iStreams: iCounter.to_i, oStreams: oCounter.to_i }
       }
     end
     return operators
@@ -295,17 +296,20 @@ class Cdo
       return File.open(@logFile).readlines
     end
   end
+
   # print the loggin messaged
   def showLog
     puts collectLogs
   end
 
+  # check if the CDO binary is present and works
   def hasCdo(path=@cdo)
     executable = system("#{path} -V >/dev/null 2>&1")
     fullpath   = File.exists?(path) and File.executable?(path)
 
     return (executable or fullpath)
   end
+
   # check if cdo backend is working
   def check
     return false unless hasCdo
@@ -316,6 +320,7 @@ class Cdo
     return true
   end
 
+  # return CDO version string
   def version(verbose=false)
     info = IO.popen("#{@cdo} -V 2>&1").readlines
     if verbose then
@@ -359,9 +364,6 @@ class Cdo
     end
   end
 
-  def noOutputOps
-    getNoOuputOperators(@cdo)
-  end
   # }}}
 
   # Addional operators: {{{

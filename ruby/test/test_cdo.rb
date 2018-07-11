@@ -274,13 +274,19 @@ class TestCdo < Minitest::Test
   end
 
   def test_noOutputOps
+    operators = @cdo.operators
     %w[griddes griddes2 gridverify info infoc infon infop infos infov map ncode
        ncode ndate ngridpoints ngrids nlevel nmon npar ntime nvar nyear output
        outputarr outputbounds outputboundscpt outputcenter outputcenter2
        outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
        outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab].each {|op|
-      assert(@cdo.noOutputOps.include?(op))
+      assert(operators.include?(op),"Operator '#{op}' cannot be found!")
+      assert_equal(0,operators[op][:oStreams],"Operator '#{op}' has a non-zero output counter!")
     }
+    # just a rought estimation
+    opsCounf = @cdo.operators.select {|o,c| 0 == c[:oStreams]}.size
+    assert(opsCounf > 50)
+    assert(opsCounf < 200)
   end
 
   def test_output_set_to_nil
@@ -515,12 +521,6 @@ class TestCdo < Minitest::Test
     @cdo.temp
     @cdo.sinfov(input: cmd)
     puts @cdo.showLog
-  end
-  def test_noOutputOps
-    c = Cdo.new
-    opsCounf = c.noOutputOps.size
-    assert(opsCounf > 50)
-    assert(opsCounf < 200)
   end
 end
 
