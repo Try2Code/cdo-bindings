@@ -146,14 +146,17 @@ instead to avoid possible segmentation faults:
     cdf = cdo.fldmin(input = ifile,returnCdf = True)
     temperatures = cdf.variables['T'][:]
 ```
-More examples can be found in test/cdo-examples.rb and [on the homepage](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D)
+More examples can be found in test/cdo-examples.rb and [on the
+homepage](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D)
 
 ### Avoid re-processing
 
 If you do not want to re-compute files, you can set
 
-*  the instance attribute 'forceOutput' to false: this will effect all later call of that instance **or**
-*  the operator option 'forceOutput' to false: this will only effect this operator call of this instance
+*  the instance attribute 'forceOutput' to false: this will effect all later
+   call of that instance **or**
+*  the operator option 'forceOutput' to false: this will only effect this
+   operator call of this instance
 
 For more information, please have a look at the unit tests.
 
@@ -175,11 +178,16 @@ http://code.zmaw.de/projects/cdo
   - **drop ruby support for 1.9 and older**
   - **remove module interface from the ruby version**
 * **1.3.3**:
-  - return arrays/lists of output files, which are created by split* operators suggestion from Karl-Hermann Wieners :ocean:
+  - return arrays/lists of output files, which are created by split* operators
+    suggestion from Karl-Hermann Wieners :ocean:
     **NOTE**: __this is done by simple globbing! Any other files with the appropriate name will be included in the list!__
   - use [six](https://pypi.python.org/pypi/six) for python2 and 3 compatibility (thanks to @jvegasbsc)
-  - drop full support of CDO version older then 1.5.4: undocumented operators in these version will not be callable
-  - new keyword for operators which write to stdout: autoSplit. When set, each line will be split with the given value of the keyword to avoid the need for manual splitting. Nested return arrays of (outer) size 1 are flattened. See #11, thx to @beatorizu
+  - drop full support of CDO version older then 1.5.4: undocumented operators
+    in these version will not be callable
+  - new keyword for operators which write to stdout: autoSplit. When set, each
+    line will be split with the given value of the keyword to avoid the need
+    for manual splitting. Nested return arrays of (outer) size 1 are flattened.
+    See #11, thx to @beatorizu
 * **1.3.2**
   - improvened stdout/stderr handling, thx to jvegasbsc
 * **1.3.1**
