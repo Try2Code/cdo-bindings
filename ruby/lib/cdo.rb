@@ -180,7 +180,7 @@ class Cdo
                                               ( not returnArray.nil? ) or \
                                               ( not returnMaArray.nil?) \
                                              )
-    #
+
     # setup basic operator execution command
     cmd = "#{@cdo} -O #{options} -#{operatorName}#{operatorParameters} #{input} "
 
