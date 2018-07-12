@@ -264,13 +264,10 @@ class TestCdo < Minitest::Test
     assert_nil(@cdo.diffv(:input => ["-stdatm,0",fileB]).last)
   end
 
-  def test_filetypes
-    assert(@cdo.filetypes.find{|ft| /^grb/.match(ft)},"GRIB support missing")
-    assert(@cdo.filetypes.include?("nc4"),"NETCDF4 support missing")
-    assert(@cdo.filetypes.include?("ext"),"EXTRA support missing")
-    assert_raises ArgumentError do
-      @cdo.filetypes("foo")
-    end
+  def test_features
+    assert_equal(true,@cdo.has_srv)
+    assert_equal(true,@cdo.has_ieg)
+    assert_equal(true,@cdo.has_ext)
   end
 
   def test_noOutputOps
@@ -315,6 +312,14 @@ class TestCdo < Minitest::Test
     %w[0100 2000 5000].each {|var|
       assert(resultsFiles.include?("#{pattern}00#{var}.grb"))
     }
+  end
+
+  def test_operators_with_multiple_output_files
+    # create input for eof
+    #
+    # check automatic generation ot two tempfiles
+    #
+    # check usage of 'returnArray' with these operators
   end
 
   if @@maintainermode  then
