@@ -76,7 +76,7 @@ class Cdo
   # collect the complete list of possible operators
   def getOperators(path2cdo)
     case
-    when version <= '1.7.0' then
+    when version <= '1.7.2' then
       cmd       = path2cdo + ' 2>&1'
       help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
       if 5 >= help.size
