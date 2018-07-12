@@ -2,6 +2,7 @@ require 'pp'
 require 'open3'
 require 'logger'
 require 'stringio'
+require 'json'
 
 class Hash
   alias :include? :has_key?
@@ -12,6 +13,7 @@ class Cdo
 
   # hardcoded fallback list of output operators - from 1.8.0 there is an
   # options for this: --operators_no_output
+  # this list works for cdo-1.6.4
   NoOutputOperators = %w[cdiread diff diffc diffn diffp
   diffv dumpmap filedes ggstat ggstats gradsdes
   griddes griddes2 gridverify info infoc infon infop infos infov map ncode
@@ -49,13 +51,21 @@ class Cdo
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
     @returnNilOnError       = returnNilOnError
 
-    @filetypes              = getFiletypes
     @returnFalseOnError     = returnFalseOnError
 
     @logging                = logging
     @logFile                = logFile
     @logger                 = Logger.new(@logFile,'a')
     @logger.level           = Logger::INFO
+
+    @config                 = getFeatures
+
+    # create methods to descibe what can be done with the binary
+    @config.each {|k,v|
+      self.class.send :define_method, k.tr('-','_') do
+        v
+      end
+    }
   end
 
   private # {{{
@@ -75,8 +85,10 @@ class Cdo
 
   # collect the complete list of possible operators
   def getOperators(path2cdo)
+    operators = {}
+
     case
-    when version <= '1.7.2' then
+    when version < '1.7.2' then
       cmd       = path2cdo + ' 2>&1'
       help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
       if 5 >= help.size
@@ -85,10 +97,26 @@ class Cdo
         exit
       end
 
-      operators = help[(help.index("Operators:")+1)..help.index(help.find {|v| v =~ /CDO version/ }) - 2].join(' ').split
+      _operators = help[(help.index("Operators:")+1)..help.index(help.find {|v|
+        v =~ /CDO version/
+      }) - 2].join(' ').split
+      _operatorsNoOutput = NoOutputOperators
+
+
+      # build up operator inventory
+      _operators.each {|op| operators[op] = {oStreams: 1} }
+      _operatorsNoOutput.each {|op| operators[op][:oStreams] = 0}
+
     when version <= '1.9.1' then
-      cmd       = "#{path2cdo} --operators"
-      operators = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
+      cmd                = "#{path2cdo} --operators"
+      _operators         = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
+      cmd                = "#{path2cdo} --operators_no_output"
+      _operatorsNoOutput = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
+
+      # build up operator inventory
+      _operators.each {|op| operators[op] = {oStreams: 1} }
+      _operatorsNoOutput.each {|op| operators[op][:oStreams] = 0}
+
     else
       cmd       = "#{path2cdo} --operators"
       operators = {}
@@ -102,21 +130,23 @@ class Cdo
     return operators
   end
 
-  def getNoOuputOperators(path2cdo)
-    if version > '1.8.0' and version < '1.9.0' then
-      puts 'CMD:'+path2cdo+' --operators_no_output' if @debug
-      IO.popen(path2cdo+' --operators_no_output').readlines.map{|line| line.split(' ')[0]}.flatten
+  # get meta-data about the CDO installation
+  def getFeatures
+    config = {}
+    config.default(false)
+
+    if version > '1.9.3' then
+      config.merge!(JSON.parse(IO.popen(@cdo + " --config all").read.chomp))
+      config.each {|k,v| config[k] = ('yes' == v) ? true : false}
     else
-      NoOutputOperators
+      _, _, stderr, _ = Open3.popen3(@cdo + " -V")
+      supported       = stderr.readlines.map(&:chomp)
+
+      supported.grep(/(Filetypes)/)[0].split(':')[1].split.map(&:downcase).each {|ftype|
+        config["has-#{ftype}"] = true
+      }
     end
-  end
-
-  # get supported IO filetypes form the binary
-  def getFiletypes
-    _, _, stderr, _ = Open3.popen3(@cdo + " -V")
-    supported       = stderr.readlines.map(&:chomp)
-
-    supported.grep(/(Filetypes)/)[0].split(':')[1].split.map(&:downcase)
+    config
   end
 
   # Execute the given cdo call and return all outputs
