@@ -12,17 +12,17 @@ class Cdo
 
   # hardcoded fallback list of output operators - from 1.8.0 there is an
   # options for this: --operators_no_output
-  NoOutputOperators = %w[cdiread cmor codetab conv_cmor_table diff diffc diffn diffp
-  diffv dump_cmor_table dumpmap filedes ggstat ggstats gmtcells gmtxyz gradsdes
+  NoOutputOperators = %w[cdiread diff diffc diffn diffp
+  diffv dumpmap filedes ggstat ggstats gradsdes
   griddes griddes2 gridverify info infoc infon infop infos infov map ncode
-  ncode ndate ngridpoints ngrids nlevel nmon npar ntime nvar nyear output
+  ncode ndate nlevel nmon npar ntime nvar nyear output
   outputarr outputbounds outputboundscpt outputcenter outputcenter2
   outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
   outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab
   partab2 seinfo seinfoc seinfon seinfop showcode showdate showformat showlevel
   showltype showmon showname showparam showstdname showtime showtimestamp
   showunit showvar showyear sinfo sinfoc sinfon sinfop sinfov
-  spartab specinfo tinfo vardes vct vct2 verifygrid vlist zaxisdes]
+  specinfo tinfo vardes vct vct2 vlist zaxisdes]
 
   attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug, :logging, :logFile
   attr_reader   :operators, :filetypes
