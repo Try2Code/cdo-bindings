@@ -201,7 +201,7 @@ class Cdo(object):
   
       #2. options
       if 'options' in kwargs:
-          cmd += kwargs['options'].split()
+        cmd += kwargs['options'].split()
   
       #3. operator(s)
       cmd.append(','.join(operator))
@@ -222,8 +222,8 @@ class Cdo(object):
           print(kwargs['input'])
           cmd.append(kwargs["input"])
         else:
-            #we assume it's either a list, a tuple or any iterable.
-            cmd.append(kwargs["input"])
+          #we assume it's either a list, a tuple or any iterable.
+          cmd.append(kwargs["input"])
   
       #5. handle rewrite of existing output files
       if not kwargs.__contains__("force"):
