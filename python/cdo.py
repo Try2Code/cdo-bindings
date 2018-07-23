@@ -108,7 +108,7 @@ class Cdo(object):
 
     self.logging                = logging
     self.logFile                = logFile
-    self.clean_tmp              = clean.tmp
+    self.clean_tmp              = clean_tmp
     if (self.logging):
         self.logger = setupLogging(self.logFile)
 
@@ -307,9 +307,9 @@ class Cdo(object):
       self.tempfile.__del__()
 
   def _clean_tmp_dir(self):
-      previous_tmp_files = [f for f in listdir("/tmp/") if isfile(join(mypath, f)) and "cdoPy" in f and os.stat(f).st_uid == os.getuid()]
+      previous_tmp_files = [f for f in os.listdir("/tmp/") if os.path.isfile(os.path.join("/tmp/", f)) and "cdoPy" in f and os.stat(os.path.join("/tmp/", f)).st_uid == os.getuid()]
       for f in previous_tmp_files:
-          os.remove(f)
+          os.remove("/tmp/"+f)
 
 
   def getOperators(self):
