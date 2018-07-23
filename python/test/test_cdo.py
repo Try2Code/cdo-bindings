@@ -215,6 +215,7 @@ class CdoTest(unittest.TestCase):
         press = cdo.stdatm("0",output=ofile,options="-f nc")
         self.assertEqual(ofile,press)
         rm([outfile, ])
+        rm([ofile,])
 
 
     def test_forceOutput(self):

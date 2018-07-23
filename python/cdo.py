@@ -167,136 +167,139 @@ class Cdo(object):
 
   def __getattr__(self, method_name):
 
-    @auto_doc(method_name, self)
-    def get(self, *args,**kwargs):
-      operator          = [method_name]
-      operatorPrintsOut = method_name in self.noOutputOperators
-
-      self.envByCall = {}
-
-      if args.__len__() != 0:
-        for arg in args:
-          operator.append(arg.__str__())
-
-      #build the cdo command
-      #0. the cdo command
-      cmd = [self.CDO]
-
-      #1. OVERWRITE EXISTING FILES
-      cmd.append('-O')
-
-      #2. options
-      if 'options' in kwargs:
-          cmd += kwargs['options'].split()
-
-      #3. operator(s)
-      cmd.append(','.join(operator))
-
-      #4. input files or operators
-      if 'input' in kwargs:
-        if isinstance(kwargs["input"], six.string_types):
-            cmd.append(kwargs["input"])
-        elif type(kwargs["input"]) == list:
-            cmd.append(' '.join(kwargs["input"]))
-        elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
-
-            # create a temp nc file from input data
-            tempfile = MyTempfile()
-            _tpath = tempfile.path()
-            kwargs["input"].to_netcdf(_tpath)
-            kwargs["input"] = _tpath
-            print(kwargs['input'])
-            cmd.append(kwargs["input"])
-        else:
-            #we assume it's either a list, a tuple or any iterable.
-            cmd.append(kwargs["input"])
-
-      #5. handle rewrite of existing output files
-      if not kwargs.__contains__("force"):
-        kwargs["force"] = self.forceOutput
-
-      #6. handle environment setup per call
-      envOfCall = {}
-      if kwargs.__contains__("env"):
-        for k,v in kwargs["env"].items():
-          envOfCall[k] = v
-
-      if operatorPrintsOut:
-        retvals = self.call(cmd,envOfCall)
-        if ( not self.hasError(method_name,cmd,retvals) ):
-          r = list(map(strip,retvals["stdout"].split(os.linesep)))
-          if "autoSplit" in kwargs:
-            splitString = kwargs["autoSplit"]
-            _output = [x.split(splitString) for x in r[:len(r)-1]]
-            if (1 == len(_output)):
-                return _output[0]
-            else:
-                return _output
+    try:
+      @auto_doc(method_name, self)
+      def get(self, *args,**kwargs):
+        operator          = [method_name]
+        operatorPrintsOut = method_name in self.noOutputOperators
+  
+        self.envByCall = {}
+  
+        if args.__len__() != 0:
+          for arg in args:
+            operator.append(arg.__str__())
+  
+        #build the cdo command
+        #0. the cdo command
+        cmd = [self.CDO]
+  
+        #1. OVERWRITE EXISTING FILES
+        cmd.append('-O')
+  
+        #2. options
+        if 'options' in kwargs:
+            cmd += kwargs['options'].split()
+  
+        #3. operator(s)
+        cmd.append(','.join(operator))
+  
+        #4. input files or operators
+        if 'input' in kwargs:
+          if isinstance(kwargs["input"], six.string_types):
+              cmd.append(kwargs["input"])
+          elif type(kwargs["input"]) == list:
+              cmd.append(' '.join(kwargs["input"]))
+          elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
+  
+              # create a temp nc file from input data
+              tempfile = MyTempfile()
+              _tpath = tempfile.path()
+              kwargs["input"].to_netcdf(_tpath)
+              kwargs["input"] = _tpath
+              print(kwargs['input'])
+              cmd.append(kwargs["input"])
           else:
-           return r[:len(r)-1]
-        else:
-          if self.returnNoneOnError:
-            return None
-          else:
-            raise CDOException(**retvals)
-      else:
-        if kwargs["force"] or \
-           (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
-          if not kwargs.__contains__("output") or None == kwargs["output"]:
-            kwargs["output"] = self.tempfile.path()
-
-          cmd.append(kwargs["output"])
-
+              #we assume it's either a list, a tuple or any iterable.
+              cmd.append(kwargs["input"])
+  
+        #5. handle rewrite of existing output files
+        if not kwargs.__contains__("force"):
+          kwargs["force"] = self.forceOutput
+  
+        #6. handle environment setup per call
+        envOfCall = {}
+        if kwargs.__contains__("env"):
+          for k,v in kwargs["env"].items():
+            envOfCall[k] = v
+  
+        if operatorPrintsOut:
           retvals = self.call(cmd,envOfCall)
-          if self.hasError(method_name,cmd,retvals):
+          if ( not self.hasError(method_name,cmd,retvals) ):
+            r = list(map(strip,retvals["stdout"].split(os.linesep)))
+            if "autoSplit" in kwargs:
+              splitString = kwargs["autoSplit"]
+              _output = [x.split(splitString) for x in r[:len(r)-1]]
+              if (1 == len(_output)):
+                  return _output[0]
+              else:
+                  return _output
+            else:
+             return r[:len(r)-1]
+          else:
             if self.returnNoneOnError:
               return None
             else:
               raise CDOException(**retvals)
         else:
-          if self.debug:
-            print(("Use existing file'"+kwargs["output"]+"'"))
-
-      if not kwargs.__contains__("returnCdf"):
-        kwargs["returnCdf"] = False
-
-      if not None == kwargs.get("returnArray"):
-        return self.readArray(kwargs["output"],kwargs["returnArray"])
-
-      elif not None == kwargs.get("returnMaArray"):
-        return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
-
-      elif self.returnCdf or kwargs["returnCdf"]:
-        return self.readCdf(kwargs["output"])
-
-      elif loadedXarray and not None == kwargs.get("returnXArray"):
-        return self.readXArray(kwargs["output"],kwargs.get("returnXArray"))
-
-      elif loadedXarray and not None == kwargs.get("returnXDataset"):
-        return self.readXDataset(kwargs["output"])
-
-      elif ('split' == method_name[0:5]):
-        return glob.glob(kwargs["output"]+'*')
-
+          if kwargs["force"] or \
+             (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
+            if not kwargs.__contains__("output") or None == kwargs["output"]:
+              kwargs["output"] = self.tempfile.path()
+  
+            cmd.append(kwargs["output"])
+  
+            retvals = self.call(cmd,envOfCall)
+            if self.hasError(method_name,cmd,retvals):
+              if self.returnNoneOnError:
+                return None
+              else:
+                raise CDOException(**retvals)
+          else:
+            if self.debug:
+              print(("Use existing file'"+kwargs["output"]+"'"))
+  
+        if not kwargs.__contains__("returnCdf"):
+          kwargs["returnCdf"] = False
+  
+        if not None == kwargs.get("returnArray"):
+          return self.readArray(kwargs["output"],kwargs["returnArray"])
+  
+        elif not None == kwargs.get("returnMaArray"):
+          return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
+  
+        elif self.returnCdf or kwargs["returnCdf"]:
+          return self.readCdf(kwargs["output"])
+  
+        elif loadedXarray and not None == kwargs.get("returnXArray"):
+          return self.readXArray(kwargs["output"],kwargs.get("returnXArray"))
+  
+        elif loadedXarray and not None == kwargs.get("returnXDataset"):
+          return self.readXDataset(kwargs["output"])
+  
+        elif ('split' == method_name[0:5]):
+          return glob.glob(kwargs["output"]+'*')
+  
+        else:
+          return kwargs["output"]
+  
+      if ((method_name in self.__dict__) or (method_name in self.operators)):
+        if self.debug:
+          print(("Found method:" + method_name))
+  
+        #cache the method for later
+        setattr(self.__class__, method_name, get)
+        return get.__get__(self)
+      elif (method_name == "cdf"):
+          # initialize cdf module implicitly
+          self.loadCdf()
+          return self.cdf
       else:
-        return kwargs["output"]
-
-    if ((method_name in self.__dict__) or (method_name in self.operators)):
-      if self.debug:
-        print(("Found method:" + method_name))
-
-      #cache the method for later
-      setattr(self.__class__, method_name, get)
-      return get.__get__(self)
-    elif (method_name == "cdf"):
-        # initialize cdf module implicitly
-        self.loadCdf()
-        return self.cdf
-    else:
-      # given method might match part of know operators: autocompletion
-      if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) == 0):
-          # If the method isn't in our dictionary, act normal.
-          raise AttributeError("Unknown method '" + method_name +"'!")
+        # given method might match part of know operators: autocompletion
+        if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) == 0):
+            # If the method isn't in our dictionary, act normal.
+            raise AttributeError("Unknown method '" + method_name +"'!")
+    finally:
+      self.tempfile.__del__()
 
   def getOperators(self):
     if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.7.0')):
