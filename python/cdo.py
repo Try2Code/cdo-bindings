@@ -87,6 +87,7 @@ class Cdo(object):
                env=os.environ,
                debug=False,
                logging=False,
+               clean_tmp=False,
                logFile=StringIO()):
 
     if 'CDO' in os.environ:
@@ -107,8 +108,12 @@ class Cdo(object):
 
     self.logging                = logging
     self.logFile                = logFile
+    self.clean_tmp              = clean.tmp
     if (self.logging):
         self.logger = setupLogging(self.logFile)
+
+    if (self.clean_tmp):
+        self._clean_tmp_dir()
 
   def __dir__(self):
     res = dir(type(self)) + list(self.__dict__.keys())
@@ -172,27 +177,27 @@ class Cdo(object):
       def get(self, *args,**kwargs):
         operator          = [method_name]
         operatorPrintsOut = method_name in self.noOutputOperators
-  
+
         self.envByCall = {}
-  
+
         if args.__len__() != 0:
           for arg in args:
             operator.append(arg.__str__())
-  
+
         #build the cdo command
         #0. the cdo command
         cmd = [self.CDO]
-  
+
         #1. OVERWRITE EXISTING FILES
         cmd.append('-O')
-  
+
         #2. options
         if 'options' in kwargs:
             cmd += kwargs['options'].split()
-  
+
         #3. operator(s)
         cmd.append(','.join(operator))
-  
+
         #4. input files or operators
         if 'input' in kwargs:
           if isinstance(kwargs["input"], six.string_types):
@@ -200,7 +205,7 @@ class Cdo(object):
           elif type(kwargs["input"]) == list:
               cmd.append(' '.join(kwargs["input"]))
           elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
-  
+
               # create a temp nc file from input data
               tempfile = MyTempfile()
               _tpath = tempfile.path()
@@ -211,17 +216,17 @@ class Cdo(object):
           else:
               #we assume it's either a list, a tuple or any iterable.
               cmd.append(kwargs["input"])
-  
+
         #5. handle rewrite of existing output files
         if not kwargs.__contains__("force"):
           kwargs["force"] = self.forceOutput
-  
+
         #6. handle environment setup per call
         envOfCall = {}
         if kwargs.__contains__("env"):
           for k,v in kwargs["env"].items():
             envOfCall[k] = v
-  
+
         if operatorPrintsOut:
           retvals = self.call(cmd,envOfCall)
           if ( not self.hasError(method_name,cmd,retvals) ):
@@ -245,9 +250,9 @@ class Cdo(object):
              (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
             if not kwargs.__contains__("output") or None == kwargs["output"]:
               kwargs["output"] = self.tempfile.path()
-  
+
             cmd.append(kwargs["output"])
-  
+
             retvals = self.call(cmd,envOfCall)
             if self.hasError(method_name,cmd,retvals):
               if self.returnNoneOnError:
@@ -257,35 +262,35 @@ class Cdo(object):
           else:
             if self.debug:
               print(("Use existing file'"+kwargs["output"]+"'"))
-  
+
         if not kwargs.__contains__("returnCdf"):
           kwargs["returnCdf"] = False
-  
+
         if not None == kwargs.get("returnArray"):
           return self.readArray(kwargs["output"],kwargs["returnArray"])
-  
+
         elif not None == kwargs.get("returnMaArray"):
           return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
-  
+
         elif self.returnCdf or kwargs["returnCdf"]:
           return self.readCdf(kwargs["output"])
-  
+
         elif loadedXarray and not None == kwargs.get("returnXArray"):
           return self.readXArray(kwargs["output"],kwargs.get("returnXArray"))
-  
+
         elif loadedXarray and not None == kwargs.get("returnXDataset"):
           return self.readXDataset(kwargs["output"])
-  
+
         elif ('split' == method_name[0:5]):
           return glob.glob(kwargs["output"]+'*')
-  
+
         else:
           return kwargs["output"]
-  
+
       if ((method_name in self.__dict__) or (method_name in self.operators)):
         if self.debug:
           print(("Found method:" + method_name))
-  
+
         #cache the method for later
         setattr(self.__class__, method_name, get)
         return get.__get__(self)
@@ -300,6 +305,12 @@ class Cdo(object):
             raise AttributeError("Unknown method '" + method_name +"'!")
     finally:
       self.tempfile.__del__()
+
+  def _clean_tmp_dir(self):
+      previous_tmp_files = [f for f in listdir("/tmp/") if isfile(join(mypath, f)) and "cdoPy" in f and os.stat(f).st_uid == os.getuid()]
+      for f in previous_tmp_files:
+          os.remove(f)
+
 
   def getOperators(self):
     if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.7.0')):
