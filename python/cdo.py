@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os,re,subprocess,tempfile,random,glob
+import os,re,subprocess,tempfile,random,glob,signal
 from pkg_resources import parse_version
 from io import StringIO
 import logging as pyLog
@@ -67,15 +67,15 @@ def setupLogging(logFile):
 
 class CDOException(Exception):
 
-    def __init__(self, stdout, stderr, returncode):
-        super(CDOException, self).__init__()
-        self.stdout     = stdout
-        self.stderr     = stderr
-        self.returncode = returncode
-        self.msg        = '(returncode:%s) %s' % (returncode, stderr)
+  def __init__(self, stdout, stderr, returncode):
+    super(CDOException, self).__init__()
+    self.stdout     = stdout
+    self.stderr     = stderr
+    self.returncode = returncode
+    self.msg        = '(returncode:%s) %s' % (returncode, stderr)
 
-    def __str__(self):
-        return self.msg
+  def __str__(self):
+    return self.msg
 
 class Cdo(object):
 
@@ -109,6 +109,18 @@ class Cdo(object):
     self.logFile                = logFile
     if (self.logging):
         self.logger = setupLogging(self.logFile)
+
+    # handling different exits from interactive sessions
+    signal.signal(signal.SIGINT, self.catch)
+    signal.signal(signal.SIGTERM, self.catch)
+    signal.signal(signal.SIGSEGV, self.catch)
+    signal.siginterrupt(signal.SIGINT, False)
+    signal.siginterrupt(signal.SIGTERM,False)
+    signal.siginterrupt(signal.SIGSEGV,False)
+
+  def catch(self,signum,frame):
+    print("caught signal",self,signum,frame)
+    self.tempfile.__del__()
 
   def __dir__(self):
     res = dir(type(self)) + list(self.__dict__.keys())
@@ -574,3 +586,5 @@ class MyTempfile(object):
     else:
       N =10000000
       t = "_"+random.randint(N).__str__()
+
+# vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2
