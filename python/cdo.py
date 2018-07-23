@@ -34,37 +34,37 @@ CDF_MOD_NETCDF4 = "netcdf4"
 CDO_PY_VERSION  = "1.3.6"
 
 def auto_doc(tool, cdo_self):
-    """Generate the __doc__ string of the decorated function by calling the cdo help command"""
-    def desc(func):
-        func.__doc__ = cdo_self.call([cdo_self.CDO, '-h', tool]).get('stdout')
-        return func
-    return desc
+  """Generate the __doc__ string of the decorated function by calling the cdo help command"""
+  def desc(func):
+    func.__doc__ = cdo_self.call([cdo_self.CDO, '-h', tool]).get('stdout')
+    return func
+  return desc
 
 def getCdoVersion(path2cdo,verbose=False):
-    proc = subprocess.Popen([path2cdo,'-V'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-    ret  = proc.communicate()
-    cdo_help   = ret[1].decode("utf-8")
-    if verbose:
-        return cdo_help
-    match = re.search("Climate Data Operators version (\d.*) .*",cdo_help)
-    return match.group(1)
+  proc = subprocess.Popen([path2cdo,'-V'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+  ret  = proc.communicate()
+  cdo_help   = ret[1].decode("utf-8")
+  if verbose:
+    return cdo_help
+  match = re.search("Climate Data Operators version (\d.*) .*",cdo_help)
+  return match.group(1)
 
 def setupLogging(logFile):
-    logger = pyLog.getLogger(__name__)
-    logger.setLevel(pyLog.INFO)
+  logger = pyLog.getLogger(__name__)
+  logger.setLevel(pyLog.INFO)
 
-    if isinstance(logFile, six.string_types):
-        handler = pyLog.FileHandler(logFile)
-    else:
-        handler = pyLog.StreamHandler(stream=logFile)
+  if isinstance(logFile, six.string_types):
+    handler = pyLog.FileHandler(logFile)
+  else:
+    handler = pyLog.StreamHandler(stream=logFile)
 
-    formatter = pyLog.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+  formatter = pyLog.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+  handler.setFormatter(formatter)
+  logger.addHandler(handler)
 
-    return logger
+  return logger
 
-
+# extra execptions for CDO
 class CDOException(Exception):
 
   def __init__(self, stdout, stderr, returncode):
@@ -77,6 +77,7 @@ class CDOException(Exception):
   def __str__(self):
     return self.msg
 
+# MAIN Cdo class
 class Cdo(object):
 
   def __init__(self,
@@ -111,16 +112,17 @@ class Cdo(object):
         self.logger = setupLogging(self.logFile)
 
     # handling different exits from interactive sessions
-    signal.signal(signal.SIGINT, self.catch)
-    signal.signal(signal.SIGTERM, self.catch)
-    signal.signal(signal.SIGSEGV, self.catch)
+    #   remove tempfiles from those sessions
+    signal.signal(signal.SIGINT,  self.__catch__)
+    signal.signal(signal.SIGTERM, self.__catch__)
+    signal.signal(signal.SIGSEGV, self.__catch__)
     signal.siginterrupt(signal.SIGINT, False)
     signal.siginterrupt(signal.SIGTERM,False)
     signal.siginterrupt(signal.SIGSEGV,False)
 
-  def catch(self,signum,frame):
-    print("caught signal",self,signum,frame)
+  def __catch__(self,signum,frame):
     self.tempfile.__del__()
+    print("caught signal",self,signum,frame)
 
   def __dir__(self):
     res = dir(type(self)) + list(self.__dict__.keys())
@@ -207,18 +209,18 @@ class Cdo(object):
       #4. input files or operators
       if 'input' in kwargs:
         if isinstance(kwargs["input"], six.string_types):
-            cmd.append(kwargs["input"])
+          cmd.append(kwargs["input"])
         elif type(kwargs["input"]) == list:
-            cmd.append(' '.join(kwargs["input"]))
+          cmd.append(' '.join(kwargs["input"]))
         elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
   
-            # create a temp nc file from input data
-            tempfile = MyTempfile()
-            _tpath = tempfile.path()
-            kwargs["input"].to_netcdf(_tpath)
-            kwargs["input"] = _tpath
-            print(kwargs['input'])
-            cmd.append(kwargs["input"])
+          # create a temp nc file from input data
+          tempfile = MyTempfile()
+          _tpath = tempfile.path()
+          kwargs["input"].to_netcdf(_tpath)
+          kwargs["input"] = _tpath
+          print(kwargs['input'])
+          cmd.append(kwargs["input"])
         else:
             #we assume it's either a list, a tuple or any iterable.
             cmd.append(kwargs["input"])
@@ -301,33 +303,33 @@ class Cdo(object):
       setattr(self.__class__, method_name, get)
       return get.__get__(self)
     elif (method_name == "cdf"):
-        # initialize cdf module implicitly
-        self.loadCdf()
-        return self.cdf
+      # initialize cdf module implicitly
+      self.loadCdf()
+      return self.cdf
     else:
       # given method might match part of know operators: autocompletion
       if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) == 0):
-          # If the method isn't in our dictionary, act normal.
-          raise AttributeError("Unknown method '" + method_name +"'!")
+        # If the method isn't in our dictionary, act normal.
+        raise AttributeError("Unknown method '" + method_name +"'!")
 
   def getOperators(self):
     if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.7.0')):
-        proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-        ret  = proc.communicate()
-        ops  = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+      proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      ops  = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
 
-        return ops
+      return ops
 
     else:
-        proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-        ret  = proc.communicate()
-        l    = ret[1].decode("utf-8").find("Operators:")
-        ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
-        endI = ops.index('')
-        s    = ' '.join(ops[:endI]).strip()
-        s    = re.sub("\s+" , " ", s)
+      proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      l    = ret[1].decode("utf-8").find("Operators:")
+      ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
+      endI = ops.index('')
+      s    = ' '.join(ops[:endI]).strip()
+      s    = re.sub("\s+" , " ", s)
 
-        return list(set(s.split(" ")))
+      return list(set(s.split(" ")))
 
   def getNoOutputOperators(self):
     if ( \
@@ -368,13 +370,13 @@ class Cdo(object):
         print("Could not load netCDF4")
         raise
     else:
-        raise ImportError("scipy or python-netcdf4 module is required to return numpy arrays.")
+      raise ImportError("scipy or python-netcdf4 module is required to return numpy arrays.")
 
   def getSupportedLibs(self,force=False):
     proc = subprocess.Popen(self.CDO + ' -V',
-        shell  = True,
-        stderr = subprocess.PIPE,
-        stdout = subprocess.PIPE)
+                            shell  = True,
+                            stderr = subprocess.PIPE,
+                            stdout = subprocess.PIPE)
     retvals = proc.communicate()
 
     withs     = list(re.findall('(with|Features): (.*)',
@@ -383,11 +385,11 @@ class Cdo(object):
     withs     =  list(map(lambda x : x.split('/') if re.search('\/',x) else x, withs))
     allWiths  = []
     for _withs in withs:
-        if isinstance(_withs,list):
-            for __withs in _withs:
-                allWiths.append(__withs)
-        else:
-            allWiths.append(_withs)
+      if isinstance(_withs,list):
+        for __withs in _withs:
+          allWiths.append(__withs)
+      else:
+        allWiths.append(_withs)
     withs     = allWiths
 
     libs      = re.findall('(\w+) library version : (\d+\.\S+) ',
