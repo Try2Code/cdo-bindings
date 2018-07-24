@@ -583,6 +583,6 @@ class MyTempfile(object):
       return t.name
     else:
       N =10000000
-      t = "_"+random.randint(N).__str__()
+      return "_"+random.randint(0,N).__str__()
 
 # vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2
