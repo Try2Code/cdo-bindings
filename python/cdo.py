@@ -492,12 +492,12 @@ class Cdo(object):
   def readCdf(self,iFile):
     """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:scipy)"""
     try:
-        fileObj =  self.cdf(iFile, mode='r')
+      fileObj =  self.cdf(iFile, mode='r')
     except:
       print("Could not import data from file '%s'" % iFile)
       raise
     else:
-        return fileObj
+      return fileObj
 
   def openCdf(self,iFile):
     """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:netcdf4)"""
@@ -507,7 +507,7 @@ class Cdo(object):
       print("Could not import data from file '%s'" % iFile)
       raise
     else:
-        return fileObj
+      return fileObj
 
   def readArray(self,iFile,varname):
     """Direcly return a numpy array for a given variable name"""
