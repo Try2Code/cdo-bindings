@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os,re,subprocess,tempfile,random,glob,signal
 from pkg_resources import parse_version
 from io import StringIO
@@ -17,7 +16,7 @@ except:
     print("Could not load xarray")
     loadedXarray = False
 
-# Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
+# Copyright (C) 2011-2018 Ralf Mueller, ralf.mueller@mpimet.mpg.de
 # See COPYING file for copying and redistribution conditions.
 #
 # This program is free software; you can redistribute it and/or modify
