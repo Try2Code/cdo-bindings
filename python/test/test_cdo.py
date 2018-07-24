@@ -538,17 +538,16 @@ class CdoTest(unittest.TestCase):
         if DEBUG:
           print(cdo)
         bathy = cdo.setrtomiss(0,10000,
-            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+                               input = cdo.topo(options='-f nc'),returnMaArray='topo')
         plot(bathy)
         oro = cdo.setrtomiss(-10000,0,
-            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+                             input = cdo.topo(options='-f nc'),returnMaArray='topo')
         plot(oro)
         random = cdo.setname('test_maArray',
                              input = "-setrtomiss,0.4,0.8 -random,r180x90 ",
                              returnMaArray='test_maArray',
                              options = "-f nc")
         plot(random)
-        rand = cdo.setname('v',input = '-random,r5x5 ', options = ' -f nc',output = '/tmp/rand.nc')
 
     def test_cdf_mods(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -595,6 +594,8 @@ class CdoTest(unittest.TestCase):
 
         pool.close()
         pool.join()
+
+        rm([rand])
 
     def test_keep_coordinates(self):
         cdo = Cdo(cdfMod=CDF_MOD)
