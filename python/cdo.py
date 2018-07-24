@@ -305,10 +305,6 @@ class Cdo(object):
       #cache the method for later
       setattr(self.__class__, method_name, get)
       return get.__get__(self)
-    elif (method_name == "cdf"):
-      # initialize cdf module implicitly
-      self.loadCdf()
-      return self.cdf
     else:
       # given method might match part of know operators: autocompletion
       if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) == 0):
