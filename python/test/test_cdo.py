@@ -1,13 +1,13 @@
 from __future__ import print_function
-import unittest,os,tempfile,sys,glob,subprocess,multiprocessing
-sys.path.append(os.path.dirname(sys.path[0]))
+import unittest,os,tempfile,sys,glob,subprocess,multiprocessing,time
 from pkg_resources import parse_version
-from stat import *
-from cdo import Cdo,CDOException
 import numpy as np
 from matplotlib import pylab as pl
 
 # add local dir to search path
+sys.path.append(os.path.dirname(sys.path[0]))
+from cdo import Cdo,CDOException
+
 
 if 'CDF_MOD' in os.environ:
   CDF_MOD = os.environ['CDF_MOD']
@@ -233,7 +233,6 @@ class CdoTest(unittest.TestCase):
         outs.append(cdo.stdatm("0,10,20",output = ofile))
         mtime0 = os.stat(ofile).st_mtime
         #to make it compatible with systems providing no nanos.
-        import time
         time.sleep(1)
         outs.append(cdo.stdatm("0,10,20",output = ofile))
         mtime1 = os.stat(ofile).st_mtime
