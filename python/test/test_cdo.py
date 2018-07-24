@@ -617,19 +617,18 @@ class CdoTest(unittest.TestCase):
           expected.reverse()
           self.assertEqual(expected,varOut.coordinates.split(' '))
 
-    def testTmp(self):
-        cdo = Cdo(cdfMod=CDF_MOD)
-        import glob
-        tempDir = tempfile.gettempdir()
-        tempfilesStart = glob.glob('{0}/cdoPy*'.format(tempDir))
-        tempfilesStart.sort()
-        tempfilesEnd   = tempfilesStart
-        self.assertEqual(tempfilesStart,tempfilesEnd)
-
-        self.test_combine()
-        tempfilesEnd = glob.glob('{0}/cdoPy**'.format(tempDir))
-        tempfilesEnd.sort()
-        self.assertEqual(tempfilesStart,tempfilesEnd)
+#   def testTmp(self):
+#       cdo = Cdo(cdfMod=CDF_MOD)
+#       tempDir = tempfile.gettempdir()
+#       tempfilesStart = glob.glob('{0}/cdoPy*'.format(tempDir))
+#       tempfilesStart.sort()
+#       tempfilesEnd   = tempfilesStart
+#       self.assertEqual(tempfilesStart,tempfilesEnd)
+#
+#       self.test_combine()
+#       tempfilesEnd = glob.glob('{0}/cdoPy**'.format(tempDir))
+#       tempfilesEnd.sort()
+#       self.assertEqual(tempfilesStart,tempfilesEnd)
     def test_readArray(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         ifile = cdo.enlarge('r44x35',
