@@ -99,11 +99,15 @@ class Cdo(object):
     self.returnNoneOnError      = returnNoneOnError
     self.tempfile               = MyTempfile()
     self.forceOutput            = forceOutput
-    self.cdfMod                 = cdfMod.lower()
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
     self.noOutputOperators      = self.getNoOutputOperators()
     self.libs                   = self.getSupportedLibs()
+
+    # netcdf IO
+    self.cdfMod                 = cdfMod.lower()
+    self.cdf                    = None
+    self.loadCdf()  # load netcdf lib if possible and set self.cdf
 
     self.logging                = logging
     self.logFile                = logFile
