@@ -521,7 +521,7 @@ class Cdo(object):
 
   def readMaArray(self,iFile,varname):
     """Create a masked array based on cdf's FillValue"""
-    fileObj =  self.readCdf(iFile)
+    fileObj = self.readCdf(iFile)
 
     #.data is not backwards compatible to old scipy versions, [:] is
     data = fileObj.variables[varname][:].copy()
