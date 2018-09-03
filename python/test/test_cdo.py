@@ -51,7 +51,7 @@ class CdoTest(unittest.TestCase):
 
     def testVersions(self):
         cdo = Cdo()
-        self.assertEqual('1.3.6',cdo.__version__())
+        self.assertEqual('1.3.7',cdo.__version__())
         self.assertTrue(parse_version('1.7.0') <= parse_version(cdo.version()))
 
     def testCDO(self):
