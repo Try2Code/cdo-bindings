@@ -151,9 +151,9 @@ class Cdo(object):
 
     if self.debug:
       print('# DEBUG - start =============================================================')
-      if {} != env:
-        for k,v in list(env.items()):
-          print("ENV: " + k + " = " + v)
+#     if {} != env:
+#       for k,v in list(env.items()):
+#         print("ENV: " + k + " = " + v)
       print('CALL  :' + ' '.join(cmd))
       print('STDOUT:')
       if (0 != len(stdout.strip())):
