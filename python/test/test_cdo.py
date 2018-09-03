@@ -51,7 +51,7 @@ class CdoTest(unittest.TestCase):
 
     def testVersions(self):
         cdo = Cdo()
-        self.assertEqual('1.3.7',cdo.__version__())
+        self.assertEqual('1.3.8',cdo.__version__())
         self.assertTrue(parse_version('1.7.0') <= parse_version(cdo.version()))
 
     def testCDO(self):
@@ -689,6 +689,43 @@ class CdoTest(unittest.TestCase):
         print(ofile)
         print(ofile.attrs)
 
+    def testTempdir(self):
+      # manual set path
+      tempPath = os.path.abspath('.')+'/tempPy'
+      cdo = Cdo(tempdir=tempPath)
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(1,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(3,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(5,len(os.listdir(tempPath)))
+      cdo.cleanTempDir()
+      self.assertEqual(0,len(os.listdir(tempPath)))
+
+      # automatic path
+      tempPath = tempfile.gettempdir()
+      cdo = Cdo()
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(1,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(3,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(12,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+      cdo.cleanTempDir()
+      self.assertEqual(0,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+
+
     if MAINTAINERMODE:
 
       def test_longChain(self):
@@ -833,7 +870,6 @@ class CdoTest(unittest.TestCase):
         tDataset = cdo.topo('global_10.0',options = '-f nc',returnXDataset = True)
         if DEBUG:
           print(tDataset)
-
 #===============================================================================
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)

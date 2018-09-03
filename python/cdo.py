@@ -30,7 +30,7 @@ except:
 
 CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
-CDO_PY_VERSION  = "1.3.7"
+CDO_PY_VERSION  = "1.3.8"
 
 def auto_doc(tool, cdo_self):
   """Generate the __doc__ string of the decorated function by calling the cdo help command"""
@@ -63,7 +63,7 @@ def setupLogging(logFile):
 
   return logger
 
-# extra execptions for CDO
+# extra execptions for CDO {{{
 class CDOException(Exception):
 
   def __init__(self, stdout, stderr, returncode):
@@ -75,19 +75,21 @@ class CDOException(Exception):
 
   def __str__(self):
     return self.msg
+#}}}
 
 # MAIN Cdo class
 class Cdo(object):
 
   def __init__(self,
-               returnCdf=False,
-               returnNoneOnError=False,
-               forceOutput=True,
-               cdfMod=CDF_MOD_NETCDF4,
-               env=os.environ,
-               debug=False,
-               logging=False,
-               logFile=StringIO()):
+               returnCdf         = False,
+               returnNoneOnError = False,
+               forceOutput       = True,
+               cdfMod            = CDF_MOD_NETCDF4,
+               env               = os.environ,
+               debug             = False,
+               tempdir           = tempfile.gettempdir(),
+               logging           = False,
+               logFile           = StringIO()):
 
     if 'CDO' in os.environ:
       self.CDO = os.environ['CDO']
@@ -97,7 +99,7 @@ class Cdo(object):
     self.operators              = self.getOperators()
     self.returnCdf              = returnCdf
     self.returnNoneOnError      = returnNoneOnError
-    self.tempfile               = MyTempfile()
+    self.tempfile               = CdoTempfile(dir=tempdir)
     self.forceOutput            = forceOutput
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
@@ -122,6 +124,11 @@ class Cdo(object):
     signal.siginterrupt(signal.SIGINT, False)
     signal.siginterrupt(signal.SIGTERM,False)
     signal.siginterrupt(signal.SIGSEGV,False)
+    # other left-overs can only be handled afterwards
+    # might be good to use the tempdir keyword to ease this, but deleteion can
+    # be triggered using:
+  def cleanTempDir(self):
+    self.tempfile.cleanTempDir()
 
   def __catch__(self,signum,frame):
     self.tempfile.__del__()
@@ -218,7 +225,7 @@ class Cdo(object):
         elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
   
           # create a temp nc file from input data
-          tempfile = MyTempfile()
+          tempfile = CdoTempfile()
           _tpath = tempfile.path()
           kwargs["input"].to_netcdf(_tpath)
           kwargs["input"] = _tpath
@@ -558,12 +565,16 @@ class Cdo(object):
     print("CDO:ENV = "+str(self.env))
 
 # Helper module for easy temp file handling
-class MyTempfile(object):
+class CdoTempfile(object):
 
   __tempfiles = []
 
-  def __init__(self):
+  def __init__(self,dir):
     self.persistent_tempfile = False
+    self.fileTag = 'cdoPy'
+    self.dir = dir
+    if not os.path.isdir(dir):
+      os.makedirs(dir)
 
   def __del__(self):
     # remove temporary files
@@ -571,12 +582,24 @@ class MyTempfile(object):
       if os.path.isfile(filename):
         os.remove(filename)
 
+  def cleanTempDir(self):
+    leftOvers = [os.path.join(self.dir,f) for f in os.listdir(self.dir)]
+    # filter for cdo.py's tempfiles owned by you
+    leftOvers = [f for f in leftOvers if
+                    self.fileTag in f and \
+                    os.path.isfile(f) and \
+                    os.stat(f).st_uid == os.getuid()]
+    # this might lead to trouble if it is used by server side computing like
+    # jupyter notebooks, filtering by userid might no be enough
+    for f in leftOvers:
+      os.remove(f)
+
   def setPersist(self,value):
     self.persistent_tempfiles = value
 
   def path(self):
     if not self.persistent_tempfile:
-      t = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy')
+      t = tempfile.NamedTemporaryFile(delete=True,prefix=self.fileTag,dir=self.dir)
       self.__class__.__tempfiles.append(t.name)
       t.close()
 
