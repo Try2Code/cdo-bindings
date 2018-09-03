@@ -32,6 +32,7 @@ def rubyTest(name: nil,interpreter: RubyInterpreter, testFile: nil)
   cmd
 end
 
+
 %w[Ruby Python].each {|lang|
   # create target for listing all tests for a given language
   fileExtension = {Ruby: 'rb',Python: 'py'}[lang.to_sym]
@@ -43,6 +44,21 @@ end
         puts md[1]
       end
     }
+  end
+
+  desc "test for correct tempfile deletion (#{lang})"
+  task "test#{lang}_tempfiles".to_sym do |t|
+    # make sure no other testing process has already created cdo-tempfile 
+    unless Dir.glob("/tmp/Cdo*").empty? then
+      warn "Cannot run temp file test - target dir /tmp is no empty"
+      exit(1)
+    end
+    sh "rake test#{lang}"
+
+    unless Dir.glob("/tmp/Cdo*").empty? then
+      warn "Found remaining temfiles!"
+      exit(1)
+    end
   end
 
   # create regression tests for Ruby and Pythonwith different cdo version (managed by spack)
@@ -76,8 +92,21 @@ end
              "done"].join(';')
       puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
       sh cmd
-    end if 'Python' == lang
-  }
+    end
+    desc "test for correct tempfile deletion (#{lang}#{pythonRelease})"
+    task "test#{lang}#{pythonRelease}_tempfiles".to_sym do |t|
+      # make sure no other testing process has already created cdo-tempfile 
+      unless Dir.glob("/tmp/Cdo*").empty? then
+        warn "Cannot run temp file test - target dir /tmp is no empty"
+        exit(1)
+      end
+      sh "rake test#{lang}#{pythonRelease}"
+      unless Dir.glob("/tmp/Cdo*").empty? then
+        warn "Found remaining temfiles!"
+        exit(1)
+      end
+    end
+  } if 'Python' == lang
 }
 
 desc "execute one/all test(s) with python2"
