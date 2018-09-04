@@ -77,7 +77,7 @@ class CDOException(Exception):
     return self.msg
 #}}}
 
-# MAIN Cdo class
+# MAIN Cdo class {{{
 class Cdo(object):
 
   def __init__(self,
@@ -563,8 +563,9 @@ class Cdo(object):
       print('CDO:CONTEXT '+context)
     print("CDO:ID  = "+str(id(self)))
     print("CDO:ENV = "+str(self.env))
+#}}}
 
-# Helper module for easy temp file handling
+# Helper module for easy temp file handling {{{
 class CdoTempfile(object):
 
   __tempfiles = []
@@ -607,5 +608,6 @@ class CdoTempfile(object):
     else:
       N =10000000
       return "_"+random.randint(0,N).__str__()
+#}}}
 
 # vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2
