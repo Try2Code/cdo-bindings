@@ -1,13 +1,13 @@
 from __future__ import print_function
-import unittest,os,tempfile,sys,glob,subprocess,multiprocessing
-sys.path.append(os.path.dirname(sys.path[0]))
+import unittest,os,tempfile,sys,glob,subprocess,multiprocessing,time
 from pkg_resources import parse_version
-from stat import *
-from cdo import Cdo,CDOException
 import numpy as np
 from matplotlib import pylab as pl
 
 # add local dir to search path
+sys.path.append(os.path.dirname(sys.path[0]))
+from cdo import Cdo,CDOException
+
 
 if 'CDF_MOD' in os.environ:
   CDF_MOD = os.environ['CDF_MOD']
@@ -51,7 +51,7 @@ class CdoTest(unittest.TestCase):
 
     def testVersions(self):
         cdo = Cdo()
-        self.assertEqual('1.3.6',cdo.__version__())
+        self.assertEqual('1.3.8',cdo.__version__())
         self.assertTrue(parse_version('1.7.0') <= parse_version(cdo.version()))
 
     def testCDO(self):
@@ -233,7 +233,6 @@ class CdoTest(unittest.TestCase):
         outs.append(cdo.stdatm("0,10,20",output = ofile))
         mtime0 = os.stat(ofile).st_mtime
         #to make it compatible with systems providing no nanos.
-        import time
         time.sleep(1)
         outs.append(cdo.stdatm("0,10,20",output = ofile))
         mtime1 = os.stat(ofile).st_mtime
@@ -539,17 +538,16 @@ class CdoTest(unittest.TestCase):
         if DEBUG:
           print(cdo)
         bathy = cdo.setrtomiss(0,10000,
-            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+                               input = cdo.topo(options='-f nc'),returnMaArray='topo')
         plot(bathy)
         oro = cdo.setrtomiss(-10000,0,
-            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+                             input = cdo.topo(options='-f nc'),returnMaArray='topo')
         plot(oro)
         random = cdo.setname('test_maArray',
                              input = "-setrtomiss,0.4,0.8 -random,r180x90 ",
                              returnMaArray='test_maArray',
                              options = "-f nc")
         plot(random)
-        rand = cdo.setname('v',input = '-random,r5x5 ', options = ' -f nc',output = '/tmp/rand.nc')
 
     def test_cdf_mods(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -597,6 +595,8 @@ class CdoTest(unittest.TestCase):
         pool.close()
         pool.join()
 
+        rm([rand])
+
     def test_keep_coordinates(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         ifile = '/pool/data/ICON/ocean_data/ocean_grid/iconR2B02-ocean_etopo40_planet.nc'
@@ -617,20 +617,18 @@ class CdoTest(unittest.TestCase):
           expected.reverse()
           self.assertEqual(expected,varOut.coordinates.split(' '))
 
-    def testTmp(self):
-        cdo = Cdo(cdfMod=CDF_MOD)
-        import glob
-        tempDir = tempfile.gettempdir()
-        tempfilesStart = glob.glob('{0}/cdoPy*'.format(tempDir))
-        tempfilesStart.sort()
-        tempfilesEnd   = glob.glob('{0}/cdoPy**'.format(tempDir))
-        tempfilesEnd.sort()
-        self.assertEqual(tempfilesStart,tempfilesEnd)
-
-        self.test_combine()
-        tempfilesEnd = glob.glob('{0}/cdoPy**'.format(tempDir))
-        tempfilesEnd.sort()
-        self.assertEqual(tempfilesStart,tempfilesEnd)
+#   def testTmp(self):
+#       cdo = Cdo(cdfMod=CDF_MOD)
+#       tempDir = tempfile.gettempdir()
+#       tempfilesStart = glob.glob('{0}/cdoPy*'.format(tempDir))
+#       tempfilesStart.sort()
+#       tempfilesEnd   = tempfilesStart
+#       self.assertEqual(tempfilesStart,tempfilesEnd)
+#
+#       self.test_combine()
+#       tempfilesEnd = glob.glob('{0}/cdoPy**'.format(tempDir))
+#       tempfilesEnd.sort()
+#       self.assertEqual(tempfilesStart,tempfilesEnd)
     def test_readArray(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         ifile = cdo.enlarge('r44x35',
@@ -690,6 +688,43 @@ class CdoTest(unittest.TestCase):
       if DEBUG:
         print(ofile)
         print(ofile.attrs)
+
+    def testTempdir(self):
+      # manual set path
+      tempPath = os.path.abspath('.')+'/tempPy'
+      cdo = Cdo(tempdir=tempPath)
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(1,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(3,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(5,len(os.listdir(tempPath)))
+      cdo.cleanTempDir()
+      self.assertEqual(0,len(os.listdir(tempPath)))
+
+      # automatic path
+      tempPath = tempfile.gettempdir()
+      cdo = Cdo()
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(1,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(3,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(12,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+      cdo.cleanTempDir()
+      self.assertEqual(0,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+
 
     if MAINTAINERMODE:
 
@@ -835,7 +870,6 @@ class CdoTest(unittest.TestCase):
         tDataset = cdo.topo('global_10.0',options = '-f nc',returnXDataset = True)
         if DEBUG:
           print(tDataset)
-
 #===============================================================================
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)

@@ -1,5 +1,4 @@
-from __future__ import print_function
-import os,re,subprocess,tempfile,random,glob
+import os,re,subprocess,tempfile,random,glob,signal
 from pkg_resources import parse_version
 from io import StringIO
 import logging as pyLog
@@ -17,7 +16,7 @@ except:
     print("Could not load xarray")
     loadedXarray = False
 
-# Copyright (C) 2011-2012 Ralf Mueller, ralf.mueller@zmaw.de
+# Copyright (C) 2011-2018 Ralf Mueller, ralf.mueller@mpimet.mpg.de
 # See COPYING file for copying and redistribution conditions.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,64 +30,66 @@ except:
 
 CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
-CDO_PY_VERSION  = "1.3.6"
+CDO_PY_VERSION  = "1.3.8"
 
 def auto_doc(tool, cdo_self):
-    """Generate the __doc__ string of the decorated function by calling the cdo help command"""
-    def desc(func):
-        func.__doc__ = cdo_self.call([cdo_self.CDO, '-h', tool]).get('stdout')
-        return func
-    return desc
+  """Generate the __doc__ string of the decorated function by calling the cdo help command"""
+  def desc(func):
+    func.__doc__ = cdo_self.call([cdo_self.CDO, '-h', tool]).get('stdout')
+    return func
+  return desc
 
 def getCdoVersion(path2cdo,verbose=False):
-    proc = subprocess.Popen([path2cdo,'-V'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-    ret  = proc.communicate()
-    cdo_help   = ret[1].decode("utf-8")
-    if verbose:
-        return cdo_help
-    match = re.search("Climate Data Operators version (\d.*) .*",cdo_help)
-    return match.group(1)
+  proc = subprocess.Popen([path2cdo,'-V'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+  ret  = proc.communicate()
+  cdo_help   = ret[1].decode("utf-8")
+  if verbose:
+    return cdo_help
+  match = re.search("Climate Data Operators version (\d.*) .*",cdo_help)
+  return match.group(1)
 
 def setupLogging(logFile):
-    logger = pyLog.getLogger(__name__)
-    logger.setLevel(pyLog.INFO)
+  logger = pyLog.getLogger(__name__)
+  logger.setLevel(pyLog.INFO)
 
-    if isinstance(logFile, six.string_types):
-        handler = pyLog.FileHandler(logFile)
-    else:
-        handler = pyLog.StreamHandler(stream=logFile)
+  if isinstance(logFile, six.string_types):
+    handler = pyLog.FileHandler(logFile)
+  else:
+    handler = pyLog.StreamHandler(stream=logFile)
 
-    formatter = pyLog.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+  formatter = pyLog.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+  handler.setFormatter(formatter)
+  logger.addHandler(handler)
 
-    return logger
+  return logger
 
-
+# extra execptions for CDO {{{
 class CDOException(Exception):
 
-    def __init__(self, stdout, stderr, returncode):
-        super(CDOException, self).__init__()
-        self.stdout     = stdout
-        self.stderr     = stderr
-        self.returncode = returncode
-        self.msg        = '(returncode:%s) %s' % (returncode, stderr)
+  def __init__(self, stdout, stderr, returncode):
+    super(CDOException, self).__init__()
+    self.stdout     = stdout
+    self.stderr     = stderr
+    self.returncode = returncode
+    self.msg        = '(returncode:%s) %s' % (returncode, stderr)
 
-    def __str__(self):
-        return self.msg
+  def __str__(self):
+    return self.msg
+#}}}
 
+# MAIN Cdo class
 class Cdo(object):
 
   def __init__(self,
-               returnCdf=False,
-               returnNoneOnError=False,
-               forceOutput=True,
-               cdfMod=CDF_MOD_NETCDF4,
-               env=os.environ,
-               debug=False,
-               logging=False,
-               clean_tmp=False,
-               logFile=StringIO()):
+               returnCdf         = False,
+               returnNoneOnError = False,
+               forceOutput       = True,
+               cdfMod            = CDF_MOD_NETCDF4,
+               env               = os.environ,
+               debug             = False,
+               tempdir           = tempfile.gettempdir(),
+               logging           = False,
+               logFile           = StringIO()):
 
     if 'CDO' in os.environ:
       self.CDO = os.environ['CDO']
@@ -98,13 +99,17 @@ class Cdo(object):
     self.operators              = self.getOperators()
     self.returnCdf              = returnCdf
     self.returnNoneOnError      = returnNoneOnError
-    self.tempfile               = MyTempfile()
+    self.tempfile               = CdoTempfile(dir=tempdir)
     self.forceOutput            = forceOutput
-    self.cdfMod                 = cdfMod.lower()
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
     self.noOutputOperators      = self.getNoOutputOperators()
     self.libs                   = self.getSupportedLibs()
+
+    # netcdf IO
+    self.cdfMod                 = cdfMod.lower()
+    self.cdf                    = None
+    self.loadCdf()  # load netcdf lib if possible and set self.cdf
 
     self.logging                = logging
     self.logFile                = logFile
@@ -112,8 +117,23 @@ class Cdo(object):
     if (self.logging):
         self.logger = setupLogging(self.logFile)
 
-    if (self.clean_tmp):
-        self._clean_tmp_dir()
+    # handling different exits from interactive sessions
+    #   remove tempfiles from those sessions
+    signal.signal(signal.SIGINT,  self.__catch__)
+    signal.signal(signal.SIGTERM, self.__catch__)
+    signal.signal(signal.SIGSEGV, self.__catch__)
+    signal.siginterrupt(signal.SIGINT, False)
+    signal.siginterrupt(signal.SIGTERM,False)
+    signal.siginterrupt(signal.SIGSEGV,False)
+    # other left-overs can only be handled afterwards
+    # might be good to use the tempdir keyword to ease this, but deleteion can
+    # be triggered using:
+  def cleanTempDir(self):
+    self.tempfile.cleanTempDir()
+
+  def __catch__(self,signum,frame):
+    self.tempfile.__del__()
+    print("caught signal",self,signum,frame)
 
   def __dir__(self):
     res = dir(type(self)) + list(self.__dict__.keys())
@@ -139,9 +159,9 @@ class Cdo(object):
 
     if self.debug:
       print('# DEBUG - start =============================================================')
-      if {} != env:
-        for k,v in list(env.items()):
-          print("ENV: " + k + " = " + v)
+#     if {} != env:
+#       for k,v in list(env.items()):
+#         print("ENV: " + k + " = " + v)
       print('CALL  :' + ' '.join(cmd))
       print('STDOUT:')
       if (0 != len(stdout.strip())):
@@ -172,139 +192,132 @@ class Cdo(object):
 
   def __getattr__(self, method_name):
 
-    try:
-      @auto_doc(method_name, self)
-      def get(self, *args,**kwargs):
-        operator          = [method_name]
-        operatorPrintsOut = method_name in self.noOutputOperators
-
-        self.envByCall = {}
-
-        if args.__len__() != 0:
-          for arg in args:
-            operator.append(arg.__str__())
-
-        #build the cdo command
-        #0. the cdo command
-        cmd = [self.CDO]
-
-        #1. OVERWRITE EXISTING FILES
-        cmd.append('-O')
-
-        #2. options
-        if 'options' in kwargs:
-            cmd += kwargs['options'].split()
-
-        #3. operator(s)
-        cmd.append(','.join(operator))
-
-        #4. input files or operators
-        if 'input' in kwargs:
-          if isinstance(kwargs["input"], six.string_types):
-              cmd.append(kwargs["input"])
-          elif type(kwargs["input"]) == list:
-              cmd.append(' '.join(kwargs["input"]))
-          elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
-
-              # create a temp nc file from input data
-              tempfile = MyTempfile()
-              _tpath = tempfile.path()
-              kwargs["input"].to_netcdf(_tpath)
-              kwargs["input"] = _tpath
-              print(kwargs['input'])
-              cmd.append(kwargs["input"])
-          else:
-              #we assume it's either a list, a tuple or any iterable.
-              cmd.append(kwargs["input"])
-
-        #5. handle rewrite of existing output files
-        if not kwargs.__contains__("force"):
-          kwargs["force"] = self.forceOutput
-
-        #6. handle environment setup per call
-        envOfCall = {}
-        if kwargs.__contains__("env"):
-          for k,v in kwargs["env"].items():
-            envOfCall[k] = v
-
-        if operatorPrintsOut:
-          retvals = self.call(cmd,envOfCall)
-          if ( not self.hasError(method_name,cmd,retvals) ):
-            r = list(map(strip,retvals["stdout"].split(os.linesep)))
-            if "autoSplit" in kwargs:
-              splitString = kwargs["autoSplit"]
-              _output = [x.split(splitString) for x in r[:len(r)-1]]
-              if (1 == len(_output)):
-                  return _output[0]
-              else:
-                  return _output
+    @auto_doc(method_name, self)
+    def get(self, *args,**kwargs):
+      operator          = [method_name]
+      operatorPrintsOut = method_name in self.noOutputOperators
+  
+      self.envByCall = {}
+  
+      if args.__len__() != 0:
+        for arg in args:
+          operator.append(arg.__str__())
+  
+      #build the cdo command
+      #0. the cdo command
+      cmd = [self.CDO]
+  
+      #1. OVERWRITE EXISTING FILES
+      cmd.append('-O')
+  
+      #2. options
+      if 'options' in kwargs:
+        cmd += kwargs['options'].split()
+  
+      #3. operator(s)
+      cmd.append(','.join(operator))
+  
+      #4. input files or operators
+      if 'input' in kwargs:
+        if isinstance(kwargs["input"], six.string_types):
+          cmd.append(kwargs["input"])
+        elif type(kwargs["input"]) == list:
+          cmd.append(' '.join(kwargs["input"]))
+        elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
+  
+          # create a temp nc file from input data
+          tempfile = CdoTempfile()
+          _tpath = tempfile.path()
+          kwargs["input"].to_netcdf(_tpath)
+          kwargs["input"] = _tpath
+          print(kwargs['input'])
+          cmd.append(kwargs["input"])
+        else:
+          #we assume it's either a list, a tuple or any iterable.
+          cmd.append(kwargs["input"])
+  
+      #5. handle rewrite of existing output files
+      if not kwargs.__contains__("force"):
+        kwargs["force"] = self.forceOutput
+  
+      #6. handle environment setup per call
+      envOfCall = {}
+      if kwargs.__contains__("env"):
+        for k,v in kwargs["env"].items():
+          envOfCall[k] = v
+  
+      if operatorPrintsOut:
+        retvals = self.call(cmd,envOfCall)
+        if ( not self.hasError(method_name,cmd,retvals) ):
+          r = list(map(strip,retvals["stdout"].split(os.linesep)))
+          if "autoSplit" in kwargs:
+            splitString = kwargs["autoSplit"]
+            _output = [x.split(splitString) for x in r[:len(r)-1]]
+            if (1 == len(_output)):
+                return _output[0]
             else:
-             return r[:len(r)-1]
+                return _output
           else:
+           return r[:len(r)-1]
+        else:
+          if self.returnNoneOnError:
+            return None
+          else:
+            raise CDOException(**retvals)
+      else:
+        if kwargs["force"] or \
+           (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
+          if not kwargs.__contains__("output") or None == kwargs["output"]:
+            kwargs["output"] = self.tempfile.path()
+  
+          cmd.append(kwargs["output"])
+  
+          retvals = self.call(cmd,envOfCall)
+          if self.hasError(method_name,cmd,retvals):
             if self.returnNoneOnError:
               return None
             else:
               raise CDOException(**retvals)
         else:
-          if kwargs["force"] or \
-             (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
-            if not kwargs.__contains__("output") or None == kwargs["output"]:
-              kwargs["output"] = self.tempfile.path()
-
-            cmd.append(kwargs["output"])
-
-            retvals = self.call(cmd,envOfCall)
-            if self.hasError(method_name,cmd,retvals):
-              if self.returnNoneOnError:
-                return None
-              else:
-                raise CDOException(**retvals)
-          else:
-            if self.debug:
-              print(("Use existing file'"+kwargs["output"]+"'"))
-
-        if not kwargs.__contains__("returnCdf"):
-          kwargs["returnCdf"] = False
-
-        if not None == kwargs.get("returnArray"):
-          return self.readArray(kwargs["output"],kwargs["returnArray"])
-
-        elif not None == kwargs.get("returnMaArray"):
-          return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
-
-        elif self.returnCdf or kwargs["returnCdf"]:
-          return self.readCdf(kwargs["output"])
-
-        elif loadedXarray and not None == kwargs.get("returnXArray"):
-          return self.readXArray(kwargs["output"],kwargs.get("returnXArray"))
-
-        elif loadedXarray and not None == kwargs.get("returnXDataset"):
-          return self.readXDataset(kwargs["output"])
-
-        elif ('split' == method_name[0:5]):
-          return glob.glob(kwargs["output"]+'*')
-
-        else:
-          return kwargs["output"]
-
-      if ((method_name in self.__dict__) or (method_name in self.operators)):
-        if self.debug:
-          print(("Found method:" + method_name))
-
-        #cache the method for later
-        setattr(self.__class__, method_name, get)
-        return get.__get__(self)
-      elif (method_name == "cdf"):
-          # initialize cdf module implicitly
-          self.loadCdf()
-          return self.cdf
+          if self.debug:
+            print(("Use existing file'"+kwargs["output"]+"'"))
+  
+      if not kwargs.__contains__("returnCdf"):
+        kwargs["returnCdf"] = False
+  
+      if not None == kwargs.get("returnArray"):
+        return self.readArray(kwargs["output"],kwargs["returnArray"])
+  
+      elif not None == kwargs.get("returnMaArray"):
+        return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
+  
+      elif self.returnCdf or kwargs["returnCdf"]:
+        return self.readCdf(kwargs["output"])
+  
+      elif loadedXarray and not None == kwargs.get("returnXArray"):
+        return self.readXArray(kwargs["output"],kwargs.get("returnXArray"))
+  
+      elif loadedXarray and not None == kwargs.get("returnXDataset"):
+        return self.readXDataset(kwargs["output"])
+  
+      elif ('split' == method_name[0:5]):
+        return glob.glob(kwargs["output"]+'*')
+  
       else:
-        # given method might match part of know operators: autocompletion
-        if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) == 0):
-            # If the method isn't in our dictionary, act normal.
-            raise AttributeError("Unknown method '" + method_name +"'!")
-    finally:
-      self.tempfile.__del__()
+        return kwargs["output"]
+  
+    if ((method_name in self.__dict__) or (method_name in self.operators)):
+      if self.debug:
+        print(("Found method:" + method_name))
+  
+      #cache the method for later
+      setattr(self.__class__, method_name, get)
+      return get.__get__(self)
+    else:
+      # given method might match part of know operators: autocompletion
+      if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) == 0):
+        # If the method isn't in our dictionary, act normal.
+        raise AttributeError("Unknown method '" + method_name +"'!")
 
   def _clean_tmp_dir(self):
       previous_tmp_files = [f for f in os.listdir("/tmp/") if os.path.isfile(os.path.join("/tmp/", f)) and "cdoPy" in f and os.stat(os.path.join("/tmp/", f)).st_uid == os.getuid()]
@@ -314,22 +327,22 @@ class Cdo(object):
 
   def getOperators(self):
     if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.7.0')):
-        proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-        ret  = proc.communicate()
-        ops  = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+      proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      ops  = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
 
-        return ops
+      return ops
 
     else:
-        proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-        ret  = proc.communicate()
-        l    = ret[1].decode("utf-8").find("Operators:")
-        ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
-        endI = ops.index('')
-        s    = ' '.join(ops[:endI]).strip()
-        s    = re.sub("\s+" , " ", s)
+      proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      l    = ret[1].decode("utf-8").find("Operators:")
+      ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
+      endI = ops.index('')
+      s    = ' '.join(ops[:endI]).strip()
+      s    = re.sub("\s+" , " ", s)
 
-        return list(set(s.split(" ")))
+      return list(set(s.split(" ")))
 
   def getNoOutputOperators(self):
     if ( \
@@ -370,13 +383,13 @@ class Cdo(object):
         print("Could not load netCDF4")
         raise
     else:
-        raise ImportError("scipy or python-netcdf4 module is required to return numpy arrays.")
+      raise ImportError("scipy or python-netcdf4 module is required to return numpy arrays.")
 
   def getSupportedLibs(self,force=False):
     proc = subprocess.Popen(self.CDO + ' -V',
-        shell  = True,
-        stderr = subprocess.PIPE,
-        stdout = subprocess.PIPE)
+                            shell  = True,
+                            stderr = subprocess.PIPE,
+                            stdout = subprocess.PIPE)
     retvals = proc.communicate()
 
     withs     = list(re.findall('(with|Features): (.*)',
@@ -385,11 +398,11 @@ class Cdo(object):
     withs     =  list(map(lambda x : x.split('/') if re.search('\/',x) else x, withs))
     allWiths  = []
     for _withs in withs:
-        if isinstance(_withs,list):
-            for __withs in _withs:
-                allWiths.append(__withs)
-        else:
-            allWiths.append(_withs)
+      if isinstance(_withs,list):
+        for __withs in _withs:
+          allWiths.append(__withs)
+      else:
+        allWiths.append(_withs)
     withs     = allWiths
 
     libs      = re.findall('(\w+) library version : (\d+\.\S+) ',
@@ -493,12 +506,12 @@ class Cdo(object):
   def readCdf(self,iFile):
     """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:scipy)"""
     try:
-        fileObj =  self.cdf(iFile, mode='r')
+      fileObj =  self.cdf(iFile, mode='r')
     except:
       print("Could not import data from file '%s'" % iFile)
       raise
     else:
-        return fileObj
+      return fileObj
 
   def openCdf(self,iFile):
     """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:netcdf4)"""
@@ -508,7 +521,7 @@ class Cdo(object):
       print("Could not import data from file '%s'" % iFile)
       raise
     else:
-        return fileObj
+      return fileObj
 
   def readArray(self,iFile,varname):
     """Direcly return a numpy array for a given variable name"""
@@ -522,7 +535,7 @@ class Cdo(object):
 
   def readMaArray(self,iFile,varname):
     """Create a masked array based on cdf's FillValue"""
-    fileObj =  self.readCdf(iFile)
+    fileObj = self.readCdf(iFile)
 
     #.data is not backwards compatible to old scipy versions, [:] is
     data = fileObj.variables[varname][:].copy()
@@ -559,12 +572,16 @@ class Cdo(object):
     print("CDO:ENV = "+str(self.env))
 
 # Helper module for easy temp file handling
-class MyTempfile(object):
+class CdoTempfile(object):
 
   __tempfiles = []
 
-  def __init__(self):
+  def __init__(self,dir):
     self.persistent_tempfile = False
+    self.fileTag = 'cdoPy'
+    self.dir = dir
+    if not os.path.isdir(dir):
+      os.makedirs(dir)
 
   def __del__(self):
     # remove temporary files
@@ -572,16 +589,30 @@ class MyTempfile(object):
       if os.path.isfile(filename):
         os.remove(filename)
 
+  def cleanTempDir(self):
+    leftOvers = [os.path.join(self.dir,f) for f in os.listdir(self.dir)]
+    # filter for cdo.py's tempfiles owned by you
+    leftOvers = [f for f in leftOvers if
+                    self.fileTag in f and \
+                    os.path.isfile(f) and \
+                    os.stat(f).st_uid == os.getuid()]
+    # this might lead to trouble if it is used by server side computing like
+    # jupyter notebooks, filtering by userid might no be enough
+    for f in leftOvers:
+      os.remove(f)
+
   def setPersist(self,value):
     self.persistent_tempfiles = value
 
   def path(self):
     if not self.persistent_tempfile:
-      t = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy')
+      t = tempfile.NamedTemporaryFile(delete=True,prefix=self.fileTag,dir=self.dir)
       self.__class__.__tempfiles.append(t.name)
       t.close()
 
       return t.name
     else:
       N =10000000
-      t = "_"+random.randint(N).__str__()
+      return "_"+random.randint(0,N).__str__()
+
+# vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2
