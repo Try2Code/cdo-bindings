@@ -125,7 +125,7 @@ class Cdo(object):
     signal.siginterrupt(signal.SIGTERM,False)
     signal.siginterrupt(signal.SIGSEGV,False)
     # other left-overs can only be handled afterwards
-    # might be good to use the tempdir keyword to ease this, but deleteion can
+    # might be good to use the tempdir keyword to ease this, but deletion can
     # be triggered using:
   def cleanTempDir(self):
     self.tempfile.cleanTempDir()
