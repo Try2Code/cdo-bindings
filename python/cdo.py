@@ -106,17 +106,17 @@ class Cdo(object):
     self.noOutputOperators      = self.getNoOutputOperators()
     self.libs                   = self.getSupportedLibs()
 
-    # netcdf IO
+    # netcdf IO {{{
     self.cdfMod                 = cdfMod.lower()
     self.cdf                    = None
-    self.loadCdf()  # load netcdf lib if possible and set self.cdf
+    self.loadCdf()  # load netcdf lib if possible and set self.cdf }}}
 
-    self.logging                = logging
+    self.logging                = logging # internal logging {{{
     self.logFile                = logFile
     if (self.logging):
-        self.logger = setupLogging(self.logFile)
+        self.logger = setupLogging(self.logFile) #}}}
 
-    # handling different exits from interactive sessions
+    # handling different exits from interactive sessions {{{
     #   remove tempfiles from those sessions
     signal.signal(signal.SIGINT,  self.__catch__)
     signal.signal(signal.SIGTERM, self.__catch__)
@@ -126,19 +126,22 @@ class Cdo(object):
     signal.siginterrupt(signal.SIGSEGV,False)
     # other left-overs can only be handled afterwards
     # might be good to use the tempdir keyword to ease this, but deletion can
-    # be triggered using:
+    # be triggered using: }}}
   def cleanTempDir(self):
     self.tempfile.cleanTempDir()
 
+  # if a termination signal could be caught, remove tempfile
   def __catch__(self,signum,frame):
     self.tempfile.__del__()
     print("caught signal",self,signum,frame)
 
+  # make use of internal documentation structure of python
   def __dir__(self):
     res = dir(type(self)) + list(self.__dict__.keys())
     res.extend(self.operators)
     return res
 
+  # execute a single CDO command line
   def call(self,cmd,envOfCall={}):
     if self.logging and '-h' != cmd[1]:
       self.logger.info(u' '.join(cmd))
@@ -156,7 +159,7 @@ class Cdo(object):
     stdout  = retvals[0].decode("utf-8")
     stderr  = retvals[1].decode("utf-8")
 
-    if self.debug:
+    if self.debug: # debug printing {{{
       print('# DEBUG - start =============================================================')
 #     if {} != env:
 #       for k,v in list(env.items()):
@@ -168,12 +171,13 @@ class Cdo(object):
       print('STDERR:')
       if (0 != len(stderr.strip())):
         print(stderr)
-      print('# DEBUG - end ===============================================================')
+      print('# DEBUG - end ===============================================================') #}}}
 
     return {"stdout"     : stdout
            ,"stderr"     : stderr
            ,"returncode" : proc.returncode}
 
+  # error handling for CDO calls
   def hasError(self,method_name,cmd,retvals):
     if (self.debug):
       print("RETURNCODE:"+retvals["returncode"].__str__())
@@ -189,7 +193,7 @@ class Cdo(object):
     else:
       return False
 
-  def __getattr__(self, method_name):
+  def __getattr__(self, method_name): # main method-call handling for Cdo-objects {{{
 
     @auto_doc(method_name, self)
     def get(self, *args,**kwargs):
@@ -202,7 +206,7 @@ class Cdo(object):
         for arg in args:
           operator.append(arg.__str__())
   
-      #build the cdo command
+      # Build the cdo command
       #0. the cdo command
       cmd = [self.CDO]
   
@@ -317,7 +321,9 @@ class Cdo(object):
       if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) == 0):
         # If the method isn't in our dictionary, act normal.
         raise AttributeError("Unknown method '" + method_name +"'!")
+  # }}}
 
+  # retrieve the list of operators from the CDO binary
   def getOperators(self):
     if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.7.0')):
       proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
@@ -337,6 +343,7 @@ class Cdo(object):
 
       return list(set(s.split(" ")))
 
+  # retrieve the list of operators that DONT write to an output file but o stdout
   def getNoOutputOperators(self):
     if ( \
             parse_version(getCdoVersion(self.CDO)) > parse_version('1.8.0') and \
@@ -430,6 +437,7 @@ class Cdo(object):
   def showLog(self):
     print(self.collectLogs())
 
+  # check if the current (or given) CDO binary works
   def hasCdo(self,path=None):
     if path is None:
       path = self.CDO
@@ -441,6 +449,7 @@ class Cdo(object):
 
     return (executable or fullpath)
 
+  # selfcheck for the current CDO binary
   def check(self):
     if not self.hasCdo():
       return False
@@ -448,10 +457,12 @@ class Cdo(object):
       print(self.call([self.CDO,' -V']))
     return True
 
+  # change the CDO binary for the current object
   def setCdo(self,value):
     self.CDO       = value
     self.operators = self.getOperators()
 
+  # return the path to the CDO binary currently used
   def getCdo(self):
     return self.CDO
 
