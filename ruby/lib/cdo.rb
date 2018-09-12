@@ -14,17 +14,18 @@ class Cdo
   # hardcoded fallback list of output operators - from 1.8.0 there is an
   # options for this: --operators_no_output
   # this list works for cdo-1.6.4
-  NoOutputOperators = %w[cdiread diff diffc diffn diffp
-  diffv dumpmap filedes ggstat ggstats gradsdes
-  griddes griddes2 gridverify info infoc infon infop infos infov map ncode
-  ncode ndate nlevel nmon npar ntime nvar nyear output
-  outputarr outputbounds outputboundscpt outputcenter outputcenter2
-  outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
-  outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab
-  partab2 seinfo seinfoc seinfon seinfop showcode showdate showformat showlevel
-  showltype showmon showname showparam showstdname showtime showtimestamp
-  showunit showvar showyear sinfo sinfoc sinfon sinfop sinfov
-  specinfo tinfo vardes vct vct2 vlist zaxisdes]
+  NoOutputOperators = %w[cdiread cmor codetab conv_cmor_table diff diffc diffn
+  diffp diffv dump_cmor_table dumpmap filedes gmtcells gmtxyz gradsdes griddes
+  griddes2 gridverify info infoc infon infop infos infov map ncode ndate
+  ngridpoints ngrids nlevel nmon npar ntime nvar nyear output outputarr
+  outputbounds outputboundscpt outputcenter outputcenter2 outputcentercpt
+  outputext outputf outputfld outputint outputkey outputsrv outputtab outputtri
+  outputts outputvector outputvrml outputxyz pardes partab partab2 seinfo
+  seinfoc seinfon seinfop showattribute showatts showattsglob showattsvar
+  showcode showdate showformat showgrid showlevel showltype showmon showname
+  showparam showstdname showtime showtimestamp showunit showvar showyear sinfo
+  sinfoc sinfon sinfop sinfov spartab specinfo tinfo vardes vct vct2 verifygrid
+  vlist xinfon zaxisdes]
   TwoOutputOperators = %w[trend samplegridicon mrotuv eoftime
   eofspatial eof3dtime eof3dspatial eof3d eof complextorect complextopol]
   MoreOutputOperators = %w[distgrid eofcoeff eofcoeff3d intyear scatter splitcode
