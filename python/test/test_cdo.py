@@ -725,6 +725,12 @@ class CdoTest(unittest.TestCase):
       cdo.cleanTempDir()
       self.assertEqual(0,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
 
+    def test_operators_with_multiple_output_files(self):
+      cdo = Cdo(cdfMod=CDF_MOD)
+      self.assertEqual(1 ,cdo.operators['topo'],'wrong output counter for "topo"')
+      self.assertEqual(0 ,cdo.operators['sinfo'],'wrong output counter for "sinfo"')
+      self.assertEqual(-1,cdo.operators['splitsel'],'wrong output counter for "splitsel"')
+      self.assertEqual(2 ,cdo.operators['trend'],'wrong output counter for "trend"')
 
     if MAINTAINERMODE:
 

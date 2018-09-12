@@ -114,13 +114,13 @@ class Cdo(object):
       self.CDO = 'cdo'
 
     self.operators              = self.getOperators()
+    self.noOutputOperators      = [op for op in self.operators.keys() if 0 == self.operators[op]]
     self.returnCdf              = returnCdf
     self.returnNoneOnError      = returnNoneOnError
     self.tempfile               = CdoTempfile(dir=tempdir)
     self.forceOutput            = forceOutput
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
-    self.noOutputOperators      = self.getNoOutputOperators()
     self.libs                   = self.getSupportedLibs()
 
     # netcdf IO {{{
@@ -143,20 +143,74 @@ class Cdo(object):
     signal.siginterrupt(signal.SIGSEGV,False)
     # other left-overs can only be handled afterwards
     # might be good to use the tempdir keyword to ease this, but deletion can
-    # be triggered using: }}}
-  def cleanTempDir(self):
-    self.tempfile.cleanTempDir()
+    # be triggered using cleanTempDir() }}}
 
-  # if a termination signal could be caught, remove tempfile
-  def __catch__(self,signum,frame):
-    self.tempfile.__del__()
-    print("caught signal",self,signum,frame)
+  # retrieve the list of operators from the CDO binary plus info out number of
+  # output streams
+  def getOperators(self):
+    operators = {}
 
-  # make use of internal documentation structure of python
-  def __dir__(self):
-    res = dir(type(self)) + list(self.__dict__.keys())
-    res.extend(self.operators)
-    return res
+    version = parse_version(getCdoVersion(self.CDO))
+    if (version < parse_version('1.7.2')):
+      proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      l    = ret[1].decode("utf-8").find("Operators:")
+      ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
+      endI = ops.index('')
+      s    = ' '.join(ops[:endI]).strip()
+      s    = re.sub("\s+" , " ", s)
+
+      for op in list(set(s.split(" "))):
+        operators[op] = 1
+        if op in self.NoOutputOperators:
+          operators[op] = 0
+        if op in self.TwoOutputOperators:
+          operators[op] = 2
+        if op in self.MoreOutputOperators:
+          operators[op] = -1
+
+    elif (version < parse_version('1.8.0') or parse_version('1.9.0') == version):
+      proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      ops  = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+
+      for op in ops:
+        operators[op] = 1
+        if op in self.NoOutputOperators:
+          operators[op] = 0
+        if op in self.TwoOutputOperators:
+          operators[op] = 2
+        if op in self.MoreOutputOperators:
+          operators[op] = -1
+
+    elif (version < parse_version('1.9.3')):
+      proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      ops  = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+
+      proc = subprocess.Popen([self.CDO,'--operators_no_output'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      opsNoOutput = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+
+      for op in ops:
+        operators[op] = 1
+        if op in opsNoOutput:
+          operators[op] = 0
+        if op in self.TwoOutputOperators:
+          operators[op] = 2
+        if op in self.MoreOutputOperators:
+          operators[op] = -1
+
+    else:
+      proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
+      ret  = proc.communicate()
+      ops  = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+      ios  = list(map(lambda x : x.split(' ')[-1], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+
+      for i,op in enumerate(ops):
+        operators[op] = int(ios[i][1:len(ios[i])-1].split('|')[1])
+
+    return operators
 
   # execute a single CDO command line
   def call(self,cmd,envOfCall={}):
@@ -326,7 +380,7 @@ class Cdo(object):
       else:
         return kwargs["output"]
   
-    if ((method_name in self.__dict__) or (method_name in self.operators)):
+    if ((method_name in self.__dict__) or (method_name in list(self.operators.keys()))):
       if self.debug:
         print(("Found method:" + method_name))
   
@@ -335,53 +389,10 @@ class Cdo(object):
       return get.__get__(self)
     else:
       # given method might match part of know operators: autocompletion
-      if (len(list(filter(lambda x : re.search(method_name,x),self.operators))) == 0):
+      if (len(list(filter(lambda x : re.search(method_name,x),list(self.operators.keys())))) == 0):
         # If the method isn't in our dictionary, act normal.
         raise AttributeError("Unknown method '" + method_name +"'!")
   # }}}
-
-  # retrieve the list of operators from the CDO binary
-  def getOperators(self):
-    if (parse_version(getCdoVersion(self.CDO)) > parse_version('1.7.0')):
-      proc = subprocess.Popen([self.CDO,'--operators'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-      ret  = proc.communicate()
-      ops  = list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
-
-      return ops
-
-    else:
-      proc = subprocess.Popen([self.CDO,'-h'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-      ret  = proc.communicate()
-      l    = ret[1].decode("utf-8").find("Operators:")
-      ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
-      endI = ops.index('')
-      s    = ' '.join(ops[:endI]).strip()
-      s    = re.sub("\s+" , " ", s)
-
-      return list(set(s.split(" ")))
-
-  # retrieve the list of operators that DONT write to an output file but o stdout
-  def getNoOutputOperators(self):
-    if ( \
-            parse_version(getCdoVersion(self.CDO)) > parse_version('1.8.0') and \
-            parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.0') ):
-      proc = subprocess.Popen([self.CDO,'--operators_no_output'],stderr = subprocess.PIPE,stdout = subprocess.PIPE)
-      ret  = proc.communicate()
-      return list(map(lambda x : x.split(' ')[0], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
-    else:
-      return ['cdiread','cmor','codetab','conv_cmor_table','diff','diffc','diffn','diffp'
-              ,'diffv','dump_cmor_table','dumpmap','filedes','ggstat','ggstats','gmtcells'
-              ,'gmtxyz','gradsdes','griddes','griddes2','gridverify','info','infoc','infon'
-              ,'infop','infos','infov','map','ncode','ncode','ndate','ngridpoints','ngrids'
-              ,'nlevel','nmon','npar','ntime','nvar','nyear','output','outputarr','outputbounds'
-              ,'outputboundscpt','outputcenter','outputcenter2','outputcentercpt','outputext'
-              ,'outputf','outputfld','outputint','outputkey','outputsrv','outputtab','outputtri'
-              ,'outputts','outputvector','outputvrml','outputxyz','pardes','partab','partab2'
-              ,'seinfo','seinfoc','seinfon','seinfop','showcode','showdate','showformat','showlevel'
-              ,'showltype','showmon','showname','showparam','showstdname','showtime','showtimestamp'
-              ,'showunit','showvar','showyear','sinfo','sinfoc','sinfon','sinfop','sinfov'
-              ,'spartab','specinfo','tinfo','vardes','vct','vct2','verifygrid','vlist','zaxisdes']
-
 
   def loadCdf(self):
     if self.cdfMod == CDF_MOD_SCIPY:
@@ -496,6 +507,19 @@ class Cdo(object):
         print("No version information available about '" + lib + "'")
         return False
 
+  def cleanTempDir(self):
+    self.tempfile.cleanTempDir()
+
+  # if a termination signal could be caught, remove tempfile
+  def __catch__(self,signum,frame):
+    self.tempfile.__del__()
+    print("caught signal",self,signum,frame)
+
+  # make use of internal documentation structure of python
+  def __dir__(self):
+    res = dir(type(self)) + list(self.__dict__.keys())
+    res.extend(list(self.operators.keys()))
+    return res
   #==================================================================
   # Addional operators:
   #------------------------------------------------------------------
@@ -583,6 +607,7 @@ class Cdo(object):
   def readXDataset(self,ifile):
     return xarray.open_dataset(ifile)
 
+  # return internal cdo.py version
   def __version__(self):
     return CDO_PY_VERSION
 
@@ -638,4 +663,4 @@ class CdoTempfile(object):
       return "_"+random.randint(0,N).__str__()
 #}}}
 
-# vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2
+# vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2 fdm=marker
