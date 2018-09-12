@@ -769,7 +769,7 @@ class CdoTest(unittest.TestCase):
 
 
       def test_phc(self):
-        ifile = DATA_DIR+'/icon/phc.nc'
+        ifile = "-select,level=0 " + DATA_DIR + '/icon/phc.nc'
         cdo = Cdo(cdfMod=CDF_MOD)
         cdo.debug = DEBUG
         #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
@@ -799,7 +799,7 @@ class CdoTest(unittest.TestCase):
       def test_smooth(self):
         cdo = Cdo(cdfMod='netcdf4')
         if (parse_version(cdo.version()) >= parse_version('1.7.2')):
-          ifile = DATA_DIR+'/icon/phc.nc'
+          ifile = "-select,level=0 " + DATA_DIR + '/icon/phc.nc'
           cdo = Cdo(cdfMod=CDF_MOD)
           cdo.debug = DEBUG
           #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
