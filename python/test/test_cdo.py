@@ -106,11 +106,9 @@ class CdoTest(unittest.TestCase):
             else:
                 self.assertTrue(op in dir(cdo))
 
-    def test_listAllOperators(self):
+    def test_allOperators(self):
         cdo = Cdo(cdfMod=CDF_MOD)
-        operators = cdo.operators
-        operators.sort()
-        #print "\n".join(operators)
+        self.assertTrue(600 < len(cdo.operators),'Number or operators is too small')
 
     def test_simple(self):
         cdo = Cdo(cdfMod=CDF_MOD)
