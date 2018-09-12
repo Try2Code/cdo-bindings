@@ -286,6 +286,13 @@ class Cdo(object):
       cmd.append('-O')
   
       #2. options
+      # switch to netcdf output in case of numpy/xarray usage
+      if (self.returnCdf \
+          or None != kwargs.get('returnArray') \
+          or None != kwargs.get('returnMaArray') \
+          or None != kwargs.get('returnXArray') \
+          or None != kwargs.get('returnMaArray')):
+        cmd.append('-f nc')
       if 'options' in kwargs:
         cmd += kwargs['options'].split()
   
