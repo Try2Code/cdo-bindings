@@ -736,8 +736,9 @@ class CdoTest(unittest.TestCase):
       def test_longChain(self):
         cdo = Cdo(cdfMod=CDF_MOD)
         ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
-        t = cdo.fldmax(input="-div -sub -timmean -seltimestep,2,3 %s -seltimestep,1 %s -gridarea %s"%(ifile,ifile,ifile),returnArray="T")
-        self.assertEqual(8.9813e-09,t[0])
+        t = cdo.fldmax(input="-div -sub -timmean -seltimestep,2,3 %s -seltimestep,1 %s -gridarea %s"%(ifile,ifile,ifile),
+            returnMaArray="t")
+        self.assertTrue(abs(8.9813e-09 - t[0][0][0]) < 1.0e-10, 'Found non-zero diff')
 
       def test_icon_coords(self):
         cdo = Cdo(cdfMod=CDF_MOD)
