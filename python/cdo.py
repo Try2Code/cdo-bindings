@@ -80,6 +80,23 @@ class CDOException(Exception):
 # MAIN Cdo class {{{
 class Cdo(object):
 
+  NoOutputOperators = 'cdiread diff diffc diffn diffp \
+  diffv dumpmap filedes ggstat ggstats gradsdes \
+  griddes griddes2 gridverify info infoc infon infop infos infov map ncode \
+  ncode ndate nlevel nmon npar ntime nvar nyear output \
+  outputarr outputbounds outputboundscpt outputcenter outputcenter2 \
+  outputcentercpt outputext outputf outputfld outputint outputkey outputsrv \
+  outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab \
+  partab2 seinfo seinfoc seinfon seinfop showcode showdate showformat showlevel \
+  showltype showmon showname showparam showstdname showtime showtimestamp \
+  showunit showvar showyear sinfo sinfoc sinfon sinfop sinfov \
+  specinfo tinfo vardes vct vct2 vlist zaxisdes'.split(' ')
+  TwoOutputOperators = 'trend samplegridicon mrotuv eoftime \
+  eofspatial eof3dtime eof3dspatial eof3d eof complextorect complextopol'.split(' ')
+  MoreOutputOperators = 'distgrid eofcoeff eofcoeff3d intyear scatter splitcode \
+  splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec \
+  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split(' ')
+
   def __init__(self,
                returnCdf         = False,
                returnNoneOnError = False,
