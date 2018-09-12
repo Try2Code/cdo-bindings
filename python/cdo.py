@@ -119,6 +119,7 @@ class Cdo(object):
     self.returnCdf              = returnCdf
     self.returnNoneOnError      = returnNoneOnError
     self.tempfile               = CdoTempfile(dir=tempdir)
+    self._tempdir               = tempdir
     self.forceOutput            = forceOutput
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
@@ -308,7 +309,7 @@ class Cdo(object):
         elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
   
           # create a temp nc file from input data
-          tempfile = CdoTempfile()
+          tempfile = CdoTempfile(dir=self._tempdir)
           _tpath = tempfile.path()
           kwargs["input"].to_netcdf(_tpath)
           kwargs["input"] = _tpath
