@@ -137,8 +137,6 @@ class Cdo
       cmd                = "#{path2cdo} --operators_no_output"
       _operatorsNoOutput = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
 
-      pp _operators.size
-      pp _operatorsNoOutput.size
       # build up operator inventory
       _operators.each {|op| operators[op] = 1 }
       _operatorsNoOutput.each {|op| operators[op] = 0}
