@@ -25,6 +25,12 @@ class Cdo
   showltype showmon showname showparam showstdname showtime showtimestamp
   showunit showvar showyear sinfo sinfoc sinfon sinfop sinfov
   specinfo tinfo vardes vct vct2 vlist zaxisdes]
+  TwoOutputOperators = %w[trend samplegridicon mrotuv eoftime
+  eofspatial eof3dtime eof3dspatial eof3d eof complextorect complextopol]
+  MoreOutputOperators = %w[distgrid eofcoeff eofcoeff3d intyear scatter splitcode
+  splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec
+  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis]
+
 
   attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug, :logging, :logFile
   attr_reader   :operators, :filetypes
@@ -43,7 +49,7 @@ class Cdo
     @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
 
     @operators              = getOperators(@cdo)
-    @noOutputOperators      = @operators.select {|op,io| 0 == io[:oStreams]}.keys
+    @noOutputOperators      = @operators.select {|op,io| 0 == io}.keys
 
     @returnCdf              = returnCdf
     @forceOutput            = forceOutput
@@ -87,6 +93,8 @@ class Cdo
   def getOperators(path2cdo)
     operators = {}
 
+    # little side note: the option --operators_no_output works in 1.8.0 and
+    # 1.8.2, but not in 1.9.0, from 1.9.1 it works again
     case
     when version < '1.7.2' then
       cmd       = path2cdo + ' 2>&1'
@@ -100,22 +108,45 @@ class Cdo
       _operators = help[(help.index("Operators:")+1)..help.index(help.find {|v|
         v =~ /CDO version/
       }) - 2].join(' ').split
-      _operatorsNoOutput = NoOutputOperators
-
 
       # build up operator inventory
-      _operators.each {|op| operators[op] = {oStreams: 1} }
-      _operatorsNoOutput.each {|op| operators[op][:oStreams] = 0}
+      # default is 1 output stream
+      _operators.each {|op| operators[op] = 1 }
+      operators.each {|op,_|
+        operators[op] = 0  if NoOutputOperators.include?(op)
+        operators[op] = 2  if TwoOutputOperators.include?(op)
+        operators[op] = -1 if MoreOutputOperators.include?(op)
+      }
 
-    when version <= '1.9.1' then
+    when (version < '1.8.0'  or '1.9.0' == version) then
+      cmd                = "#{path2cdo} --operators"
+      _operators         = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
+
+      _operators.each {|op| operators[op] = 1 }
+      operators.each {|op,_|
+        operators[op] = 0  if NoOutputOperators.include?(op)
+        operators[op] = 2  if TwoOutputOperators.include?(op)
+        operators[op] = -1 if MoreOutputOperators.include?(op)
+      }
+
+
+    when version < '1.9.3' then
+
       cmd                = "#{path2cdo} --operators"
       _operators         = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
       cmd                = "#{path2cdo} --operators_no_output"
       _operatorsNoOutput = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
 
+      pp _operators.size
+      pp _operatorsNoOutput.size
       # build up operator inventory
-      _operators.each {|op| operators[op] = {oStreams: 1} }
-      _operatorsNoOutput.each {|op| operators[op][:oStreams] = 0}
+      _operators.each {|op| operators[op] = 1 }
+      _operatorsNoOutput.each {|op| operators[op] = 0}
+      operators.each {|op,_|
+        operators[op] = 0  if _operatorsNoOutput.include?(op)
+        operators[op] = 2  if TwoOutputOperators.include?(op)
+        operators[op] = -1 if MoreOutputOperators.include?(op)
+      }
 
     else
       cmd       = "#{path2cdo} --operators"
@@ -123,8 +154,8 @@ class Cdo
       IO.popen(cmd).readlines.map {|line|
         lineContent        = line.chomp.split(' ')
         name               = lineContent[0]
-        iCounter, oCounter = lineContent[-1].tr(')','').tr('(','').split('|')
-        operators[name]    = { iStreams: iCounter.to_i, oStreams: oCounter.to_i }
+        iCounter, oCounter = lineContent[-1][1..-1].split('|')
+        operators[name]    = oCounter.to_i
       }
     end
     return operators

@@ -315,6 +315,10 @@ class TestCdo < Minitest::Test
   end
 
   def test_operators_with_multiple_output_files
+    assert_equal(1,@cdo.operators['topo'],'wrong output counter for "topo"')
+    assert_equal(0,@cdo.operators['sinfo'],'wrong output counter for "sinfo"')
+    assert_equal(-1,@cdo.operators['splitsel'],'wrong output counter for "splitsel"')
+    assert_equal(2,@cdo.operators['trend'],'wrong output counter for "trend"')
     # create input for eof
     #
     # check automatic generation ot two tempfiles
