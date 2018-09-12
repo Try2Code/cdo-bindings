@@ -278,10 +278,10 @@ class TestCdo < Minitest::Test
        outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
        outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab].each {|op|
       assert(operators.include?(op),"Operator '#{op}' cannot be found!")
-      assert_equal(0,operators[op][:oStreams],"Operator '#{op}' has a non-zero output counter!")
+      assert_equal(0,operators[op],"Operator '#{op}' has a non-zero output counter!")
     }
     # just a rought estimation
-    opsCounf = @cdo.operators.select {|o,c| 0 == c[:oStreams]}.size
+    opsCounf = @cdo.operators.select {|_,c| 0 == c}.size
     assert(opsCounf > 50)
     assert(opsCounf < 200)
   end
@@ -317,6 +317,7 @@ class TestCdo < Minitest::Test
   def test_operators_with_multiple_output_files
     assert_equal(1,@cdo.operators['topo'],'wrong output counter for "topo"')
     assert_equal(0,@cdo.operators['sinfo'],'wrong output counter for "sinfo"')
+    assert_equal(0,@cdo.operators['ngridpoints'],'wrong output counter for "sinfo"')
     assert_equal(-1,@cdo.operators['splitsel'],'wrong output counter for "splitsel"')
     assert_equal(2,@cdo.operators['trend'],'wrong output counter for "trend"')
     # create input for eof
