@@ -327,6 +327,48 @@ class TestCdo < Minitest::Test
     #
     # check usage of 'returnArray' with these operators
   end
+  def test_tempdir
+    # manual set path
+    tag = 'tempRb'
+    tempPath = Dir.pwd+'/'+tag
+    pp Dir.glob("#{tempPath}/*").size
+    assert_equal(0,Dir.glob("#{tempPath}/*").size)
+    cdo = Cdo.new(tempdir: tempPath)
+    cdo.topo('r10x10',options = '-f nc')
+    assert_equal(1,Dir.glob("#{tempPath}/*").size)
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    assert_equal(3,Dir.glob("#{tempPath}/*").size)
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    assert_equal(5,Dir.glob("#{tempPath}/*").size)
+    cdo.cleanTempDir
+    assert_equal(0,Dir.glob("#{tempPath}/*").size)
+
+    # automatic path
+    tempPath = Dir.tmpdir
+    tag = 'Cdorb'
+    pattern = "#{tempPath}/#{tag}*"
+    cdo = Cdo.new
+    assert_equal(0,Dir.glob(pattern).size)
+    cdo.topo('r10x10',options = '-f nc')
+    assert_equal(1,Dir.glob(pattern).size)
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    assert_equal(3,Dir.glob(pattern).size)
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    cdo.topo('r10x10',options = '-f nc')
+    assert_equal(12,Dir.glob(pattern).size)
+    cdo.cleanTempDir()
+    assert_equal(0,Dir.glob(pattern).size)
+  end
 
   if @@maintainermode  then
     require 'unifiedPlot'

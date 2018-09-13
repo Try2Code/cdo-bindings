@@ -428,6 +428,10 @@ class Cdo
     end
   end
 
+  # remove tempfiles created from this or previous runs
+  def cleanTempDir
+    @tempStore.cleanTempDir
+  end
   # }}}
 
   # Addional operators: {{{
@@ -470,6 +474,9 @@ class CdoTempfileStore
 
     # storage for filenames in order to prevent too early removement
     @_tempfiles           = []
+
+    # make sure the tempdir ie really there
+    Dir.mkdir(@dir) unless Dir.exists?(@dir)
   end
 
   def setPersist(value)
@@ -491,6 +498,13 @@ class CdoTempfileStore
 
   def showFiles
     @_tempfiles.each {|f| print(f+" ") if f.kind_of? String}
+  end
+
+  def cleanTempDir
+    # filter by name, realfile and ownership
+    Dir.entries(@dir).map {|f| "#@dir/#{f}"}.find_all {|file|
+      File.file?(file) and File.owned?(file) and file.include?(@tag)
+    }.each {|f| File.unlink(f)}
   end
 end
 
