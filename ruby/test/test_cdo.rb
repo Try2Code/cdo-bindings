@@ -336,18 +336,18 @@ class TestCdo < Minitest::Test
       assert_equal(8.981299259858133e-09,t[0])
     end
     def test_returnArray
-      temperature = @cdo.stdatm(0,:options => '-f nc',:returnCdf => true).var('T').get.flatten[0]
+      temperature = @cdo.stdatm(0,:returnCdf => true).var('T').get.flatten[0]
       assert_raises ArgumentError do
-        @cdo.stdatm(0,:options => '-f nc',:returnArray => 'TT')
+        @cdo.stdatm(0,:returnArray => 'TT')
       end
-      temperature = @cdo.stdatm(0,:options => '-f nc',:returnArray => 'T')
+      temperature = @cdo.stdatm(0,:returnArray => 'T')
       assert_equal(288.0,temperature.flatten[0])
-      pressure = @cdo.stdatm(0,1000,:options => '-f nc -b F64',:returnArray => 'P')
+      pressure = @cdo.stdatm(0,1000,:options => '-b F64',:returnArray => 'P')
       assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
     end
     def test_returnMaArray
       @cdo.debug = @@debug
-      topo = @cdo.topo(:options => '-f nc',:returnMaArray => 'topo')
+      topo = @cdo.topo(:returnMaArray => 'topo')
       assert_equal(-1890.0,topo.mean.round)
       bathy = @cdo.setrtomiss(0,10000,
           :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
