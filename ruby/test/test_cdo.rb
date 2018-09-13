@@ -344,35 +344,36 @@ class TestCdo < Minitest::Test
     assert_equal(5,Dir.glob("#{tempPath}/*").size)
     cdo.cleanTempDir
     assert_equal(0,Dir.glob("#{tempPath}/*").size)
-
-    # automatic path
-    tempPath = Dir.tmpdir
-    tag = 'Cdorb'
-    pattern = "#{tempPath}/#{tag}*"
-    cdo = Cdo.new
-    assert_equal(0,Dir.glob(pattern).size)
-    cdo.topo('r10x10',options = '-f nc')
-    assert_equal(1,Dir.glob(pattern).size)
-    cdo.topo('r10x10',options = '-f nc')
-    cdo.topo('r10x10',options = '-f nc')
-    assert_equal(3,Dir.glob(pattern).size)
-    cdo.topo('r10x10',options = '-f nc')
-    cdo.topo('r10x10',options = '-f nc')
-    cdo.topo('r10x10',options = '-f nc')
-    cdo.topo('r10x10',options = '-f nc')
-    cdo.topo('r10x10',options = '-f nc')
-    cdo.topo('r10x10',options = '-f nc')
-    cdo.topo('r10x10',options = '-f nc')
-    cdo.topo('r10x10',options = '-f nc')
-    cdo.topo('r10x10',options = '-f nc')
-    assert_equal(12,Dir.glob(pattern).size)
-    cdo.cleanTempDir()
-    assert_equal(0,Dir.glob(pattern).size)
   end
 
   if @@maintainermode  then
     require 'unifiedPlot'
 
+    def test_system_tempdir
+      # automatic path
+      tempPath = Dir.tmpdir
+      tag = 'Cdorb'
+      pattern = "#{tempPath}/#{tag}*"
+      cdo = Cdo.new
+      assert_equal(0,Dir.glob(pattern).size)
+      cdo.topo('r10x10',options = '-f nc')
+      assert_equal(1,Dir.glob(pattern).size)
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      assert_equal(3,Dir.glob(pattern).size)
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      assert_equal(12,Dir.glob(pattern).size)
+      cdo.cleanTempDir()
+      assert_equal(0,Dir.glob(pattern).size)
+    end
     def test_longChain
       ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
       t = @cdo.fldmax(input: "-div -sub -timmean -seltimestep,2,3 #{ifile} -seltimestep,1 #{ifile}  -gridarea #{ifile}",returnArray: "t")

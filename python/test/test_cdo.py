@@ -703,27 +703,6 @@ class CdoTest(unittest.TestCase):
       cdo.cleanTempDir()
       self.assertEqual(0,len(os.listdir(tempPath)))
 
-      # automatic path
-      tempPath = tempfile.gettempdir()
-      cdo = Cdo()
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(1,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(3,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(12,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
-      cdo.cleanTempDir()
-      self.assertEqual(0,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
-
     def test_operators_with_multiple_output_files(self):
       cdo = Cdo(cdfMod=CDF_MOD)
       self.assertEqual(1 ,cdo.operators['topo'],'wrong output counter for "topo"')
@@ -732,6 +711,28 @@ class CdoTest(unittest.TestCase):
       self.assertEqual(2 ,cdo.operators['trend'],'wrong output counter for "trend"')
 
     if MAINTAINERMODE:
+
+      def test_system_tempdir(self):
+        # automatic path
+        tempPath = tempfile.gettempdir()
+        cdo = Cdo()
+        cdo.topo('r10x10',options = '-f nc')
+        self.assertEqual(1,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+        cdo.topo('r10x10',options = '-f nc')
+        cdo.topo('r10x10',options = '-f nc')
+        self.assertEqual(3,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+        cdo.topo('r10x10',options = '-f nc')
+        cdo.topo('r10x10',options = '-f nc')
+        cdo.topo('r10x10',options = '-f nc')
+        cdo.topo('r10x10',options = '-f nc')
+        cdo.topo('r10x10',options = '-f nc')
+        cdo.topo('r10x10',options = '-f nc')
+        cdo.topo('r10x10',options = '-f nc')
+        cdo.topo('r10x10',options = '-f nc')
+        cdo.topo('r10x10',options = '-f nc')
+        self.assertEqual(12,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
+        cdo.cleanTempDir()
+        self.assertEqual(0,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
 
       def test_longChain(self):
         cdo = Cdo(cdfMod=CDF_MOD)
