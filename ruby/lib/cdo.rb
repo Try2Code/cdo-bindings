@@ -91,7 +91,7 @@ class Cdo
   end
 
   # collect the complete list of possible operators
-  def getOperators(path2cdo)
+  def getOperators(path2cdo) #{{{
     operators = {}
 
     # little side note: the option --operators_no_output works in 1.8.0 and
@@ -158,7 +158,7 @@ class Cdo
       }
     end
     return operators
-  end
+  end #}}}
 
   # get meta-data about the CDO installation
   def getFeatures
@@ -483,4 +483,4 @@ module MyTempfile
   end
 end
 
-#vim:fdm=marker
+# vim: fdm=marker
