@@ -118,8 +118,7 @@ class Cdo(object):
     self.noOutputOperators      = [op for op in self.operators.keys() if 0 == self.operators[op]]
     self.returnCdf              = returnCdf
     self.returnNoneOnError      = returnNoneOnError
-    self.tempfile               = CdoTempfile(dir=tempdir)
-    self._tempdir               = tempdir
+    self.tempStore              = CdoTempfileStore(dir=tempdir)
     self.forceOutput            = forceOutput
     self.env                    = env
     self.debug                  = True if 'DEBUG' in os.environ else debug
@@ -149,7 +148,7 @@ class Cdo(object):
 
   # retrieve the list of operators from the CDO binary plus info out number of
   # output streams
-  def getOperators(self):
+  def getOperators(self): #{{{
     operators = {}
 
     version = parse_version(getCdoVersion(self.CDO))
@@ -212,9 +211,9 @@ class Cdo(object):
       for i,op in enumerate(ops):
         operators[op] = int(ios[i][1:len(ios[i])-1].split('|')[1])
 
-    return operators
+    return operators # }}}
 
-  # execute a single CDO command line
+  # execute a single CDO command line {{{
   def call(self,cmd,envOfCall={}):
     if self.logging and '-h' != cmd[1]:
       self.logger.info(u' '.join(cmd))
@@ -248,10 +247,10 @@ class Cdo(object):
 
     return {"stdout"     : stdout
            ,"stderr"     : stderr
-           ,"returncode" : proc.returncode}
+           ,"returncode" : proc.returncode} #}}}
 
   # error handling for CDO calls
-  def hasError(self,method_name,cmd,retvals):
+  def hasError(self,method_name,cmd,retvals): #{{{
     if (self.debug):
       print("RETURNCODE:"+retvals["returncode"].__str__())
     if ( 0 != retvals["returncode"] ):
@@ -264,7 +263,7 @@ class Cdo(object):
           self.logger.error(cmd + " with:" + retvals["stderr"])
       return True
     else:
-      return False
+      return False #}}}
 
   def __getattr__(self, method_name): # main method-call handling for Cdo-objects {{{
 
@@ -272,20 +271,20 @@ class Cdo(object):
     def get(self, *args,**kwargs):
       operator          = [method_name]
       operatorPrintsOut = method_name in self.noOutputOperators
-  
+
       self.envByCall = {}
-  
+
       if args.__len__() != 0:
         for arg in args:
           operator.append(arg.__str__())
-  
+
       # Build the cdo command
       #0. the cdo command
       cmd = [self.CDO]
-  
+
       #1. OVERWRITE EXISTING FILES
       cmd.append('-O')
-  
+
       #2. options
       # switch to netcdf output in case of numpy/xarray usage
       if (self.returnCdf \
@@ -296,10 +295,10 @@ class Cdo(object):
         cmd.append('-f nc')
       if 'options' in kwargs:
         cmd += kwargs['options'].split()
-  
+
       #3. operator(s)
       cmd.append(','.join(operator))
-  
+
       #4. input files or operators
       if 'input' in kwargs:
         if isinstance(kwargs["input"], six.string_types):
@@ -307,28 +306,27 @@ class Cdo(object):
         elif type(kwargs["input"]) == list:
           cmd.append(' '.join(kwargs["input"]))
         elif (True == loadedXarray and type(kwargs["input"]) == xarray.core.dataset.Dataset):
-  
+
           # create a temp nc file from input data
-          tempfile = CdoTempfile(dir=self._tempdir)
-          _tpath = tempfile.path()
-          kwargs["input"].to_netcdf(_tpath)
-          kwargs["input"] = _tpath
+          tmpfile = self.tempStore.newFile()
+          kwargs["input"].to_netcdf(tmpfile)
+          kwargs["input"] = tmpfile
           print(kwargs['input'])
           cmd.append(kwargs["input"])
         else:
           #we assume it's either a list, a tuple or any iterable.
           cmd.append(kwargs["input"])
-  
+
       #5. handle rewrite of existing output files
       if not kwargs.__contains__("force"):
         kwargs["force"] = self.forceOutput
-  
+
       #6. handle environment setup per call
       envOfCall = {}
       if kwargs.__contains__("env"):
         for k,v in kwargs["env"].items():
           envOfCall[k] = v
-  
+
       if operatorPrintsOut:
         retvals = self.call(cmd,envOfCall)
         if ( not self.hasError(method_name,cmd,retvals) ):
@@ -351,10 +349,10 @@ class Cdo(object):
         if kwargs["force"] or \
            (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
           if not kwargs.__contains__("output") or None == kwargs["output"]:
-            kwargs["output"] = self.tempfile.path()
-  
+            kwargs["output"] = self.tempStore.newFile()
+
           cmd.append(kwargs["output"])
-  
+
           retvals = self.call(cmd,envOfCall)
           if self.hasError(method_name,cmd,retvals):
             if self.returnNoneOnError:
@@ -364,35 +362,35 @@ class Cdo(object):
         else:
           if self.debug:
             print(("Use existing file'"+kwargs["output"]+"'"))
-  
+
       if not kwargs.__contains__("returnCdf"):
         kwargs["returnCdf"] = False
-  
+
       if not None == kwargs.get("returnArray"):
         return self.readArray(kwargs["output"],kwargs["returnArray"])
-  
+
       elif not None == kwargs.get("returnMaArray"):
         return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
-  
+
       elif self.returnCdf or kwargs["returnCdf"]:
         return self.readCdf(kwargs["output"])
-  
+
       elif loadedXarray and not None == kwargs.get("returnXArray"):
         return self.readXArray(kwargs["output"],kwargs.get("returnXArray"))
-  
+
       elif loadedXarray and not None == kwargs.get("returnXDataset"):
         return self.readXDataset(kwargs["output"])
-  
+
       elif ('split' == method_name[0:5]):
         return glob.glob(kwargs["output"]+'*')
-  
+
       else:
         return kwargs["output"]
-  
+
     if ((method_name in self.__dict__) or (method_name in list(self.operators.keys()))):
       if self.debug:
         print(("Found method:" + method_name))
-  
+
       #cache the method for later
       setattr(self.__class__, method_name, get)
       return get.__get__(self)
@@ -517,11 +515,11 @@ class Cdo(object):
         return False
 
   def cleanTempDir(self):
-    self.tempfile.cleanTempDir()
+    self.tempStore.cleanTempDir()
 
   # if a termination signal could be caught, remove tempfile
   def __catch__(self,signum,frame):
-    self.tempfile.__del__()
+    self.tempStore.__del__()
     print("caught signal",self,signum,frame)
 
   # make use of internal documentation structure of python
@@ -628,7 +626,7 @@ class Cdo(object):
 #}}}
 
 # Helper module for easy temp file handling {{{
-class CdoTempfile(object):
+class CdoTempfileStore(object):
 
   __tempfiles = []
 
@@ -660,7 +658,7 @@ class CdoTempfile(object):
   def setPersist(self,value):
     self.persistent_tempfiles = value
 
-  def path(self):
+  def newFile(self):
     if not self.persistent_tempfile:
       t = tempfile.NamedTemporaryFile(delete=True,prefix=self.fileTag,dir=self.dir)
       self.__class__.__tempfiles.append(t.name)
