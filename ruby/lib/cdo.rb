@@ -3,6 +3,7 @@ require 'open3'
 require 'logger'
 require 'stringio'
 require 'json'
+require 'tempfile'
 
 class Hash
   alias :include? :has_key?
@@ -41,6 +42,7 @@ class Cdo
                  returnFalseOnError: false,
                  forceOutput: true,
                  env: {},
+                 tempdir: Dir.tmpdir,
                  logging: false,
                  logFile: StringIO.new,
                  debug: false,
@@ -60,6 +62,7 @@ class Cdo
 
     @returnFalseOnError     = returnFalseOnError
 
+    @tempStore              = CdoTempfileStore.new(tempdir)
     @logging                = logging
     @logFile                = logFile
     @logger                 = Logger.new(@logFile,'a')
@@ -235,6 +238,7 @@ class Cdo
            autoSplit:     nil)
     options = options.to_s
 
+    # switch netcdf output if data of filehandles are requested as output
     options << ' -f nc' if ( \
                              (     returnCdf ) or \
                              ( not returnArray.nil? ) or \
@@ -268,7 +272,7 @@ class Cdo
       force = @forceOutput if force.nil?
       if force or not File.exists?(output.to_s)
         # create a tempfile if output is not given
-        output = CdoTempfileStore.path if output.nil?
+        output = @tempStore.newFile if output.nil?
 
         #finalize the execution command
         cmd << "#{output}"
@@ -455,31 +459,38 @@ class Cdo
 end
 #
 # Helper module for easy temp file handling
-module CdoTempfileStore
-  require 'tempfile'
-  @@_tempfiles           = []
-  @@persistent_tempfiles = false
-  @@N                    = 10000000
+class CdoTempfileStore
+  # base for persitent temp files - just for debugging
+  N = 10000000
 
-  def CdoTempfileStore.setPersist(value)
-    @@persistent_tempfiles = value
+  def initialize(dir=Dir.tmpdir)
+    @dir                  = dir
+    @tag                  = 'Cdorb'
+    @persistent_tempfiles = false
+
+    # storage for filenames in order to prevent too early removement
+    @_tempfiles           = []
   end
 
-  def CdoTempfileStore.path
-    unless @@persistent_tempfiles
-      t = Tempfile.new(self.class.to_s)
-      @@_tempfiles << t
-      @@_tempfiles << t.path
+  def setPersist(value)
+    @persistent_tempfiles = value
+  end
+
+  def newFile
+    unless @persistent_tempfiles
+      t = Tempfile.new(@tag,@dir)
+      @_tempfiles << t
+      @_tempfiles << t.path
       t.path
     else
-      t = "_"+rand(@@N).to_s
-      @@_tempfiles << t
+      t = "_"+rand(N).to_s
+      @_tempfiles << t
       t
     end
   end
 
-  def CdoTempfileStore.showFiles
-    @@_tempfiles.each {|f| print(f+" ") if f.kind_of? String}
+  def showFiles
+    @_tempfiles.each {|f| print(f+" ") if f.kind_of? String}
   end
 end
 
