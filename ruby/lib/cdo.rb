@@ -235,10 +235,10 @@ class Cdo
            autoSplit:     nil)
     options = options.to_s
 
-    options << ' -f nc' if  ( \
-                            (     returnCdf ) or \
-                            ( not returnArray.nil? ) or \
-                            ( not returnMaArray.nil?) \
+    options << ' -f nc' if ( \
+                             (     returnCdf ) or \
+                             ( not returnArray.nil? ) or \
+                             ( not returnMaArray.nil?) \
                            )
 
     # setup basic operator execution command
