@@ -367,11 +367,11 @@ class TestCdo < Minitest::Test
       assert(0 < withMask[1,1])
     end
     def test_combine
-      ofile0, ofile1 = MyTempfile.path, MyTempfile.path
+      ofile0, ofile1 = CdoTempfileStore.path, CdoTempfileStore.path
       @cdo.fldsum(:input => @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:options => "-f nc"),:output => ofile0)
       @cdo.fldsum(:input => "-stdatm,25,100,250,500,875,1400,2100,3000,4000,5000",:options => "-f nc",:output => ofile1)
       @cdo.returnCdf = true
-      MyTempfile.showFiles
+      CdoTempfileStore.showFiles
       diff = @cdo.sub(:input => [ofile0,ofile1].join(' ')).var('T').get
       assert_equal(0.0,diff.min)
       assert_equal(0.0,diff.max)
@@ -379,7 +379,7 @@ class TestCdo < Minitest::Test
     end
 
     def test_tempfile
-      ofile0, ofile1 = MyTempfile.path, MyTempfile.path
+      ofile0, ofile1 = CdoTempfileStore.path, CdoTempfileStore.path
       assert(ofile0 != ofile1, "Found equal tempfiles!")
       # Tempfile should not disappeare even if the GC was started
       puts ofile0
@@ -402,7 +402,7 @@ class TestCdo < Minitest::Test
       FileUtils.rm(ofile)
     end
     def test_simple_returnCdf
-      ofile0, ofile1 = MyTempfile.path, MyTempfile.path
+      ofile0, ofile1 = CdoTempfileStore.path, CdoTempfileStore.path
       sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),
                  :returnCdf => true).var("P").get
       assert_equal(1013.25,sum.min)
@@ -600,10 +600,10 @@ end
 #  @cdo.expr("'t=#{TEMP_EXPR['geopotheight']}'", :input => ifile, :output => tempFile)
 #
 #
-#  # TIPS: I often work with temporary files and for getting rid of handling them manually the MyTempfile module can be used:
+#  # TIPS: I often work with temporary files and for getting rid of handling them manually the CdoTempfileStore module can be used:
 #  #       Simply include the following methods into you scripts and use tfile for any temporary variable
 #  def tfile
-#    MyTempfile.path
+#    CdoTempfileStore.path
 #  end
 #  # As an example, the computation of simple atmospherric density could look like
 #  presFile, tempFile = tfile, tfile
@@ -612,6 +612,6 @@ end
 #  @cdo.chainCall("setname,#{rho} -divc,#{C_R} -div",in: [presFile,tempFile].join(' '), out: densityFile)
 #
 #  # For debugging, it is helpfull, to avoid the automatic cleanup at the end of the scripts:
-#  MyTempfile.setPersist(true)
+#  CdoTempfileStore.setPersist(true)
 #  # creates randomly names files. Switch on debugging with
 #  @cdo.Debug = true

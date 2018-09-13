@@ -268,7 +268,7 @@ class Cdo
       force = @forceOutput if force.nil?
       if force or not File.exists?(output.to_s)
         # create a tempfile if output is not given
-        output = MyTempfile.path if output.nil?
+        output = CdoTempfileStore.path if output.nil?
 
         #finalize the execution command
         cmd << "#{output}"
@@ -455,17 +455,17 @@ class Cdo
 end
 #
 # Helper module for easy temp file handling
-module MyTempfile
+module CdoTempfileStore
   require 'tempfile'
   @@_tempfiles           = []
   @@persistent_tempfiles = false
   @@N                    = 10000000
 
-  def MyTempfile.setPersist(value)
+  def CdoTempfileStore.setPersist(value)
     @@persistent_tempfiles = value
   end
 
-  def MyTempfile.path
+  def CdoTempfileStore.path
     unless @@persistent_tempfiles
       t = Tempfile.new(self.class.to_s)
       @@_tempfiles << t
@@ -478,7 +478,7 @@ module MyTempfile
     end
   end
 
-  def MyTempfile.showFiles
+  def CdoTempfileStore.showFiles
     @@_tempfiles.each {|f| print(f+" ") if f.kind_of? String}
   end
 end
