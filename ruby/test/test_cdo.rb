@@ -472,6 +472,12 @@ class TestCdo < Minitest::Test
                             {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
                             plotConf: {:yrange => '[0:1]'},title: 'r10x1') if @@show
     end
+
+    # opendap test - broken since 1.9.0
+    def test_opendap
+      ifile = 'https://www.esrl.noaa.gov/psd/thredds/dodsC/Datasets/cpc_global_precip/precip.1979.nc'
+      @cdo.sinfov(input: ifile)
+    end if @@debug
   end
 
   def test_env
