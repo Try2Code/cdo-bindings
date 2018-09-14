@@ -219,7 +219,7 @@ class Cdo(object):
     return operators # }}}
 
   # execute a single CDO command line {{{
-  def call(self,cmd,envOfCall={}):
+  def __call(self,cmd,envOfCall={}):
     if self.logging and '-h' != cmd[1]:
       self.logger.info(u' '.join(cmd))
 
@@ -255,7 +255,7 @@ class Cdo(object):
            ,"returncode" : proc.returncode} #}}}
 
   # error handling for CDO calls
-  def hasError(self,method_name,cmd,retvals): #{{{
+  def __hasError(self,method_name,cmd,retvals): #{{{
     if (self.debug):
       print("RETURNCODE:"+retvals["returncode"].__str__())
     if ( 0 != retvals["returncode"] ):
@@ -333,8 +333,8 @@ class Cdo(object):
           envOfCall[k] = v
 
       if operatorPrintsOut:
-        retvals = self.call(cmd,envOfCall)
-        if ( not self.hasError(method_name,cmd,retvals) ):
+        retvals = self.__call(cmd,envOfCall)
+        if ( not self.__hasError(method_name,cmd,retvals) ):
           r = list(map(strip,retvals["stdout"].split(os.linesep)))
           if "autoSplit" in kwargs:
             splitString = kwargs["autoSplit"]
@@ -358,8 +358,8 @@ class Cdo(object):
 
           cmd.append(kwargs["output"])
 
-          retvals = self.call(cmd,envOfCall)
-          if self.hasError(method_name,cmd,retvals):
+          retvals = self.__call(cmd,envOfCall)
+          if self.__hasError(method_name,cmd,retvals):
             if self.returnNoneOnError:
               return None
             else:
@@ -484,7 +484,7 @@ class Cdo(object):
 
     cmd = [path," -V",'>/dev/null 2>&1']
 
-    executable = (0 == self.call(cmd)["returncode"])
+    executable = (0 == self.__call(cmd)["returncode"])
     fullpath = (os.path.isfile(path) and os.access(path, os.X_OK))
 
     return (executable or fullpath)
@@ -494,7 +494,7 @@ class Cdo(object):
     if not self.hasCdo():
       return False
     if self.debug:
-      print(self.call([self.CDO,' -V']))
+      print(self.__call([self.CDO,' -V']))
     return True
 
   # change the CDO binary for the current object
