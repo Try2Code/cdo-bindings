@@ -271,11 +271,18 @@ class Cdo
     else
       force = @forceOutput if force.nil?
       if force or not File.exists?(output.to_s)
-        # create a tempfile if output is not given
-        output = @tempStore.newFile if output.nil?
+        # create tempfile(s) according to the number of output streams needed
+        # if output argument is missing
+        outputs = []
+        if output.nil? then
+          operators[operatorName].times { outputs << @tempStore.newFile}
+        else
+          outputs << output
+        end
+        #output = @tempStore.newFile if output.nil?
 
         #finalize the execution command
-        cmd << "#{output}"
+        cmd << "#{outputs.join(' ')}"
 
         retvals = _call(cmd,env)
 
@@ -287,7 +294,7 @@ class Cdo
           end
         end
       else
-        warn "Use existing file '#{output}'" if @debug
+        warn "Use existing file(s) '#{output}'" if @debug
       end
     end
 
@@ -300,7 +307,8 @@ class Cdo
     elsif /^split/.match(operatorName)
       Dir.glob("#{output}*")
     else
-      output
+      return output if outputs.size == 1
+      return outputs
     end
   end
 

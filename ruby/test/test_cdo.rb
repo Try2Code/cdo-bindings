@@ -324,7 +324,9 @@ class TestCdo < Minitest::Test
     # create input for eof
     #
     # check automatic generation ot two tempfiles
-    #
+    aFile, bFile = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100")
+    assert_equal(51.0,@cdo.outputkey('value',input: aFile)[-1].to_f)
+    assert_equal(44.0,@cdo.outputkey('value',input: bFile)[-1].to_f)
     # check usage of 'returnArray' with these operators
   end
   def test_tempdir
