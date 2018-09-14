@@ -307,7 +307,8 @@ class Cdo
     elsif not returnMaArray.nil?
       readMaArray(outputs[0],returnMaArray)
     elsif returnCdf or @returnCdf
-      readCdf(outputs[0])
+      retval = outputs.map{|f| readCdf(f)}
+      return 1 == retval.size ? retval[0] : retval
     elsif /^split/.match(operatorName)
       Dir.glob("#{output}*")
     else
