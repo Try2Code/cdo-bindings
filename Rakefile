@@ -21,6 +21,23 @@ def getCdoPackagesFromSpack
   modules = IO.popen(cmd).readlines.map(&:chomp)
 end
 
+desc "run each CDO binary from the regression tests"
+task :checkRegression do |t|
+  getCdoPackagesFromSpack.each {|spackModule|
+    cmd = [". #{SpackEnv}" ,
+           "module purge",
+           spackModule,
+           "cdo -V",
+           "module purge"].join(';')
+
+    sh cmd
+  }
+end
+desc "list spack modules available for regression testing"
+task :listRegressionModules do |t|
+  getCdoPackagesFromSpack.each {|mod| puts mod}
+end
+
 def pythonTest(name: nil,interpreter: PythonInterpreter)
   cmd = "cd python; #{interpreter} test/test_cdo.py"
   cmd << " CdoTest.#{name}" unless name.nil?
@@ -126,19 +143,6 @@ end
 desc "execute one/all test(s) with ruby or the given env: RubyInterpreter"
 task :testRuby, :name do |t,args|
   sh rubyTest(name: args.name)
-end
-
-task :checkRegression do |t|
-    @cdoPackages.each {|comp,cdoVersions|
-      cdoVersions.each {|cdoVersion|
-        cmd = [". #{SpackEnv}" ,
-               "spack load #{cdoVersion} %#{comp}",
-               "cdo -V",
-               "spack unload #{cdoVersion} %#{comp}"].join(';')
-        puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
-        sh cmd
-      }
-    }
 end
 
 task :default => :testRuby
