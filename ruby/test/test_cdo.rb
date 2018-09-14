@@ -327,7 +327,13 @@ class TestCdo < Minitest::Test
     aFile, bFile = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100")
     assert_equal(51.0,@cdo.outputkey('value',input: aFile)[-1].to_f)
     assert_equal(44.0,@cdo.outputkey('value',input: bFile)[-1].to_f)
-    # check usage of 'returnArray' with these operators
+    # check usage of 'returnCdf' with these operators
+    aFile, bFile = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100",returnCdf: true)
+    assert_equal(51.0, aFile.var('for').get.flatten[0],"got wrong value from cdf handle")
+    assert_equal(44.0, bFile.var('for').get.flatten[0],"got wrong value from cdf handle")
+
+    avar = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100",returnArray: 'for').flatten[0]
+    assert_equal(51.0, avar,"got wrong value from narray")
   end
   def test_tempdir
     # manual set path
