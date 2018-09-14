@@ -272,7 +272,7 @@ class Cdo(object):
 
   def __getattr__(self, method_name): # main method-call handling for Cdo-objects {{{
 
-    @auto_doc(method_name, self)
+    @auto_doc(method_name, self.CDO)
     def get(self, *args,**kwargs):
       operator          = [method_name]
       operatorPrintsOut = method_name in self.noOutputOperators
