@@ -462,7 +462,7 @@ class Cdo
 
 end
 #
-# Helper module for easy temp file handling
+# Helper module for easy temp file handling {{{
 class CdoTempfileStore
   # base for persitent temp files - just for debugging
   N = 10000000
@@ -506,6 +506,6 @@ class CdoTempfileStore
       File.file?(file) and File.owned?(file) and file.include?(@tag)
     }.each {|f| File.unlink(f)}
   end
-end
+end #}}}
 
 # vim: fdm=marker
