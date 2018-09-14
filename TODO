@@ -1,8 +1,0 @@
-some ideas for future work
-
-# Include some features of nco, to have one single interface for cdo *and* nco
-#* rename dimensions + variable _in-place_ with <pre>
-ncrename -d oldDim,newDim -v oldVar,newVar file</pre>
-#* delete vars in place with <pre>ncks -x -v var1,var2,var3 in.nc</pre>
-#* allow dimensions in expresseion with ncap2 like on http://nco.sourceforge.net/ncap2.in or <pre>ncap2 -s 's=lat*topo' topo.nc latTimesTopo.nc</pre>
-

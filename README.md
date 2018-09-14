@@ -166,7 +166,8 @@ Please use the forum or ticket system of CDOs official web page:
 http://code.zmaw.de/projects/cdo
 
 ## Changelog
-* next:
+* **1.4.0** API change :
+  - the ```operators``` atribute is no longer a list, but a dict (python) or hash (ruby) holding the number of output streams as value
   - use CDOs new (1.9.4) ```--config``` option for implementing propper reflection about the binary
   - finally fix #16 (missing tempfile generation for more than one output streams)
   - fix #19 (thx @pgierz for the input)
