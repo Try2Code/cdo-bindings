@@ -32,10 +32,15 @@ CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
 CDO_PY_VERSION  = "1.3.8"
 
-def auto_doc(tool, cdo_self):
+def auto_doc(tool, path2cdo):
   """Generate the __doc__ string of the decorated function by calling the cdo help command"""
   def desc(func):
-    func.__doc__ = cdo_self.call([cdo_self.CDO, '-h', tool]).get('stdout')
+    proc = subprocess.Popen('%s -h %s '%(path2cdo,tool),
+                            shell  = True,
+                            stderr = subprocess.PIPE,
+                            stdout = subprocess.PIPE)
+    retvals = proc.communicate()
+    func.__doc__ = retvals[0].decode("utf-8")
     return func
   return desc
 
