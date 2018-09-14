@@ -251,6 +251,12 @@ class Cdo
     # use an empty hash for non-given environment
     env = {} if env.nil?
 
+    # list of all output streams
+    outputs = []
+
+    # just collect given output(s)
+    outputs << output unless output.nil?
+
     case output
     when $stdout
       retvals = _call(cmd,env)
@@ -269,17 +275,15 @@ class Cdo
         end
       end
     else
+      # if operators was not called with output-forcing given, take the global switch
       force = @forceOutput if force.nil?
+
       if force or not File.exists?(output.to_s)
         # create tempfile(s) according to the number of output streams needed
         # if output argument is missing
-        outputs = []
         if output.nil? then
           operators[operatorName].times { outputs << @tempStore.newFile}
-        else
-          outputs << output
         end
-        #output = @tempStore.newFile if output.nil?
 
         #finalize the execution command
         cmd << "#{outputs.join(' ')}"
@@ -294,20 +298,20 @@ class Cdo
           end
         end
       else
-        warn "Use existing file(s) '#{output}'" if @debug
+        warn "Use existing file(s) '#{outputs.join(' ')}'" if @debug
       end
     end
 
     if not returnArray.nil?
-      readArray(output,returnArray)
+      readArray(outputs[0],returnArray)
     elsif not returnMaArray.nil?
-      readMaArray(output,returnMaArray)
+      readMaArray(outputs[0],returnMaArray)
     elsif returnCdf or @returnCdf
-      readCdf(output)
+      readCdf(outputs[0])
     elsif /^split/.match(operatorName)
       Dir.glob("#{output}*")
     else
-      return output if outputs.size == 1
+      return outputs[0] if outputs.size == 1
       return outputs
     end
   end
