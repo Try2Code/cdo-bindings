@@ -83,13 +83,27 @@ The default is false of cause.
 By default the return value of each call is the name of the output files (no matter if its a temporary file or not)
 
 #### Use temporary output files
+If the output key is left out, one or more (depending on the operator) temporary files are generated and used as return value(s). In a regular script or a regularly closed interactive session, these files are removed at the end automatically.
+
 ```ruby
     tminFile = cdo.timmin(input: ifile)  #ruby
 ```
 ```python
     tminFile = cdo.timmin(input = ifile) #python
 ```
-
+However these tempfiles remain if the session/script is killed with SIGKILL or if the bindings are used via Jupyter notebooks. Those session are usually long lasting and the heavy usage if tempfiles can easily fill the system tempdir - your system will become unusable then.
+The bindings offer two ways to cope with that
+* Set another directory for storing tempfiles with a constructor option and remove anything left in there when you experienced a crash or something like this
+```python
+   cdo = Cdo(tempdir=tempPath)      #python
+   cdo = Cdo.new(tempdir: tempPath) #ruby
+```
+* remove all tempfiles created by this or former usage of the cdo-bindings belonging to your current Unix-user with (taking into account user-defined ```tempdir``` from above
+```
+   cdo.cleanTempDir() #python
+   cdo.cleanTempDir   #ruby
+```
+   
 #### Operators with parameter
 ```ruby
     cdo.remap([gridfile,weightfile],input:   ifile, output: ofile)   #ruby
@@ -139,6 +153,8 @@ By default the return value of each call is the name of the output files (no mat
     t = cdo.fldmin(input = ifile,returnCdf = True).variables['T'][:]   #py, version >= 1.2.0
     t = cdo.fldmin(input = ifile,returnArray = 'T')                    #py, version >= 1.2.0
 ```
+
+Other options are so-called _masked arrays_ (use ```returnMaArray```) for ruby and python and XArray/XDataset for python-only: use ```returnXArray``` or ```returnXDataset``` for that.
 
 *) If you use scipy >= 0.14 as netcdf backend, you have to use following code
 instead to avoid possible segmentation faults:
