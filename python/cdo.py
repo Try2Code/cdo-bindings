@@ -298,8 +298,8 @@ class Cdo(object):
           or None != kwargs.get('returnArray') \
           or None != kwargs.get('returnMaArray') \
           or None != kwargs.get('returnXArray') \
-          or None != kwargs.get('returnCdf') \
-          or None != kwargs.get('returnMaArray')):
+          or None != kwargs.get('returnXDataset') \
+          or None != kwargs.get('returnCdf')):
         cmd.append('-f nc')
       if 'options' in kwargs:
         cmd += kwargs['options'].split()

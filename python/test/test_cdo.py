@@ -673,17 +673,17 @@ class CdoTest(unittest.TestCase):
 
     def test_cdiMeta(self):
       cdo = Cdo()
-      ofile = cdo.stdatm("0", options = "-f nc", returnCdf = True)
+      ofile = cdo.stdatm("0", returnCdf = True)
       if DEBUG:
         print(ofile)
-      ofile = cdo.stdatm("0", options = "-f nc4", returnCdf = True)
+      ofile = cdo.stdatm("0",  returnCdf = True)
       if DEBUG:
         print(ofile)
-      ofile = cdo.stdatm("0", options = "-f nc", returnXArray = 'T')
+      ofile = cdo.stdatm("0", returnXArray = 'T')
       if DEBUG:
         print(ofile)
         print(ofile.attrs)
-      ofile = cdo.stdatm("0", options = "-f nc", returnXDataset=True)
+      ofile = cdo.stdatm("0", returnXDataset=True)
       if DEBUG:
         print(ofile)
         print(ofile.attrs)
@@ -882,7 +882,7 @@ class CdoTest(unittest.TestCase):
           print("no xarray installation available!")
           return
 
-        tArray = cdo.topo('global_10.0',options = '-f nc',returnXArray = 'topo')
+        tArray = cdo.topo('global_10.0',returnXArray = 'topo')
         if DEBUG:
           print(tArray)
 
@@ -894,7 +894,7 @@ class CdoTest(unittest.TestCase):
           print("no xarray installation available!")
           return
 
-        tDataset = cdo.topo('global_10.0',options = '-f nc',returnXDataset = True)
+        tDataset = cdo.topo('global_10.0',returnXDataset = True)
         if DEBUG:
           print(tDataset)
 #===============================================================================
