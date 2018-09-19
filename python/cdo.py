@@ -30,7 +30,7 @@ except:
 
 CDF_MOD_SCIPY   = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
-CDO_PY_VERSION  = "1.3.8"
+CDO_PY_VERSION  = "1.4.0"
 
 def auto_doc(tool, path2cdo):
   """Generate the __doc__ string of the decorated function by calling the cdo help command"""
