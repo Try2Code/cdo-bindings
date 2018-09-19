@@ -302,6 +302,9 @@ class Cdo
       end
     end
 
+    # return data arrays instead - this is for now limitted to fields of the
+    # first output file. number from the second need only one addition line, so
+    # I think this is sufficient
     if not returnArray.nil?
       readArray(outputs[0],returnArray)
     elsif not returnMaArray.nil?
