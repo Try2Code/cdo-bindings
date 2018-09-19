@@ -709,6 +709,26 @@ class CdoTest(unittest.TestCase):
       self.assertEqual(0 ,cdo.operators['sinfo'],'wrong output counter for "sinfo"')
       self.assertEqual(-1,cdo.operators['splitsel'],'wrong output counter for "splitsel"')
       self.assertEqual(2 ,cdo.operators['trend'],'wrong output counter for "trend"')
+  
+      if (parse_version(cdo.version()) > parse_version('1.6.4')):
+        self.assertEqual(0,cdo.operators['ngridpoints'],'wrong output counter for "sinfo"')
+
+      # create input for eof
+      #
+      # check automatic generation ot two tempfiles
+      aFile, bFile = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100")
+      self.assertTrue(os.path.exists(aFile),"cannot find tempfile")
+      self.assertTrue(os.path.exists(bFile),"cannot find tempfile")
+      self.assertEqual(51.0,float(cdo.outputkey('value',input = aFile)[-1]))
+      self.assertEqual(44.0,float(cdo.outputkey('value',input = bFile)[-1]))
+      # check usage of 'returnCdf' with these operators
+      aFile, bFile = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnCdf = True)
+      self.assertEqual(51.0, aFile.variables['for'][0],"got wrong value from cdf handle")
+      self.assertEqual(44.0, bFile.variables['for'][0],"got wrong value from cdf handle")
+
+      avar = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnArray = 'for')[0]
+      self.assertEqual(51.0, avar,"got wrong value from narray")
+
 
     if MAINTAINERMODE:
 

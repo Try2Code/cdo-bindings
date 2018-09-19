@@ -279,9 +279,11 @@ class Cdo(object):
 
       self.envByCall = {}
 
+      # collect operator parameters and pad them to the operator name
       if args.__len__() != 0:
         for arg in args:
           operator.append(arg.__str__())
+      operatorCall = ','.join(operator)
 
       # Build the cdo command
       #0. the cdo command
@@ -296,13 +298,14 @@ class Cdo(object):
           or None != kwargs.get('returnArray') \
           or None != kwargs.get('returnMaArray') \
           or None != kwargs.get('returnXArray') \
+          or None != kwargs.get('returnCdf') \
           or None != kwargs.get('returnMaArray')):
         cmd.append('-f nc')
       if 'options' in kwargs:
         cmd += kwargs['options'].split()
 
       #3. operator(s)
-      cmd.append(','.join(operator))
+      cmd.append(operatorCall)
 
       #4. input files or operators
       if 'input' in kwargs:
@@ -332,6 +335,13 @@ class Cdo(object):
         for k,v in kwargs["env"].items():
           envOfCall[k] = v
 
+      # lsit of all outputs
+      outputs = []
+
+      # collect the given output
+      if None != kwargs.get("output"):
+        outputs.append(kwargs["output"])
+
       if operatorPrintsOut:
         retvals = self.__call(cmd,envOfCall)
         if ( not self.__hasError(method_name,cmd,retvals) ):
@@ -354,9 +364,10 @@ class Cdo(object):
         if kwargs["force"] or \
            (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
           if not kwargs.__contains__("output") or None == kwargs["output"]:
-            kwargs["output"] = self.tempStore.newFile()
+            for i in range(0,self.operators[method_name]):
+              outputs.append(self.tempStore.newFile())
 
-          cmd.append(kwargs["output"])
+          cmd.append(' '.join(outputs))
 
           retvals = self.__call(cmd,envOfCall)
           if self.__hasError(method_name,cmd,retvals):
@@ -372,25 +383,25 @@ class Cdo(object):
         kwargs["returnCdf"] = False
 
       if not None == kwargs.get("returnArray"):
-        return self.readArray(kwargs["output"],kwargs["returnArray"])
-
+        return self.readArray(outputs[0],kwargs["returnArray"])
       elif not None == kwargs.get("returnMaArray"):
-        return self.readMaArray(kwargs["output"],kwargs["returnMaArray"])
-
+        return self.readMaArray(outputs[0],kwargs["returnMaArray"])
       elif self.returnCdf or kwargs["returnCdf"]:
-        return self.readCdf(kwargs["output"])
-
+        if 1 == len(outputs):
+          return self.readCdf(outputs[0])
+        else:
+          return [self.readCdf(file) for file in outputs]
       elif loadedXarray and not None == kwargs.get("returnXArray"):
-        return self.readXArray(kwargs["output"],kwargs.get("returnXArray"))
-
+        return self.readXArray(outputs[0],kwargs.get("returnXArray"))
       elif loadedXarray and not None == kwargs.get("returnXDataset"):
-        return self.readXDataset(kwargs["output"])
-
+        return self.readXDataset(outputs[0])
       elif ('split' == method_name[0:5]):
         return glob.glob(kwargs["output"]+'*')
-
       else:
-        return kwargs["output"]
+        if (1 == len(outputs)):
+          return outputs[0]
+        else:
+          return outputs
 
     if ((method_name in self.__dict__) or (method_name in list(self.operators.keys()))):
       if self.debug:
