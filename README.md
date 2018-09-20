@@ -57,7 +57,7 @@ By default the cdo-bindings use the 'cdo' binary found in your $PATH variable. T
 * use the CDO environment variable to set the path to be used
 * use the python/ruby method ```cdo.setCdo('/path/to/the/CDO/executable/you/want')```. By this technique you can create different objects for different CDO versions.
 
-#### Debugging
+### Debugging
 
 For debugging purpose, both interfaces provide a "debug" attribute. If it is set to a boolian true, the complete commands and the return values will be printed during execution
 
