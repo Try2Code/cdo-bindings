@@ -323,14 +323,17 @@ class CdoTest(unittest.TestCase):
         cdo.debug = DEBUG
         topo = cdo.topo(returnMaArray='topo')
         self.assertEqual(-1890.0,round(topo.mean()))
+        self.assertEqual(259200,topo.count())
         bathy = cdo.setrtomiss(0,10000,
             input = cdo.topo(options='-f nc'),returnMaArray='topo')
-        print(bathy)
-        return
+        #print(bathy)
+        self.assertEqual(173565,bathy.count())
+
         self.assertEqual(-3386.0,round(bathy.mean()))
         oro = cdo.setrtomiss(-10000,0,
             input = cdo.topo(options='-f nc'),returnMaArray='topo')
         self.assertEqual(1142.0,round(oro.mean()))
+        self.assertEqual(85567,oro.count())
         bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnMaArray = 'topo')
         self.assertEqual(-4298.0,bathy[0,0])
         self.assertEqual(-2669.0,bathy[0,1])
