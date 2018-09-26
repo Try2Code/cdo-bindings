@@ -37,8 +37,7 @@ The following describes the basic features for both languages
 
 ### Run operators
 
-The Ruby module can be used directly after loading it. For python and ruby
-class interfaces an instance has to be created first
+Befor calling operators, you have to create an object first:
 
 ```ruby
     cdo = Cdo.new   #ruby
@@ -53,7 +52,7 @@ Please check the documentation for constructor paramaters. I try to have equal i
 
 By default the cdo-bindings use the 'cdo' binary found in your $PATH variable. To change that, you can
 
-* load a module before calling your script
+* load a module before calling your script(```module command``` or another package manager like ```conda``` or ```spack```)
 * use the CDO environment variable to set the path to be used
 * use the python/ruby method ```cdo.setCdo('/path/to/the/CDO/executable/you/want')```. By this technique you can create different objects for different CDO versions.
 
