@@ -105,6 +105,7 @@ class CdoTest(unittest.TestCase):
                 self.assertTrue(op in cdo.operators)
             else:
                 self.assertTrue(op in dir(cdo))
+        self.assertFalse('' in cdo.operators.keys())
 
     def test_allOperators(self):
         cdo = Cdo(cdfMod=CDF_MOD)
@@ -543,7 +544,7 @@ class CdoTest(unittest.TestCase):
         self.assertTrue(cdo.debug)
         cdo = Cdo(forceOutput=False)
         self.assertFalse(cdo.forceOutput)
-        cdo = Cdo(True,True, cdfMod=CDF_MOD)
+        cdo = Cdo('cdo',True,True, cdfMod=CDF_MOD)
         self.assertTrue(cdo.returnCdf)
         cdo.returnCdf = False
         self.assertTrue(not cdo.returnCdf)
