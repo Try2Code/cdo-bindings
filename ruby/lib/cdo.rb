@@ -46,8 +46,7 @@ class Cdo
                  debug: false,
                  tempdir: Dir.tmpdir,
                  logging: false,
-                 logFile: StringIO.new,
-                 )
+                 logFile: StringIO.new)
 
     # setup path to cdo executable
     @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
