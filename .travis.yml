@@ -17,24 +17,24 @@ before_install:
   - conda update -q conda
   - conda info -a
   - conda env create --file .travis-py2.7.yml
-  - conda update -n test_env_py27 --all
   - conda env create --file .travis-py3.6.yml
-  - conda update -n test_env_py36 --all
   - conda env create --file .travis-py3.7.yml
-  - conda update -n test_env_py37 --all
 script:
   - gem install narray narray_miss ruby-netcdf minitest rake colorize facets
   - source activate test_env_py27
+  - conda update --all
   - cdo -V
   - type -p cdo
   - python --version
   - rake testPython CDO=$(type -p cdo) NO_COLOR=1
   - source activate test_env_py36
+  - conda update --all
   - cdo -V
   - type -p cdo
   - python --version
   - rake testPython CDO=$(type -p cdo) NO_COLOR=1
   - source activate test_env_py37
+  - conda update --all
   - cdo -V
   - type -p cdo
   - python --version
