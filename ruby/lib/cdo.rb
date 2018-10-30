@@ -40,13 +40,14 @@ class Cdo
   def initialize(cdo: 'cdo',
                  returnCdf: false,
                  returnFalseOnError: false,
+                 returnNilOnError: false,
                  forceOutput: true,
                  env: {},
+                 debug: false,
                  tempdir: Dir.tmpdir,
                  logging: false,
                  logFile: StringIO.new,
-                 debug: false,
-                 returnNilOnError: false)
+                 )
 
     # setup path to cdo executable
     @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
@@ -59,7 +60,6 @@ class Cdo
     @env                    = env
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
     @returnNilOnError       = returnNilOnError
-
     @returnFalseOnError     = returnFalseOnError
 
     @tempStore              = CdoTempfileStore.new(tempdir)
