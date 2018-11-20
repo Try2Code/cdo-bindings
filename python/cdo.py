@@ -311,7 +311,7 @@ class Cdo(object):
 
       # 3. add operators
       #   collect operator parameters and pad them to the operator name
-      operator = [method_name]
+      operator = ['-'+method_name]
       if args.__len__() != 0:
         for arg in args:
           operator.append(arg.__str__())
