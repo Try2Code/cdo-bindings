@@ -286,40 +286,39 @@ class Cdo(object):
 
     @auto_doc(method_name, self.CDO)
     def get(self, *args, **kwargs):
-      operator = [method_name]
       operatorPrintsOut = method_name in self.noOutputOperators
 
       self.envByCall = {}
 
-      # collect operator parameters and pad them to the operator name
-      if args.__len__() != 0:
-        for arg in args:
-          operator.append(arg.__str__())
-      operatorCall = ','.join(operator)
-
       # Build the cdo command
-      # 0. the cdo command
+      # 0. the cdo command itself
       cmd = [self.CDO]
 
       # 1. OVERWRITE EXISTING FILES
       cmd.append('-O')
 
-      # 2. options
+      # 2. set the options
       # switch to netcdf output in case of numpy/xarray usage
       if (self.returnCdf
           or None != kwargs.get('returnArray')
           or None != kwargs.get('returnMaArray')
           or None != kwargs.get('returnXArray')
           or None != kwargs.get('returnXDataset')
-              or None != kwargs.get('returnCdf')):
+          or None != kwargs.get('returnCdf')):
         cmd.append('-f nc')
       if 'options' in kwargs:
         cmd += kwargs['options'].split()
 
-      # 3. operator(s)
+      # 3. add operators
+      #   collect operator parameters and pad them to the operator name
+      operator = [method_name]
+      if args.__len__() != 0:
+        for arg in args:
+          operator.append(arg.__str__())
+      operatorCall = ','.join(operator)
       cmd.append(operatorCall)
 
-      # 4. input files or operators
+      # 4. input files or other operators
       if 'input' in kwargs:
         if isinstance(kwargs["input"], six.string_types):
           cmd.append(kwargs["input"])
@@ -347,7 +346,7 @@ class Cdo(object):
         for k, v in kwargs["env"].items():
           envOfCall[k] = v
 
-      # lsit of all outputs
+      # 7. output handling: use given outputs or create temporary files
       outputs = []
 
       # collect the given output
