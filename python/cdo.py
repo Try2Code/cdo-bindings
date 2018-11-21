@@ -10,17 +10,34 @@ from io import StringIO
 import logging as pyLog
 import six
 
+# workaround for python2/3 string handling {{{
 try:
-    from string import strip
+  from string import strip
 except ImportError:
-    strip = str.strip
+  strip = str.strip
+#}}}
 
-try:
+# {{{ attempt to load optional libraries: netcdf-IO + XArray
+# numpy is a dependency of both, so no need to check that 
+def loadOptionalLibs():
+  loadedXarray = False
+  loadedNetcdf = False
+
+  try:
     import xarray
     loadedXarray = True
-except:
-    print("Could not load xarray")
-    loadedXarray = False
+  except:
+    print("-->> Could not load xarray!! <<--")
+
+  try:
+    from netCDF4 import Dataset as cdf
+    loadedNetcdf = True
+    import numpy as np
+  except:
+    print("-->> Could not load netCDF4! <<--")
+
+  return (loadedXarray, loadedNetcdf)
+#}}}
 
 # Copyright (C) 2011-2018 Ralf Mueller, ralf.mueller@mpimet.mpg.de
 # See COPYING file for copying and redistribution conditions.
@@ -34,8 +51,6 @@ except:
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-CDF_MOD_SCIPY = "scipy"
-CDF_MOD_NETCDF4 = "netcdf4"
 CDO_PY_VERSION = "1.4.1"
 
 # build interactive documentation: help(cdo.sinfo) {{{
@@ -119,10 +134,8 @@ class Cdo(object):
 
   def __init__(self,
                cdo='cdo',
-               returnCdf=False,
                returnNoneOnError=False,
                forceOutput=True,
-               cdfMod=CDF_MOD_NETCDF4,
                env=os.environ,
                debug=False,
                tempdir=tempfile.gettempdir(),
@@ -136,7 +149,6 @@ class Cdo(object):
 
     self.operators = self.getOperators()
     self.noOutputOperators = [op for op in self.operators.keys() if 0 == self.operators[op]]
-    self.returnCdf = returnCdf
     self.returnNoneOnError = returnNoneOnError
     self.tempStore = CdoTempfileStore(dir=tempdir)
     self.forceOutput = forceOutput
@@ -144,10 +156,12 @@ class Cdo(object):
     self.debug = True if 'DEBUG' in os.environ else debug
     self.libs = self.getSupportedLibs()
 
-    # netcdf IO {{{
-    self.cdfMod = cdfMod.lower()
-    self.cdf = None
-    self.loadCdf()  # load netcdf lib if possible and set self.cdf }}}
+    # optional IO libraries for additional return types {{{
+    self.hasXArray, self.hasNetcdf = loadOptionalLibs()
+    if self.hasNetcdf:
+      self.cdf = cdf
+    else:
+      self.cdf = None
 
     self.logging = logging  # internal logging {{{
     self.logFile = logFile
@@ -300,8 +314,7 @@ class Cdo(object):
 
       # 2. set the options
       # switch to netcdf output in case of numpy/xarray usage
-      if (self.returnCdf
-          or None != kwargs.get('returnArray')
+      if (   None != kwargs.get('returnArray')
           or None != kwargs.get('returnMaArray')
           or None != kwargs.get('returnXArray')
           or None != kwargs.get('returnXDataset')
@@ -400,7 +413,7 @@ class Cdo(object):
       elif not None == kwargs.get("returnMaArray"):
         return self.readMaArray(outputs[0], kwargs["returnMaArray"])
 
-      elif self.returnCdf or kwargs["returnCdf"]:
+      elif kwargs["returnCdf"]:
         if 1 == len(outputs):
           return self.readCdf(outputs[0])
         else:
@@ -436,26 +449,6 @@ class Cdo(object):
         raise AttributeError("Unknown method '" + method_name + "'!")
   # }}}
 
-  # try to load netcdf IO library {{{
-  def loadCdf(self):
-    if self.cdfMod == CDF_MOD_SCIPY:
-      try:
-        from scipy.io.netcdf import netcdf_file as cdf
-        self.cdf = cdf
-      except:
-        print("Could not load scipy.io.netcdf")
-        raise
-
-    elif self.cdfMod == CDF_MOD_NETCDF4:
-      try:
-        from netCDF4 import Dataset as cdf
-        self.cdf = cdf
-      except:
-        print("Could not load netCDF4")
-        raise
-    else:
-      raise ImportError("scipy or python-netcdf4 module is required to return numpy arrays.")
-    #}}}
 
   def getSupportedLibs(self, force=False):
     proc = subprocess.Popen(self.CDO + ' -V',
@@ -488,12 +481,6 @@ class Cdo(object):
       libraries[l.lower()] = v
 
     return libraries
-
-  def setReturnArray(self, value=True):
-    self.returnCdf = value
-
-  def unsetReturnArray(self):
-    self.setReturnArray(False)
 
   def collectLogs(self):
     if isinstance(self.logFile, six.string_types):
@@ -592,31 +579,20 @@ class Cdo(object):
 
     return delta_levels
 
-  def readCdf(self, iFile):
-    """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:scipy)"""
-    try:
-      fileObj = self.cdf(iFile, mode='r')
-    except:
-      print("Could not import data from file '%s'" % iFile)
+  def readCdf(self, iFile, mode='r'):
+    """Return a cdf handle created by the available cdf library"""
+    if self.hasNetcdf:
+      fileObj = self.cdf(iFile, mode=mode)
+    else
+      print("Could not import data from file '%s' (python-netCDF4)" % iFile)
       raise
-    else:
-      return fileObj
-
-  def openCdf(self, iFile):
-    """Return a cdf handle created by the available cdf library. python-netcdf4 and scipy suported (default:netcdf4)"""
-    try:
-      fileObj = self.cdf(iFile, mode='r+')
-    except:
-      print("Could not import data from file '%s'" % iFile)
-      raise
-    else:
-      return fileObj
+    return fileObj
 
   def readArray(self, iFile, varname):
     """Direcly return a numpy array for a given variable name"""
     filehandle = self.readCdf(iFile)
     try:
-      # return the data array
+      # return the data array for given variable name
       return filehandle.variables[varname][:].copy()
     except KeyError:
       print("Cannot find variable '%s'" % varname)
@@ -626,14 +602,11 @@ class Cdo(object):
     """Create a masked array based on cdf's FillValue"""
     fileObj = self.readCdf(iFile)
 
-    # .data is not backwards compatible to old scipy versions, [:] is
-    data = fileObj.variables[varname][:].copy()
-
-    # load numpy if available
-    try:
-      import numpy as np
-    except:
-      raise ImportError("numpy is required to return masked arrays.")
+    if not varname in fileObj.variables:
+      raise KeyError:
+        print("Cannot find variables '%s'" % varname)
+    else:
+      data = fileObj.variables[varname][:].copy()
 
     if hasattr(fileObj.variables[varname], '_FillValue'):
       # return masked array
@@ -645,14 +618,14 @@ class Cdo(object):
     return retval
 
   def readXArray(self, ifile, varname):
-    if (not loadedXarray):
+    if not self.hasXarray:
       raise ImportError("Could not load XArray")
 
     dataSet = xarray.open_dataset(ifile)
     return dataSet[varname]
 
   def readXDataset(self, ifile):
-    if (not loadedXarray):
+    if (not self.hasXarray):
       raise ImportError("Could not load XArray")
     return xarray.open_dataset(ifile)
 
