@@ -189,6 +189,12 @@ Please use the forum or ticket system of CDOs official web page:
 http://code.zmaw.de/projects/cdo
 
 ## Changelog
+* **1.5.0** API change :
+  - simplify the interface:
+    - remove returnCdf from constructor, only use it with operator calls
+    - remove methods setReturnArray/unsetReturnArray: I fear it's not used anyway, but 'returnArray' in each call
+    - remove the optional dependency to scipy since it offers less functionality than netCDF4 and just blows up the code
+    - new attributes: hasNetcdf, hasXArray for checking for the respective support
 * **1.4.0** API change :
   - the ```operators``` atribute is no longer a list, but a dict (python) or hash (ruby) holding the number of output streams as value
   - finally fix #16 (missing tempfile generation for more than one output streams)
