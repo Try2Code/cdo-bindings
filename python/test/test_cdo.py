@@ -51,7 +51,7 @@ class CdoTest(unittest.TestCase):
 
     def testVersions(self):
         cdo = Cdo()
-        self.assertEqual('1.4.0',cdo.__version__())
+        self.assertEqual('1.5.0',cdo.__version__())
         self.assertTrue(parse_version('1.7.0') <= parse_version(cdo.version()))
 
     def testCDO(self):
@@ -223,7 +223,7 @@ class CdoTest(unittest.TestCase):
         self.assertEqual(outs[0],outs[1])
         os.remove(ofile)
         outs = []
- 
+
         # dedicated output, force = false
         ofile = 'test_force_false'
         outs.append(cdo.stdatm("0,10,20",output = ofile,force=False))
@@ -260,12 +260,8 @@ class CdoTest(unittest.TestCase):
     def test_cdf(self):
         cdo = Cdo()
         self.assertTrue(hasattr(cdo, "cdf"))# not in cdo.__dict__)
-        cdo.setReturnArray()
-        self.assertTrue(hasattr(cdo, "cdf"))#"cdf" in cdo.__dict__)
-        cdo.setReturnArray(False)
         sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
         self.assertEqual(1013.25,sum.variables["P"][:])
-        cdo.unsetReturnArray()
 
     def test_thickness(self):
         cdo = Cdo()
@@ -276,22 +272,22 @@ class CdoTest(unittest.TestCase):
     def test_showlevels(self):
         cdo = Cdo()
         sourceLevels = "25 100 250 500 875 1400 2100 3000 4000 5000".split()
-        self.assertEqual(' '.join(sourceLevels), 
-                        cdo.showlevel(input = "-selname,T " + cdo.stdatm(','.join(sourceLevels),options = "-f nc"))[0]) 
+        self.assertEqual(' '.join(sourceLevels),
+                        cdo.showlevel(input = "-selname,T " + cdo.stdatm(','.join(sourceLevels),options = "-f nc"))[0])
 
     def test_verticalLevels(self):
         cdo = Cdo()
         # check, if a given input files has vertival layers of a given thickness array
         targetThicknesses = [50.0,  100.0,  200.0,  300.0,  450.0,  600.0,  800.0, 1000.0, 1000.0, 1000.0]
         sourceLevels = "25 100 250 500 875 1400 2100 3000 4000 5000".split()
-        thicknesses = cdo.thicknessOfLevels(input = "-selname,T " + cdo.stdatm(','.join(sourceLevels),options = "-f nc")) 
+        thicknesses = cdo.thicknessOfLevels(input = "-selname,T " + cdo.stdatm(','.join(sourceLevels),options = "-f nc"))
         self.assertEqual(targetThicknesses,thicknesses)
 
 
     def test_returnArray(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        self.assertEqual(False, cdo.stdatm(0, returnArray = 'TT'))
+        self.assertRaises(LookupError, cdo.stdatm,0, returnArray = 'TT')
         temperature = cdo.stdatm(0,returnArray = 'T')
         self.assertEqual(288.0,temperature.flatten()[0])
 #TODO       pressure = cdo.stdatm("0,1000",options = '-f nc -b F64',returnArray = 'P')
@@ -328,39 +324,36 @@ class CdoTest(unittest.TestCase):
     def test_returnXDataset(self):
         cdo = Cdo()
         self.assertTrue(hasattr(cdo, "cdf"))# not in cdo.__dict__)
-        cdo.setReturnArray()
-        self.assertTrue(hasattr(cdo, "cdf"))#"cdf" in cdo.__dict__)
-        cdo.setReturnArray(False)
         sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnXDataset=True)
         self.assertEqual(1013.25,sum.variables["P"][:])
-        cdo.unsetReturnArray()
 
     def test_returnXArray(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        topo = cdo.topo(options='-f nc',returnXArray='topo')
-        self.assertEqual(-1889,int(topo.mean()))
-        self.assertEqual(259200,topo.count())
+        if (cdo.hasXarray):
+          topo = cdo.topo(options='-f nc',returnXArray='topo')
+          self.assertEqual(-1889,int(topo.mean()))
+          self.assertEqual(259200,topo.count())
 
-        bathy = cdo.setrtomiss(0,10000,
-            input = cdo.topo(options='-f nc'),returnXArray='topo')
-        self.assertEqual(-3385,int(bathy.mean()))
-        self.assertEqual(173565,bathy.count())
-        oro = cdo.setrtomiss(-10000,0,
-            input = cdo.topo(options='-f nc'),returnXArray='topo')
-        self.assertEqual(1142,int(oro.mean()))
-        self.assertEqual(85567,oro.count())
-        bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnXArray = 'topo')
-        self.assertEqual(-4298.0,bathy[0,0])
-        self.assertEqual(-2669.0,bathy[0,1])
-        ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
-        tb = cdo.subc(-2669.0,input = ta)
-        withMask = cdo.div(input=ta+" "+tb,returnXArray='topo')
-        from xarray import DataArray
-        self.assertEqual(False,DataArray.to_masked_array(withMask).mask[0,0])
-        self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,0])
-        self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,1])
-        self.assertEqual(True,DataArray.to_masked_array(withMask).mask[0,1])
+          bathy = cdo.setrtomiss(0,10000,
+              input = cdo.topo(options='-f nc'),returnXArray='topo')
+          self.assertEqual(-3385,int(bathy.mean()))
+          self.assertEqual(173565,bathy.count())
+          oro = cdo.setrtomiss(-10000,0,
+              input = cdo.topo(options='-f nc'),returnXArray='topo')
+          self.assertEqual(1142,int(oro.mean()))
+          self.assertEqual(85567,oro.count())
+          bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnXArray = 'topo')
+          self.assertEqual(-4298.0,bathy[0,0])
+          self.assertEqual(-2669.0,bathy[0,1])
+          ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
+          tb = cdo.subc(-2669.0,input = ta)
+          withMask = cdo.div(input=ta+" "+tb,returnXArray='topo')
+          from xarray import DataArray
+          self.assertEqual(False,DataArray.to_masked_array(withMask).mask[0,0])
+          self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,0])
+          self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,1])
+          self.assertEqual(True,DataArray.to_masked_array(withMask).mask[0,1])
 
     def test_xarray_input(self):
       cdo = Cdo()
@@ -523,9 +516,6 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo(forceOutput=False)
         self.assertFalse(cdo.forceOutput)
         cdo = Cdo('cdo',True,True)
-        self.assertTrue(cdo.returnCdf)
-        cdo.returnCdf = False
-        self.assertTrue(not cdo.returnCdf)
         self.assertTrue(cdo.returnNoneOnError)
 
     def test_env(self):
@@ -594,17 +584,6 @@ class CdoTest(unittest.TestCase):
 
         cdo.debug = DEBUG
         rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
-        cdf  = cdo.openCdf(rand)
-        var  = cdf.variables['v']
-        vals = var[:]
-        ni,nj = np.shape(vals)
-        for i in range(0,ni):
-          for j in range(0,nj):
-            vals[i,j] = np.abs((ni/2-i)**2 + (nj/2-j)**2)
-
-        vals = vals/np.abs(vals).max()
-        var[:] = vals
-        cdf.close()
 
         missRange = '0.25,0.85'
         withMissRange = 'test_withMissRange.nc'
@@ -725,7 +704,7 @@ class CdoTest(unittest.TestCase):
       self.assertEqual(0 ,cdo.operators['sinfo'],'wrong output counter for "sinfo"')
       self.assertEqual(-1,cdo.operators['splitsel'],'wrong output counter for "splitsel"')
       self.assertEqual(2 ,cdo.operators['trend'],'wrong output counter for "trend"')
-  
+
       if (parse_version(cdo.version()) > parse_version('1.6.4')):
         self.assertEqual(0,cdo.operators['ngridpoints'],'wrong output counter for "sinfo"')
 
