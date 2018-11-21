@@ -36,11 +36,14 @@ except:
 
 CDF_MOD_SCIPY = "scipy"
 CDF_MOD_NETCDF4 = "netcdf4"
-CDO_PY_VERSION = "1.4.0"
+CDO_PY_VERSION = "1.4.1"
 
-
+# build interactive documentation: help(cdo.sinfo) {{{
 def auto_doc(tool, path2cdo):
-  """Generate the __doc__ string of the decorated function by calling the cdo help command"""
+  """Generate the __doc__ string of the decorated function by calling the cdo help command
+  use like this:
+    c = cdo.Cdo()
+    help(c.sinfov)"""
   def desc(func):
     proc = subprocess.Popen('%s -h %s ' % (path2cdo, tool),
                             shell=True,
@@ -50,8 +53,9 @@ def auto_doc(tool, path2cdo):
     func.__doc__ = retvals[0].decode("utf-8")
     return func
   return desc
+#}}}
 
-
+# some helper functions without side effects {{{
 def getCdoVersion(path2cdo, verbose=False):
   proc = subprocess.Popen([path2cdo, '-V'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
   ret = proc.communicate()
@@ -60,7 +64,6 @@ def getCdoVersion(path2cdo, verbose=False):
     return cdo_help
   match = re.search("Climate Data Operators version (\d.*) .*", cdo_help)
   return match.group(1)
-
 
 def setupLogging(logFile):
   logger = pyLog.getLogger(__name__)
@@ -76,10 +79,9 @@ def setupLogging(logFile):
   logger.addHandler(handler)
 
   return logger
+#}}}
 
 # extra execptions for CDO {{{
-
-
 class CDOException(Exception):
 
   def __init__(self, stdout, stderr, returncode):
@@ -94,10 +96,9 @@ class CDOException(Exception):
 # }}}
 
 # MAIN Cdo class {{{
-
-
 class Cdo(object):
 
+  # fallback operator lists {{{
   NoOutputOperators = 'cdiread cmor codetab conv_cmor_table diff diffc diffn \
   diffp diffv dump_cmor_table dumpmap filedes gmtcells gmtxyz gradsdes griddes \
   griddes2 gridverify info infoc infon infop infos infov map ncode ndate \
@@ -114,7 +115,7 @@ class Cdo(object):
   eofspatial eof3dtime eof3dspatial eof3d eof complextorect complextopol'.split()
   MoreOutputOperators = 'distgrid eofcoeff eofcoeff3d intyear scatter splitcode \
   splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec \
-  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split()
+  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split() #}}}
 
   def __init__(self,
                cdo='cdo',
@@ -395,19 +396,26 @@ class Cdo(object):
 
       if not None == kwargs.get("returnArray"):
         return self.readArray(outputs[0], kwargs["returnArray"])
+
       elif not None == kwargs.get("returnMaArray"):
         return self.readMaArray(outputs[0], kwargs["returnMaArray"])
+
       elif self.returnCdf or kwargs["returnCdf"]:
         if 1 == len(outputs):
           return self.readCdf(outputs[0])
         else:
           return [self.readCdf(file) for file in outputs]
+
       elif loadedXarray and not None == kwargs.get("returnXArray"):
         return self.readXArray(outputs[0], kwargs.get("returnXArray"))
+
       elif loadedXarray and not None == kwargs.get("returnXDataset"):
         return self.readXDataset(outputs[0])
+
       elif ('split' == method_name[0:5]):
         return glob.glob(kwargs["output"] + '*')
+
+      # default: return filename (given or tempfile)
       else:
         if (1 == len(outputs)):
           return outputs[0]
@@ -428,6 +436,7 @@ class Cdo(object):
         raise AttributeError("Unknown method '" + method_name + "'!")
   # }}}
 
+  # try to load netcdf IO library {{{
   def loadCdf(self):
     if self.cdfMod == CDF_MOD_SCIPY:
       try:
@@ -446,6 +455,7 @@ class Cdo(object):
         raise
     else:
       raise ImportError("scipy or python-netcdf4 module is required to return numpy arrays.")
+    #}}}
 
   def getSupportedLibs(self, force=False):
     proc = subprocess.Popen(self.CDO + ' -V',
@@ -635,12 +645,18 @@ class Cdo(object):
     return retval
 
   def readXArray(self, ifile, varname):
+    if (not loadedXarray):
+      raise ImportError("Could not load XArray")
+
     dataSet = xarray.open_dataset(ifile)
     return dataSet[varname]
 
   def readXDataset(self, ifile):
+    if (not loadedXarray):
+      raise ImportError("Could not load XArray")
     return xarray.open_dataset(ifile)
 
+  # internal helper methods:
   # return internal cdo.py version
   def __version__(self):
     return CDO_PY_VERSION
@@ -653,8 +669,6 @@ class Cdo(object):
 # }}}
 
 # Helper module for easy temp file handling {{{
-
-
 class CdoTempfileStore(object):
 
   __tempfiles = []
