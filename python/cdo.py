@@ -402,27 +402,33 @@ class Cdo(object):
           if self.debug:
             print(("Use existing file'" + kwargs["output"] + "'"))
 
+      # defaults for file handles as return values
       if not kwargs.__contains__("returnCdf"):
         kwargs["returnCdf"] = False
+      if not kwargs.__contains__("returnXDataset"):
+        kwargs["returnXDataset"] = False
 
-      if not None == kwargs.get("returnArray"):
+      # return data arrays
+      if None != kwargs.get("returnArray"):
         return self.readArray(outputs[0], kwargs["returnArray"])
-
-      elif not None == kwargs.get("returnMaArray"):
+      elif None != kwargs.get("returnMaArray"):
         return self.readMaArray(outputs[0], kwargs["returnMaArray"])
+      elif None != kwargs.get("returnXArray"):
+        return self.readXArray(outputs[0], kwargs.get("returnXArray"))
 
+      # return files handles (or lists of them)
       elif kwargs["returnCdf"]:
         if 1 == len(outputs):
           return self.readCdf(outputs[0])
         else:
           return [self.readCdf(file) for file in outputs]
+      elif kwargs["returnXDataset"]:
+        if 1 == len(outputs):
+          return self.readXDataset(outputs[0])
+        else:
+          return [self.readXDataset(file) for file in outputs]
 
-      elif self.hasXarray and not None == kwargs.get("returnXArray"):
-        return self.readXArray(outputs[0], kwargs.get("returnXArray"))
-
-      elif self.hasXarray and not None == kwargs.get("returnXDataset"):
-        return self.readXDataset(outputs[0])
-
+      # handle split-operator outputs
       elif ('split' == method_name[0:5]):
         return glob.glob(kwargs["output"] + '*')
 

@@ -203,7 +203,6 @@ class CdoTest(unittest.TestCase):
           self.assertRaises(ImportError,cdo.stdatm,0,returnCdf=True)
         rm([ofile,])
 
-
     def test_forceOutput(self):
         cdo = Cdo()
         cdo.debug = DEBUG
@@ -336,9 +335,13 @@ class CdoTest(unittest.TestCase):
 
     def test_returnXDataset(self):
         cdo = Cdo()
-        self.assertTrue(hasattr(cdo, "cdf"))# not in cdo.__dict__)
-        sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnXDataset=True)
-        self.assertEqual(1013.25,sum.variables["P"][:])
+        if cdo.hasXarray:
+          sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnXDataset=True)
+          self.assertEqual(1013.25,sum.variables["P"][:])
+        else:
+          self.assertRaises(ImportError,
+              cdo.fldsum,
+              input = '-topo',returnXDataset=True)
 
     def test_returnXArray(self):
         cdo = Cdo()
