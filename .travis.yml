@@ -27,7 +27,7 @@ script:
   - type -p cdo
   - python --version
   - rake testPython CDO=$(type -p cdo) NO_COLOR=1
-  - if test '5' = "$(ruby --version | cut -d ' ' -f 2 | cut -d '.' -f 2)"; then pip uninstall netCDF4 xarray ; rake testPython CDO=$(type -p cdo) NO_COLOR=1; fi
+  - if test '5' = "$(ruby --version | cut -d ' ' -f 2 | cut -d '.' -f 2)"; then pip uninstall -y netCDF4 xarray -y ; rake testPython CDO=$(type -p cdo) NO_COLOR=1; fi
   - source activate test_env_py36
   - conda update --all
   - cdo -V
@@ -40,5 +40,5 @@ script:
   - type -p cdo
   - python --version
   - rake testPython CDO=$(type -p cdo) NO_COLOR=1
-  - if test '5' = "$(ruby --version | cut -d ' ' -f 2 | cut -d '.' -f 2)"; then pip uninstall netCDF4 xarray ; rake testPython CDO=$(type -p cdo) NO_COLOR=1; fi
+  - if test '5' = "$(ruby --version | cut -d ' ' -f 2 | cut -d '.' -f 2)"; then pip uninstall -y netCDF4 xarray; rake testPython CDO=$(type -p cdo) NO_COLOR=1; fi
   - rake testRuby   CDO=$(type -p cdo) NO_COLOR=1
