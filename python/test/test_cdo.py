@@ -199,9 +199,9 @@ class CdoTest(unittest.TestCase):
           self.assertEqual(1013.25,press.min())
           press = cdo.stdatm("0",output=ofile,options="-f nc")
           self.assertEqual(ofile,press)
-          rm([ofile,])
         else:
           self.assertRaises(ImportError,cdo.stdatm,0,returnCdf=True)
+        rm([ofile,])
 
 
     def test_forceOutput(self):
@@ -293,11 +293,15 @@ class CdoTest(unittest.TestCase):
     def test_returnArray(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        self.assertRaises(LookupError, cdo.stdatm,0, returnArray = 'TT')
-        temperature = cdo.stdatm(0,returnArray = 'T')
-        self.assertEqual(288.0,temperature.flatten()[0])
+        if cdo.hasNetcdf:
+          self.assertRaises(LookupError, cdo.stdatm,0, returnArray = 'TT')
+          temperature = cdo.stdatm(0,returnArray = 'T')
+          self.assertEqual(288.0,temperature.flatten()[0])
 #TODO       pressure = cdo.stdatm("0,1000",options = '-f nc -b F64',returnArray = 'P')
 #TODO       self.assertEqual("[ 1013.25         898.54345604]",pressure.flatten().__str__())
+        else:
+          self.assertRaises(ImportError, cdo.stdatm,0, returnArray = 'TT')
+          self.assertRaises(ImportError, cdo.stdatm,0, returnArray = 'T')
 
     def test_returnMaArray(self):
         cdo = Cdo()
@@ -604,33 +608,37 @@ class CdoTest(unittest.TestCase):
 
     def test_fillmiss(self):
         cdo = Cdo()
-        if 'CDO' in os.environ:
-          cdo.setCdo(os.environ.get('CDO'))
 
-        cdo.debug = DEBUG
-        rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
+        if cdo.hasNetcdf:
+          if 'CDO' in os.environ:
+            cdo.setCdo(os.environ.get('CDO'))
 
-        missRange = '0.25,0.85'
-        withMissRange = 'test_withMissRange.nc'
-        arOrg = cdo.copy(input = rand,returnMaArray = 'v')
-        arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
-        arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
-        arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
-        if 'setmisstonn' in cdo.operators:
-          arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
+          cdo.debug = DEBUG
+          rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
 
-        pool = multiprocessing.Pool(8)
-        pool.apply_async(plot, (arOrg, ),{"title":'org'      })#ofile='fmOrg')
-        pool.apply_async(plot, (arWmr, ),{"title":'missing'  })#ofile='fmWmr')
-        pool.apply_async(plot, (arFm,  ),{"title":'fillmiss' })#ofile= 'fmFm')
-        pool.apply_async(plot, (arFm1s,),{"title":'fillmiss2'})#ofile='fmFm2')
-        if 'setmisstonn' in cdo.operators:
-          pool.apply_async(plot, (arM2NN,), {"title":'setmisstonn'})#, ofile='fmsetMNN')
+          missRange = '0.25,0.85'
+          withMissRange = 'test_withMissRange.nc'
+          arOrg = cdo.copy(input = rand,returnMaArray = 'v')
+          arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
+          arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
+          arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
+          if 'setmisstonn' in cdo.operators:
+            arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
 
-        pool.close()
-        pool.join()
+          pool = multiprocessing.Pool(8)
+          pool.apply_async(plot, (arOrg, ),{"title":'org'      })#ofile='fmOrg')
+          pool.apply_async(plot, (arWmr, ),{"title":'missing'  })#ofile='fmWmr')
+          pool.apply_async(plot, (arFm,  ),{"title":'fillmiss' })#ofile= 'fmFm')
+          pool.apply_async(plot, (arFm1s,),{"title":'fillmiss2'})#ofile='fmFm2')
+          if 'setmisstonn' in cdo.operators:
+            pool.apply_async(plot, (arM2NN,), {"title":'setmisstonn'})#, ofile='fmsetMNN')
 
-        rm([rand])
+          pool.close()
+          pool.join()
+
+          rm([rand])
+        else:
+          print("test_fillmiss disables because of missing python-netCDF4")
 
     def test_keep_coordinates(self):
         cdo = Cdo()
@@ -696,20 +704,19 @@ class CdoTest(unittest.TestCase):
 
     def test_cdiMeta(self):
       cdo = Cdo()
-      ofile = cdo.stdatm("0", returnCdf = True)
-      if DEBUG:
-        print(ofile)
-      ofile = cdo.stdatm("0",  returnCdf = True)
-      if DEBUG:
-        print(ofile)
-      ofile = cdo.stdatm("0", returnXArray = 'T')
-      if DEBUG:
-        print(ofile)
-        print(ofile.attrs)
-      ofile = cdo.stdatm("0", returnXDataset=True)
-      if DEBUG:
-        print(ofile)
-        print(ofile.attrs)
+      if cdo.hasNetcdf:
+        ofile = cdo.stdatm("0", returnCdf = True)
+        if DEBUG:
+          print(ofile)
+      if cdo.hasXarray:
+        ofile = cdo.stdatm("0", returnXArray = 'T')
+        if DEBUG:
+          print(ofile)
+          print(ofile.attrs)
+        ofile = cdo.stdatm("0", returnXDataset=True)
+        if DEBUG:
+          print(ofile)
+          print(ofile.attrs)
 
     def testTempdir(self):
       # manual set path
@@ -782,41 +789,46 @@ class CdoTest(unittest.TestCase):
 
       def test_longChain(self):
         cdo = Cdo()
-        ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
-        t = cdo.fldmax(input="-div -sub -timmean -seltimestep,2,3 %s -seltimestep,1 %s -gridarea %s"%(ifile,ifile,ifile),
-            returnMaArray="t")
-        self.assertTrue(abs(8.9813e-09 - t[0][0][0]) < 1.0e-10, 'Found non-zero diff')
+        if cdo.hasNetcdf:
+          ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
+          t = cdo.fldmax(input="-div -sub -timmean -seltimestep,2,3 %s -seltimestep,1 %s -gridarea %s"%(ifile,ifile,ifile),
+              returnMaArray="t")
+          self.assertTrue(abs(8.9813e-09 - t[0][0][0]) < 1.0e-10, 'Found non-zero diff')
 
       def test_icon_coords(self):
         cdo = Cdo()
-        ifile = DATA_DIR +'/icon/oce_AquaAtlanticBoxACC.nc'
-        ivar  = 't_acc'
-        varIn = cdo.readCdf(ifile)
-        varIn = varIn.variables[ivar]
-        expected =  u'clon clat'
-        self.assertEqual(expected,varIn.coordinates)
+        if cdo.hasNetcdf:
+          ifile = DATA_DIR +'/icon/oce_AquaAtlanticBoxACC.nc'
+          ivar  = 't_acc'
+          varIn = cdo.readCdf(ifile)
+          varIn = varIn.variables[ivar]
+          expected =  u'clon clat'
+          self.assertEqual(expected,varIn.coordinates)
 
-        varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
-        varOut = varOut.variables[ivar]
-        expected =  u'clat clon'
-        self.assertEqual(expected,varOut.coordinates)
+          varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
+          varOut = varOut.variables[ivar]
+          expected =  u'clat clon'
+          self.assertEqual(expected,varOut.coordinates)
+
       def testCall(self):
         cdo = Cdo()
         if DEBUG:
           print(cdo.sinfov(input=DATA_DIR+'/icon/oce.nc'))
+
       def test_readCdf(self):
         cdo = Cdo()
         input= "-settunits,days  -setyear,2000 -for,1,4"
         cdfFile = cdo.copy(options="-f nc",input=input)
-        cdf     = cdo.readCdf(cdfFile)
-
-        self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
-
+        if cdo.hasNetcdf:
+          cdf     = cdo.readCdf(cdfFile)
+          self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
 
       def test_phc(self):
         ifile = "-select,level=0 " + DATA_DIR + '/icon/phc.nc'
         cdo = Cdo()
         cdo.debug = DEBUG
+        if not cdo.hasNetcdf:
+          return
         #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
         #          output=ifile,
         #          options='-O')
@@ -843,7 +855,7 @@ class CdoTest(unittest.TestCase):
 
       def test_smooth(self):
         cdo = Cdo()
-        if (parse_version(cdo.version()) >= parse_version('1.7.2')):
+        if (parse_version(cdo.version()) >= parse_version('1.7.2') and cdo.hasNetcdf):
           ifile = "-select,level=0 " + DATA_DIR + '/icon/phc.nc'
           cdo = Cdo()
           cdo.debug = DEBUG
