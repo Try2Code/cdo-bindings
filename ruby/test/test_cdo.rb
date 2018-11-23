@@ -214,11 +214,11 @@ class TestCdo < Minitest::Test
   end
 
   def test_parseArgs
-    io,opts = Cdo.parseArgs([1,2,3,:input => '1',:output => '2',:force => true,:returnCdf => "T",:autoSplit => '  '])
+    io,opts = Cdo.parseArgs([1,2,3,:input => '1',:output => '2',:force => true,:returnCdf => true,:autoSplit => '  '])
     assert_equal("1",io[:input])
     assert_equal("2",io[:output])
     assert_equal(true,io[:force])
-    assert_equal("T",io[:returnCdf])
+    assert_equal(true,io[:returnCdf])
     assert_equal("  ",io[:autoSplit])
     pp [io,opts]
   end
@@ -355,91 +355,104 @@ class TestCdo < Minitest::Test
   end
 
   def test_returnArray
-    temperature = @cdo.stdatm(0,:returnCdf => true).var('T').get.flatten[0]
-    assert(1.7 < temperature,"Temperature to low!")
-    assert_raises ArgumentError do
-      @cdo.stdatm(0,:returnArray => 'TT')
+    if @cdo.hasNetcdf then
+      temperature = @cdo.stdatm(0,:returnCdf => true).var('T').get.flatten[0]
+      assert(1.7 < temperature,"Temperature to low!")
+      assert_raises ArgumentError do
+        @cdo.stdatm(0,:returnArray => 'TT')
+      end
+      temperature = @cdo.stdatm(0,:returnArray => 'T')
+      assert_equal(288.0,temperature.flatten[0])
+      pressure = @cdo.stdatm(0,1000,:options => '-b F64',:returnArray => 'P')
+      assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
+    else
+      assert_raises LoadError do
+        temperature = @cdo.stdatm(0,:returnCdf => true).var('T').get.flatten[0]
+      end
     end
-    temperature = @cdo.stdatm(0,:returnArray => 'T')
-    assert_equal(288.0,temperature.flatten[0])
-    pressure = @cdo.stdatm(0,1000,:options => '-b F64',:returnArray => 'P')
-    assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
   end
   def test_returnMaArray
-    @cdo.debug = @@debug
-    topo = @cdo.topo(:returnMaArray => 'topo')
-    assert_equal(-1890.0,topo.mean.round)
-    bathy = @cdo.setrtomiss(0,10000,
-        :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
-    assert_equal(-3386.0,bathy.mean.round)
-    oro = @cdo.setrtomiss(-10000,0,
-        :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
-    assert_equal(1142.0,oro.mean.round)
-    bathy = @cdo.remapnn('r2x2',:input => @cdo.topo(:options => '-f nc'), :returnMaArray => 'topo')
-    assert_equal(-4298.0,bathy[0,0])
-    assert_equal(-2669.0,bathy[1,0])
-    ta = @cdo.remapnn('r2x2',:input => @cdo.topo(:options => '-f nc'))
-    tb = @cdo.subc(-2669.0,:input => ta)
-    withMask = @cdo.div(:input => ta+" "+tb,:returnMaArray => 'topo')
-    assert(-8.0e+33 > withMask[1,0])
-    assert(0 < withMask[0,0])
-    assert(0 < withMask[0,1])
-    assert(0 < withMask[1,1])
-  end
-  def test_combine
-    ofile0, ofile1 = @tempStore.newFile, @tempStore.newFile
-    @cdo.fldsum(:input => @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:options => "-f nc"),:output => ofile0)
-    @cdo.fldsum(:input => "-stdatm,25,100,250,500,875,1400,2100,3000,4000,5000",:options => "-f nc",:output => ofile1)
-    @cdo.returnCdf = true
-    @tempStore.showFiles
-    diff = @cdo.sub(:input => [ofile0,ofile1].join(' ')).var('T').get
-    assert_equal(0.0,diff.min)
-    assert_equal(0.0,diff.max)
-    @cdo.returnCdf = false
+    if @cdo.hasNetcdf then
+      @cdo.debug = @@debug
+      topo = @cdo.topo(:returnMaArray => 'topo')
+      assert_equal(-1890.0,topo.mean.round)
+      bathy = @cdo.setrtomiss(0,10000,
+                              :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
+      assert_equal(-3386.0,bathy.mean.round)
+      oro = @cdo.setrtomiss(-10000,0,
+                            :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
+      assert_equal(1142.0,oro.mean.round)
+      bathy = @cdo.remapnn('r2x2',:input => @cdo.topo(:options => '-f nc'), :returnMaArray => 'topo')
+      assert_equal(-4298.0,bathy[0,0])
+      assert_equal(-2669.0,bathy[1,0])
+      ta = @cdo.remapnn('r2x2',:input => @cdo.topo(:options => '-f nc'))
+      tb = @cdo.subc(-2669.0,:input => ta)
+      withMask = @cdo.div(:input => ta+" "+tb,:returnMaArray => 'topo')
+      assert(-8.0e+33 > withMask[1,0])
+      assert(0 < withMask[0,0])
+      assert(0 < withMask[0,1])
+      assert(0 < withMask[1,1])
+    else
+      assert_raises LoadError do
+        topo = @cdo.topo(:returnMaArray => 'topo')
+      end
+    end
   end
 
   def test_returnCdf
     ofile = rand(0xfffff).to_s + '_test_returnCdf.nc'
     vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
     assert_equal(ofile,vals)
-    @cdo.returnCdf = true
-    vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
-    assert_equal(["lon","lat","level","P","T"],vals.var_names)
-    assert_equal(276,vals.var("T").get.flatten.mean.floor)
-    @cdo.returnCdf = false
-    vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
-    assert_equal(ofile,vals)
+    if @cdo.hasNetcdf then
+      vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:returnCdf => true)
+      assert_equal(["lon","lat","level","P","T"],vals.var_names)
+      assert_equal(276,vals.var("T").get.flatten.mean.floor)
+      vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
+      assert_equal(ofile,vals)
+    end
     FileUtils.rm(ofile)
   end
   def test_simple_returnCdf
-    ofile0, ofile1 = @tempStore.newFile, @tempStore.newFile
-    sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),
-                      :returnCdf => true).var("P").get
-    assert_equal(1013.25,sum.min)
-    sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),:output => ofile0)
-    assert_equal(ofile0,sum)
-    test_returnCdf
+    if @cdo.hasNetcdf then
+      ofile0, ofile1 = @tempStore.newFile, @tempStore.newFile
+      sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),
+                        :returnCdf => true).var("P").get
+      assert_equal(1013.25,sum.min)
+      sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),:output => ofile0)
+      assert_equal(ofile0,sum)
+      test_returnCdf
+    else
+      puts "test_simple_returnCdf is disabled because of missing ruby-netcdf"
+    end
   end
   def test_readCdf
     input = "-settunits,days  -setyear,2000 -for,1,4"
     cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
-    cdf     = @cdo.readCdf(cdfFile)
-    assert_empty(['lon','lat','for','time'] - cdf.var_names)
+    if @cdo.hasNetcdf then
+      cdf = @cdo.readCdf(cdfFile)
+      assert_empty(['lon','lat','for','time'] - cdf.var_names)
+    else
+      assert_raises LoadError do
+        cdf = @cdo.readCdf(cdfFile)
+      end
+    end
   end
   def test_combine
     ofile0, ofile1 = @tempStore.newFile, @tempStore.newFile
     @cdo.fldsum(:input => @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:options => "-f nc"),:output => ofile0)
     @cdo.fldsum(:input => "-stdatm,25,100,250,500,875,1400,2100,3000,4000,5000",:options => "-f nc",:output => ofile1)
-    @cdo.returnCdf = true
     @tempStore.showFiles
-    diff = @cdo.sub(:input => [ofile0,ofile1].join(' ')).var('T').get
-    assert_equal(0.0,diff.min)
-    assert_equal(0.0,diff.max)
-    @cdo.returnCdf = false
+    if @cdo.hasNetcdf then
+      diff = @cdo.sub(:returnCdf => true, :input => [ofile0,ofile1].join(' ')).var('T').get
+      assert_equal(0.0,diff.min)
+      assert_equal(0.0,diff.max)
+    end
   end
   def test_readArray
-    @cdo.debug = @@debug
-    assert_equal([40,80],@cdo.readArray(@cdo.sellonlatbox(-10,10,-20,20,:input => '-topo',:options => '-f nc'), 'topo').shape)
+    if @cdo.hasNetcdf then
+      @cdo.debug = @@debug
+      assert_equal([40,80],@cdo.readArray(@cdo.sellonlatbox(-10,10,-20,20,:input => '-topo',:options => '-f nc'), 'topo').shape)
+    end
   end
   def test_env
     oTag     = 'test_env_with_splitlevel_'
@@ -557,45 +570,57 @@ class TestCdo < Minitest::Test
       @cdo.help
     end
     def test_fillmiss
-      @cdo.debug = @@debug
-      # check up-down replacement
-      rand = @cdo.setname('v',:input => '-random,r1x10 ', :options => ' -f nc',:output => '/tmp/rand.nc')
-      cdf  = @cdo.openCdf(rand)
-      vals = cdf.var('v').get
-      cdf.var('v').put(vals.sort)
-      cdf.sync
-      cdf.close
+      rand = @cdo.setname('v',
+                          :input => '-random,r1x10 ',
+                          :options => ' -f nc')
 
-      missRange = '0.3,0.8'
-      arOrg = @cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
-      arFm  = @cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
-      arFm1s= @cdo.fillmiss2(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
-      vOrg  = arOrg[0,0..-1]
-      vFm   = arFm[0,0..-1]
-      vFm1s = arFm1s[0,0..-1]
-      UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
-                            {:y => vFm,  :style => 'points',:title => 'fillmiss'},
-                            {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r1x10') if @@show
-      # check left-right replacement
-      rand = @cdo.setname('v',:input => '-random,r10x1 ', :options => ' -f nc',:output => '/tmp/rand.nc')
-      cdf  = @cdo.openCdf(rand)
-      vals = cdf.var('v').get
-      cdf.var('v').put(vals.sort)
-      cdf.sync
-      cdf.close
+      if @cdo.hasNetcdf then
+        @cdo.debug = @@debug
+        cdf  = @cdo.openCdf(rand)
+        vals = cdf.var('v').get
+        cdf.var('v').put(vals.sort)
+        cdf.sync
+        cdf.close
+      else
+        assert_raises LoadError do
+          cdf  = @cdo.openCdf(rand)
+        end
+      end
 
-      missRange = '0.3,0.8'
-      arOrg = @cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
-      arFm  = @cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
-      arFm1s= @cdo.fillmiss2(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
-      vOrg  =  arOrg[0..-1,0]
-      vFm   =   arFm[0..-1,0]
-      vFm1s = arFm1s[0..-1,0]
-      UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
-                            {:y => vFm,  :style => 'points',:title => 'fillmiss'},
-                            {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r10x1') if @@show
+      if @cdo.hasNetcdf then
+        missRange = '0.3,0.8'
+        arOrg = @cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
+        arFm  = @cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+        arFm1s= @cdo.fillmiss2(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+        vOrg  = arOrg[0,0..-1]
+        vFm   = arFm[0,0..-1]
+        vFm1s = arFm1s[0,0..-1]
+        UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
+                              {:y => vFm,  :style => 'points',:title => 'fillmiss'},
+                              {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
+        plotConf: {:yrange => '[0:1]'},title: 'r1x10') if @@show
+        # check left-right replacement
+        rm([rand])
+        rand = @cdo.setname('v',:input => '-random,r10x1 ', :options => ' -f nc',:output => '/tmp/rand.nc')
+        cdf  = @cdo.openCdf(rand)
+        vals = cdf.var('v').get
+        cdf.var('v').put(vals.sort)
+        cdf.sync
+        cdf.close
+
+        missRange = '0.3,0.8'
+        arOrg = @cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
+        arFm  = @cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+        arFm1s= @cdo.fillmiss2(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+        vOrg  =  arOrg[0..-1,0]
+        vFm   =   arFm[0..-1,0]
+        vFm1s = arFm1s[0..-1,0]
+        UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
+                              {:y => vFm,  :style => 'points',:title => 'fillmiss'},
+                              {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
+        plotConf: {:yrange => '[0:1]'},title: 'r10x1') if @@show
+        rm([rand])
+      end
     end
 
     # opendap test - broken since 1.9.0

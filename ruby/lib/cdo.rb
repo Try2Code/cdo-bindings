@@ -35,10 +35,9 @@ class Cdo
 
 
   attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug, :logging, :logFile
-  attr_reader   :operators, :filetypes
+  attr_reader   :operators, :filetypes, :hasNetcdf
 
   def initialize(cdo: 'cdo',
-                 returnCdf: false,
                  returnFalseOnError: false,
                  returnNilOnError: false,
                  forceOutput: true,
@@ -54,7 +53,8 @@ class Cdo
     @operators              = getOperators(@cdo)
     @noOutputOperators      = @operators.select {|op,io| 0 == io}.keys
 
-    @returnCdf              = returnCdf
+    @hasNetcdf              = loadOptionalLibs
+
     @forceOutput            = forceOutput
     @env                    = env
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
@@ -308,7 +308,7 @@ class Cdo
       readArray(outputs[0],returnArray)
     elsif not returnMaArray.nil?
       readMaArray(outputs[0],returnMaArray)
-    elsif returnCdf or @returnCdf
+    elsif returnCdf
       retval = outputs.map{|f| readCdf(f)}
       return 1 == retval.size ? retval[0] : retval
     elsif /^split/.match(operatorName)
@@ -343,12 +343,13 @@ class Cdo
   end
 
   # load the netcdf bindings
-  def loadCdf
+  def loadOptionalLibs
     begin
       require "numru/netcdf_miss"
-    rescue LoadError
-      warn "Could not load ruby's netcdf bindings. Please install it."
-      raise
+      return true
+    rescue
+      warn "Could not load ruby's netcdf bindings"
+      return false
     end
   end
 
@@ -410,15 +411,17 @@ class Cdo
   end
 
   # return cdf handle to given file readonly
-  def readCdf(iFile)
-    loadCdf
-    NumRu::NetCDF.open(iFile)
+  def readCdf(iFile,mode='r')
+    if @hasNetcdf then
+      NumRu::NetCDF.open(iFile,mode)
+    else
+      raise LoadError,"Could not load ruby-netcdf"
+    end
   end
 
   # return cdf handle opened in append more
   def openCdf(iFile)
-    loadCdf
-    NumRu::NetCDF.open(iFile,'r+')
+    readCdf(iFile,'r+')
   end
 
   # return narray for given variable name
