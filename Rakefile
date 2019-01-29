@@ -10,15 +10,33 @@ CLEAN.include("{ruby,python}/*.{grb,nc,png,svg}")
 
 PythonInterpreter = ENV.has_key?('PYTHON') ? ENV['PYTHON'] : 'python'
 RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
+SpackEnv          = "$HOME/src/tools/spack/share/spack/setup-env.sh"
 
-String.disable_colorization = (not ENV.has_key?('NO_COLOR'))
+String.disable_colorization = (ENV.has_key?('NO_COLOR'))
 
 
-@cdoPackages = {
-  "clang@5.0.1" => ["cdo@1.9.0", "cdo@1.9.1", "cdo@1.9.2", "cdo@1.9.3"],
-  "gcc@6.4.1"   => ["cdo@1.7.2", "cdo@1.8.2", "cdo@1.8.2", "cdo@1.9.0", "cdo@1.9.1", "cdo@1.9.2", "cdo@1.9.3"],
-  "gcc@7.2.0"   => ["cdo@1.7.2", "cdo@1.8.2", "cdo@1.9.0", "cdo@1.9.1", "cdo@1.9.2", "cdo@1.9.3"]
-}
+def getCdoPackagesFromSpack
+  # list possible cdo modules provided by spack
+  cmd = [". #{SpackEnv}" , 'spack module tcl loads cdo | grep module'].join(';')
+  modules = IO.popen(cmd).readlines.map(&:chomp)
+end
+
+desc "run each CDO binary from the regression tests"
+task :checkRegression do |t|
+  getCdoPackagesFromSpack.each {|spackModule|
+    cmd = [". #{SpackEnv}" ,
+           "module purge",
+           spackModule,
+           "cdo -V",
+           "module purge"].join(';')
+
+    sh cmd
+  }
+end
+desc "list spack modules available for regression testing"
+task :listRegressionModules do |t|
+  getCdoPackagesFromSpack.each {|mod| puts mod}
+end
 
 def pythonTest(name: nil,interpreter: PythonInterpreter)
   cmd = "cd python; #{interpreter} test/test_cdo.py"
@@ -31,6 +49,7 @@ def rubyTest(name: nil,interpreter: RubyInterpreter, testFile: nil)
   cmd << " --name=#{name}" unless name.nil?
   cmd
 end
+
 
 %w[Ruby Python].each {|lang|
   # create target for listing all tests for a given language
@@ -45,20 +64,33 @@ end
     }
   end
 
+  desc "test for correct tempfile deletion (#{lang})"
+  task "test#{lang}_tempfiles".to_sym do |t|
+    # make sure no other testing process has already created cdo-tempfile 
+    unless Dir.glob("/tmp/Cdo*").empty? then
+      warn "Cannot run temp file test - target dir /tmp is no empty"
+      exit(1)
+    end
+    sh "rake test#{lang}"
+
+    unless Dir.glob("/tmp/Cdo*").empty? then
+      warn "Found remaining temfiles!"
+      exit(1)
+    end
+  end
+
   # create regression tests for Ruby and Pythonwith different cdo version (managed by spack)
   desc "run regresssion for multiple CDO releases in #{lang}"
   task "test#{lang}Regression".to_sym, :name do |t,args|
     runTests = args.name.nil? ? "rake test#{lang}" : "rake test#{lang}[#{args.name}]"
-    spackEnv = "$HOME/src/tools/spack/share/spack/setup-env.sh"
-    @cdoPackages.each {|comp,cdoVersions|
-      cdoVersions.each {|cdoVersion|
-        cmd = [". #{spackEnv}" ,
-               "spack load #{cdoVersion} %#{comp}",
-               runTests,
-               "spack unload #{cdoVersion} %#{comp}"].join(';')
-        puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
-        sh cmd
-      }
+    getCdoPackagesFromSpack.each {|spackModule|
+      cmd = [". #{SpackEnv}" ,
+             "module purge",
+             spackModule,
+             runTests,
+             "module purge"].join(';')
+      puts spackModule.split.last.colorize(:green)
+      sh cmd
     }
   end
   %w[2 3].each {|pythonRelease|
@@ -67,17 +99,30 @@ end
       runTests = args.name.nil? \
         ? "rake test#{lang}#{pythonRelease}" \
         : "rake test#{lang}#{pythonRelease}[#{args.name}]"
-      spackEnv = "$HOME/src/tools/spack/share/spack/setup-env.sh"
-      cmd = [". #{spackEnv}" ,
-             "for pkg in $(spack find -s cdo  | tail +2)",
-             "  do echo $pkg; spack load ${pkg}",
-             runTests,
-             "  spack unload ${pkg} ",
-             "done"].join(';')
-      puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
-      sh cmd
-    end if 'Python' == lang
-  }
+      getCdoPackagesFromSpack.each {|spackModule|
+        cmd = [". #{SpackEnv}" ,
+               "module purge",
+               spackModule,
+               runTests,
+               "module purge"].join(';')
+        puts spackModule.split.last.colorize(:green)
+        sh cmd
+      }
+    end
+    desc "test for correct tempfile deletion (#{lang}#{pythonRelease})"
+    task "test#{lang}#{pythonRelease}_tempfiles".to_sym do |t|
+      # make sure no other testing process has already created cdo-tempfile 
+      unless Dir.glob("/tmp/Cdo*").empty? then
+        warn "Cannot run temp file test - target dir /tmp is no empty"
+        exit(1)
+      end
+      sh "rake test#{lang}#{pythonRelease}"
+      unless Dir.glob("/tmp/Cdo*").empty? then
+        warn "Found remaining temfiles!"
+        exit(1)
+      end
+    end
+  } if 'Python' == lang
 }
 
 desc "execute one/all test(s) with python2"
@@ -98,25 +143,6 @@ end
 desc "execute one/all test(s) with ruby or the given env: RubyInterpreter"
 task :testRuby, :name do |t,args|
   sh rubyTest(name: args.name)
-end
-
-desc "execute one/all lib-test(s) with ruby or the given env: RubyInterpreter"
-task :testRubyLib, :name do |t,args|
-  sh rubyTest(name: args.name,testFile: 'test/test_cdo_lib.rb')
-end
-
-task :checkRegression do |t|
-    spackEnv = "$HOME/src/tools/spack/share/spack/setup-env.sh"
-    @cdoPackages.each {|comp,cdoVersions|
-      cdoVersions.each {|cdoVersion|
-        cmd = [". #{spackEnv}" ,
-               "spack load #{cdoVersion} %#{comp}",
-               "cdo -V",
-               "spack unload #{cdoVersion} %#{comp}"].join(';')
-        puts cmd.colorize(:blue) if ENV.has_key?('DEBUG')
-        sh cmd
-      }
-    }
 end
 
 task :default => :testRuby

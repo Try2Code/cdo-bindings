@@ -18,6 +18,7 @@ class TestCdo < Minitest::Test
 
   def setup
     @cdo = Cdo.new
+    @tempStore = CdoTempfileStore.new
   end
 
   def test_cdo
@@ -82,7 +83,7 @@ class TestCdo < Minitest::Test
   end
   def test_CDO_version
     assert("1.4.3.1" < @cdo.version,"Version too low: #{@cdo.version}")
-    assert("1.7.1" < @cdo.version,"Version too low: #{@cdo.version}")
+    assert("1.6.3" < @cdo.version,"Version too low: #{@cdo.version}")
     assert("3.0" > @cdo.version,"Version too high: #{@cdo.version}")
   end
   def test_args
@@ -213,11 +214,11 @@ class TestCdo < Minitest::Test
   end
 
   def test_parseArgs
-    io,opts = Cdo.parseArgs([1,2,3,:input => '1',:output => '2',:force => true,:returnCdf => "T",:autoSplit => '  '])
+    io,opts = Cdo.parseArgs([1,2,3,:input => '1',:output => '2',:force => true,:returnCdf => true,:autoSplit => '  '])
     assert_equal("1",io[:input])
     assert_equal("2",io[:output])
     assert_equal(true,io[:force])
-    assert_equal("T",io[:returnCdf])
+    assert_equal(true,io[:returnCdf])
     assert_equal("  ",io[:autoSplit])
     pp [io,opts]
   end
@@ -272,16 +273,15 @@ class TestCdo < Minitest::Test
 
   def test_noOutputOps
     operators = @cdo.operators
-    %w[griddes griddes2 gridverify info infoc infon infop infos infov map ncode
-       ncode ndate ngridpoints ngrids nlevel nmon npar ntime nvar nyear output
+    %w[griddes griddes2 gridverify info infoc infon infop infos infov map
        outputarr outputbounds outputboundscpt outputcenter outputcenter2
        outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
        outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab].each {|op|
       assert(operators.include?(op),"Operator '#{op}' cannot be found!")
-      assert_equal(0,operators[op][:oStreams],"Operator '#{op}' has a non-zero output counter!")
+      assert_equal(0,operators[op],"Operator '#{op}' has a non-zero output counter!")
     }
     # just a rought estimation
-    opsCounf = @cdo.operators.select {|o,c| 0 == c[:oStreams]}.size
+    opsCounf = @cdo.operators.select {|_,c| 0 == c}.size
     assert(opsCounf > 50)
     assert(opsCounf < 200)
   end
@@ -315,40 +315,72 @@ class TestCdo < Minitest::Test
   end
 
   def test_operators_with_multiple_output_files
+    assert_equal(1,@cdo.operators['topo'],'wrong output counter for "topo"')
+    assert_equal(0,@cdo.operators['sinfo'],'wrong output counter for "sinfo"')
+    assert_equal(0,@cdo.operators['ngridpoints'],'wrong output counter for "sinfo"') if @cdo.version > '1.6.4'
+
+    assert_equal(-1,@cdo.operators['splitsel'],'wrong output counter for "splitsel"')
+    assert_equal(2,@cdo.operators['trend'],'wrong output counter for "trend"')
     # create input for eof
     #
     # check automatic generation ot two tempfiles
-    #
-    # check usage of 'returnArray' with these operators
+    aFile, bFile = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100")
+    assert_equal(51.0,@cdo.outputkey('value',input: aFile)[-1].to_f)
+    assert_equal(44.0,@cdo.outputkey('value',input: bFile)[-1].to_f)
+    # check usage of 'returnCdf' with these operators
+    aFile, bFile = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100",returnCdf: true)
+    assert_equal(51.0, aFile.var('for').get.flatten[0],"got wrong value from cdf handle")
+    assert_equal(44.0, bFile.var('for').get.flatten[0],"got wrong value from cdf handle")
+
+    avar = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100",returnArray: 'for').flatten[0]
+    assert_equal(51.0, avar,"got wrong value from narray")
+  end
+  def test_tempdir
+    # manual set path
+    tag = 'tempRb'
+    tempPath = Dir.pwd+'/'+tag
+    pp Dir.glob("#{tempPath}/*").size
+    assert_equal(0,Dir.glob("#{tempPath}/*").size)
+    cdo = Cdo.new(tempdir: tempPath)
+    cdo.topo('r10x10',options: '-f nc')
+    assert_equal(1,Dir.glob("#{tempPath}/*").size)
+    cdo.topo('r10x10',options: '-f nc')
+    cdo.topo('r10x10',options: '-f nc')
+    assert_equal(3,Dir.glob("#{tempPath}/*").size)
+    cdo.topo('r10x10',options: '-f nc')
+    cdo.topo('r10x10',options: '-f nc')
+    assert_equal(5,Dir.glob("#{tempPath}/*").size)
+    cdo.cleanTempDir
+    assert_equal(0,Dir.glob("#{tempPath}/*").size)
   end
 
-  if @@maintainermode  then
-    require 'unifiedPlot'
-
-    def test_longChain
-      ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
-      t = @cdo.fldmax(input: "-div -sub -timmean -seltimestep,2,3 #{ifile} -seltimestep,1 #{ifile}  -gridarea #{ifile}",returnArray: "t")
-      assert_equal(8.981299259858133e-09,t[0])
-    end
-    def test_returnArray
-      temperature = @cdo.stdatm(0,:options => '-f nc',:returnCdf => true).var('T').get.flatten[0]
+  def test_returnArray
+    if @cdo.hasNetcdf then
+      temperature = @cdo.stdatm(0,:returnCdf => true).var('T').get.flatten[0]
+      assert(1.7 < temperature,"Temperature to low!")
       assert_raises ArgumentError do
-        @cdo.stdatm(0,:options => '-f nc',:returnArray => 'TT')
+        @cdo.stdatm(0,:returnArray => 'TT')
       end
-      temperature = @cdo.stdatm(0,:options => '-f nc',:returnArray => 'T')
+      temperature = @cdo.stdatm(0,:returnArray => 'T')
       assert_equal(288.0,temperature.flatten[0])
-      pressure = @cdo.stdatm(0,1000,:options => '-f nc -b F64',:returnArray => 'P')
+      pressure = @cdo.stdatm(0,1000,:options => '-b F64',:returnArray => 'P')
       assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
+    else
+      assert_raises LoadError do
+        temperature = @cdo.stdatm(0,:returnCdf => true).var('T').get.flatten[0]
+      end
     end
-    def test_returnMaArray
+  end
+  def test_returnMaArray
+    if @cdo.hasNetcdf then
       @cdo.debug = @@debug
-      topo = @cdo.topo(:options => '-f nc',:returnMaArray => 'topo')
+      topo = @cdo.topo(:returnMaArray => 'topo')
       assert_equal(-1890.0,topo.mean.round)
       bathy = @cdo.setrtomiss(0,10000,
-          :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
+                              :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
       assert_equal(-3386.0,bathy.mean.round)
       oro = @cdo.setrtomiss(-10000,0,
-          :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
+                            :input => @cdo.topo(:options => '-f nc'),:returnMaArray => 'topo')
       assert_equal(1142.0,oro.mean.round)
       bathy = @cdo.remapnn('r2x2',:input => @cdo.topo(:options => '-f nc'), :returnMaArray => 'topo')
       assert_equal(-4298.0,bathy[0,0])
@@ -360,115 +392,68 @@ class TestCdo < Minitest::Test
       assert(0 < withMask[0,0])
       assert(0 < withMask[0,1])
       assert(0 < withMask[1,1])
+    else
+      assert_raises LoadError do
+        topo = @cdo.topo(:returnMaArray => 'topo')
+      end
     end
-    def test_combine
-      ofile0, ofile1 = MyTempfile.path, MyTempfile.path
-      @cdo.fldsum(:input => @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:options => "-f nc"),:output => ofile0)
-      @cdo.fldsum(:input => "-stdatm,25,100,250,500,875,1400,2100,3000,4000,5000",:options => "-f nc",:output => ofile1)
-      @cdo.returnCdf = true
-      MyTempfile.showFiles
-      diff = @cdo.sub(:input => [ofile0,ofile1].join(' ')).var('T').get
-      assert_equal(0.0,diff.min)
-      assert_equal(0.0,diff.max)
-      @cdo.returnCdf = false
-    end
+  end
 
-    def test_tempfile
-      ofile0, ofile1 = MyTempfile.path, MyTempfile.path
-      assert(ofile0 != ofile1, "Found equal tempfiles!")
-      # Tempfile should not disappeare even if the GC was started
-      puts ofile0
-      assert(File.exist?(ofile0))
-      GC.start
-      assert(File.exist?(ofile0))
-    end
-
-    def test_returnCdf
-      ofile = rand(0xfffff).to_s + '_test_returnCdf.nc'
-      vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
-      assert_equal(ofile,vals)
-      @cdo.returnCdf = true
-      vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
+  def test_returnCdf
+    ofile = rand(0xfffff).to_s + '_test_returnCdf.nc'
+    vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
+    assert_equal(ofile,vals)
+    if @cdo.hasNetcdf then
+      vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:returnCdf => true)
       assert_equal(["lon","lat","level","P","T"],vals.var_names)
       assert_equal(276,vals.var("T").get.flatten.mean.floor)
-      @cdo.returnCdf = false
       vals = @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:output => ofile,:options => "-f nc")
       assert_equal(ofile,vals)
-      FileUtils.rm(ofile)
     end
-    def test_simple_returnCdf
-      ofile0, ofile1 = MyTempfile.path, MyTempfile.path
+    FileUtils.rm(ofile)
+  end
+  def test_simple_returnCdf
+    if @cdo.hasNetcdf then
+      ofile0, ofile1 = @tempStore.newFile, @tempStore.newFile
       sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),
-                 :returnCdf => true).var("P").get
+                        :returnCdf => true).var("P").get
       assert_equal(1013.25,sum.min)
       sum = @cdo.fldsum(:input => @cdo.stdatm(0,:options => "-f nc"),:output => ofile0)
       assert_equal(ofile0,sum)
       test_returnCdf
+    else
+      puts "test_simple_returnCdf is disabled because of missing ruby-netcdf"
     end
-    def test_readCdf
-      input = "-settunits,days  -setyear,2000 -for,1,4"
-      cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
-      cdf     = @cdo.readCdf(cdfFile)
+  end
+  def test_readCdf
+    input = "-settunits,days  -setyear,2000 -for,1,4"
+    cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
+    if @cdo.hasNetcdf then
+      cdf = @cdo.readCdf(cdfFile)
       assert_empty(['lon','lat','for','time'] - cdf.var_names)
+    else
+      assert_raises LoadError do
+        cdf = @cdo.readCdf(cdfFile)
+      end
     end
-    def test_selIndexListFromIcon
-      input = "~/data/icon/oce.nc"
+  end
+  def test_combine
+    ofile0, ofile1 = @tempStore.newFile, @tempStore.newFile
+    @cdo.fldsum(:input => @cdo.stdatm(25,100,250,500,875,1400,2100,3000,4000,5000,:options => "-f nc"),:output => ofile0)
+    @cdo.fldsum(:input => "-stdatm,25,100,250,500,875,1400,2100,3000,4000,5000",:options => "-f nc",:output => ofile1)
+    @tempStore.showFiles
+    if @cdo.hasNetcdf then
+      diff = @cdo.sub(:returnCdf => true, :input => [ofile0,ofile1].join(' ')).var('T').get
+      assert_equal(0.0,diff.min)
+      assert_equal(0.0,diff.max)
     end
-    def test_readArray
+  end
+  def test_readArray
+    if @cdo.hasNetcdf then
       @cdo.debug = @@debug
       assert_equal([40,80],@cdo.readArray(@cdo.sellonlatbox(-10,10,-20,20,:input => '-topo',:options => '-f nc'), 'topo').shape)
     end
-    def test_doc
-      @cdo.debug = @@debug
-      @cdo.help(:remap)
-      @cdo.help(:infov)
-      @cdo.help(:topo)
-      @cdo.help(:notDefinedOP)
-      @cdo.help
-    end
-    def test_fillmiss
-      @cdo.debug = @@debug
-      # check up-down replacement
-      rand = @cdo.setname('v',:input => '-random,r1x10 ', :options => ' -f nc',:output => '/tmp/rand.nc')
-      cdf  = @cdo.openCdf(rand)
-      vals = cdf.var('v').get
-      cdf.var('v').put(vals.sort)
-      cdf.sync
-      cdf.close
-
-      missRange = '0.3,0.8'
-      arOrg = @cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
-      arFm  = @cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
-      arFm1s= @cdo.fillmiss2(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
-      vOrg  = arOrg[0,0..-1]
-      vFm   = arFm[0,0..-1]
-      vFm1s = arFm1s[0,0..-1]
-      UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
-                            {:y => vFm,  :style => 'points',:title => 'fillmiss'},
-                            {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r1x10') if @@show
-      # check left-right replacement
-      rand = @cdo.setname('v',:input => '-random,r10x1 ', :options => ' -f nc',:output => '/tmp/rand.nc')
-      cdf  = @cdo.openCdf(rand)
-      vals = cdf.var('v').get
-      cdf.var('v').put(vals.sort)
-      cdf.sync
-      cdf.close
-
-      missRange = '0.3,0.8'
-      arOrg = @cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
-      arFm  = @cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
-      arFm1s= @cdo.fillmiss2(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
-      vOrg  =  arOrg[0..-1,0]
-      vFm   =   arFm[0..-1,0]
-      vFm1s = arFm1s[0..-1,0]
-      UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
-                            {:y => vFm,  :style => 'points',:title => 'fillmiss'},
-                            {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
-                            plotConf: {:yrange => '[0:1]'},title: 'r10x1') if @@show
-    end
   end
-
   def test_env
     oTag     = 'test_env_with_splitlevel_'
     levels   = [0,10,100]
@@ -527,80 +512,121 @@ class TestCdo < Minitest::Test
     @cdo.sinfov(input: cmd)
     puts @cdo.showLog
   end
-end
+  if @@maintainermode  then
+    require 'unifiedPlot'
 
-#  # Calling simple operators
-#  #
-#  # merge:
-#  #   let files be an erray of valid filenames and ofile is a string
-#  @cdo.merge(:input => outvars.join(" "),:output => ofile)
-#  #   or with multiple arrays:
-#  @cdo.merge(:input => [ifiles0,ifiles1].flatten.join(' '),:output => ofile)
-#  # selname:
-#  #   lets grep out some variables from ifile:
-#  ["T","U","V"].each {|varname|
-#    varfile = varname+".nc"
-#    @cdo.selname(varname,:input => ifile,:output => varfile)
-#  }
-#  #   a threaded version of this could look like:
-#  ths = []
-#  ["T","U","V"].each {|outvar|
-#    ths << Thread.new(outvar) {|ovar|
-#      varfile = varname+".nc"
-#      @cdo.selname(varname,:input => ifile,:output => varfile)
-#    }
-#  }
-#  ths.each {|th| th.join}
-#  # another example with sub:
-#  @cdo.sub(:input => [oldfile,newfile].join(' '), :output => diff)
-#
-#  # It is possible too use the 'send' method
-#  operator  = /grb/.match(File.extname(ifile)) ? :showcode : :showname
-#  inputVars = @cdo.send(operator,:input => ifile)
-#  # show and info operators are writing to stdout. cdo.rb tries to collects this into arrays
-#  #
-#  # Same stuff with other operators:
-#  operator = case var
-#             when Fixnum then 'selcode'
-#             when String then 'selname'
-#             else
-#               warn "Wrong usage of variable identifier for '#{var}' (class #{var.class})!"
-#             end
-#  @cdo.send(operator,var,:input => @ifile, :output => varfile)
-#
-#  # Pass an array for operators with multiple options:
-#  #   Perform conservative remapping with pregenerated weights
-#  @cdo.remap([gridfile,weightfile],:input => copyfile,:output => outfile)
-#  #   Create vertical height levels out of hybrid model levels
-#  @cdo.ml2hl([0,20,50,100,200,400,800,1200].join(','),:input => hybridlayerfile, :output => reallayerfile)
-#  # or use multiple arguments directly
-#  @cdo.remapeta(vctfile,orofile,:input => ifile,:output => hybridlayerfile)
-#
-#  # the powerfull expr operator:
-#  # taken from the tutorial in https://code.zmaw.de/projects/cdo/wiki/Tutorial#The-_expr_-Operator
-#  SCALEHEIGHT  = 10000.0
-#  C_EARTH_GRAV = 9.80665
-#  # function for later computation of hydrostatic atmosphere pressure
-#  PRES_EXPR    = lambda {|height| "101325.0*exp((-1)*(1.602769777072154)*log((exp(#{height}/#{SCALEHEIGHT})*213.15+75.0)/288.15))"}
-#  TEMP_EXPR    = lambda {|height| "213.0+75.0*exp(-#{height}/#{SCALEHEIGHT})"}
-#
-#  # Create Pressure and Temperature out of a height field 'geopotheight' from ifile
-#  @cdo.expr("'p=#{PRES_EXPR['geopotheight']}'", :input => ifile, :output => presFile)
-#  @cdo.expr("'t=#{TEMP_EXPR['geopotheight']}'", :input => ifile, :output => tempFile)
-#
-#
-#  # TIPS: I often work with temporary files and for getting rid of handling them manually the MyTempfile module can be used:
-#  #       Simply include the following methods into you scripts and use tfile for any temporary variable
-#  def tfile
-#    MyTempfile.path
-#  end
-#  # As an example, the computation of simple atmospherric density could look like
-#  presFile, tempFile = tfile, tfile
-#  @cdo.expr("'p=#{PRES_EXPR['geopotheight']}'", :input => ifile, :output => presFile)
-#  @cdo.expr("'t=#{TEMP_EXPR['geopotheight']}'", :input => ifile, :output => tempFile)
-#  @cdo.chainCall("setname,#{rho} -divc,#{C_R} -div",in: [presFile,tempFile].join(' '), out: densityFile)
-#
-#  # For debugging, it is helpfull, to avoid the automatic cleanup at the end of the scripts:
-#  MyTempfile.setPersist(true)
-#  # creates randomly names files. Switch on debugging with
-#  @cdo.Debug = true
+    def test_system_tempdir
+      # automatic path
+      tempPath = Dir.tmpdir
+      tag = 'Cdorb'
+      pattern = "#{tempPath}/#{tag}*"
+      cdo = Cdo.new
+      assert_equal(0,Dir.glob(pattern).size)
+      cdo.topo('r10x10')
+      assert_equal(1,Dir.glob(pattern).size)
+      cdo.topo('r10x10')
+      cdo.topo('r10x10',options: '-f nc')
+      assert_equal(3,Dir.glob(pattern).size)
+      cdo.topo('r10x10',options: '-f nc')
+      cdo.topo('r10x10',options: '-f nc')
+      cdo.topo('r10x10',options: '-f nc')
+      cdo.topo('r10x10')
+      cdo.topo('r10x10',options: '-f nc')
+      cdo.topo('r10x10',options: '-f nc')
+      cdo.topo('r10x10',options: '-f nc')
+      cdo.topo('r10x10')
+      cdo.topo('r10x10',options: '-f nc')
+      assert_equal(12,Dir.glob(pattern).size)
+      cdo.cleanTempDir()
+      assert_equal(0,Dir.glob(pattern).size)
+    end
+    def test_longChain
+      ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
+      t = @cdo.fldmax(input: "-div -sub -timmean -seltimestep,2,3 #{ifile} -seltimestep,1 #{ifile}  -gridarea #{ifile}",returnArray: "t")
+      assert_equal(8.981299259858133e-09,t[0])
+    end
+    def test_tempfile
+      ofile0, ofile1 = @tempStore.newFile, @tempStore.newFile
+      assert(ofile0 != ofile1, "Found equal tempfiles!")
+      # Tempfile should not disappeare even if the GC was started
+      puts ofile0
+      assert(File.exist?(ofile0))
+      GC.start
+      assert(File.exist?(ofile0))
+    end
+    def test_selIndexListFromIcon
+      input = "~/data/icon/oce.nc"
+    end
+    def test_readArray
+      @cdo.debug = @@debug
+      assert_equal([40,80],@cdo.readArray(@cdo.sellonlatbox(-10,10,-20,20,:input => '-topo',:options => '-f nc'), 'topo').shape)
+    end
+    def test_doc
+      @cdo.debug = @@debug
+      @cdo.help(:remap)
+      @cdo.help(:infov)
+      @cdo.help(:topo)
+      @cdo.help(:notDefinedOP)
+      @cdo.help
+    end
+    def test_fillmiss
+      rand = @cdo.setname('v',
+                          :input => '-random,r1x10 ',
+                          :options => ' -f nc')
+
+      if @cdo.hasNetcdf then
+        @cdo.debug = @@debug
+        cdf  = @cdo.openCdf(rand)
+        vals = cdf.var('v').get
+        cdf.var('v').put(vals.sort)
+        cdf.sync
+        cdf.close
+      else
+        assert_raises LoadError do
+          cdf  = @cdo.openCdf(rand)
+        end
+      end
+
+      if @cdo.hasNetcdf then
+        missRange = '0.3,0.8'
+        arOrg = @cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
+        arFm  = @cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+        arFm1s= @cdo.fillmiss2(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+        vOrg  = arOrg[0,0..-1]
+        vFm   = arFm[0,0..-1]
+        vFm1s = arFm1s[0,0..-1]
+        UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
+                              {:y => vFm,  :style => 'points',:title => 'fillmiss'},
+                              {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
+        plotConf: {:yrange => '[0:1]'},title: 'r1x10') if @@show
+        # check left-right replacement
+        rm([rand])
+        rand = @cdo.setname('v',:input => '-random,r10x1 ', :options => ' -f nc',:output => '/tmp/rand.nc')
+        cdf  = @cdo.openCdf(rand)
+        vals = cdf.var('v').get
+        cdf.var('v').put(vals.sort)
+        cdf.sync
+        cdf.close
+
+        missRange = '0.3,0.8'
+        arOrg = @cdo.setrtomiss(missRange,:input => cdf.path,:returnMaArray => 'v')
+        arFm  = @cdo.fillmiss(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+        arFm1s= @cdo.fillmiss2(:input => "-setrtomiss,#{missRange} #{cdf.path}",:returnMaArray => 'v')
+        vOrg  =  arOrg[0..-1,0]
+        vFm   =   arFm[0..-1,0]
+        vFm1s = arFm1s[0..-1,0]
+        UnifiedPlot.linePlot([{:y => vOrg, :style => 'line',:title => 'org'},
+                              {:y => vFm,  :style => 'points',:title => 'fillmiss'},
+                              {:y => vFm1s,:style => 'points',:title => 'fillmiss2'}],
+        plotConf: {:yrange => '[0:1]'},title: 'r10x1') if @@show
+        rm([rand])
+      end
+    end
+
+    # opendap test - broken since 1.9.0
+    def test_opendap
+      ifile = 'https://www.esrl.noaa.gov/psd/thredds/dodsC/Datasets/cpc_global_precip/precip.1979.nc'
+      @cdo.sinfov(input: ifile)
+    end if @@debug
+  end
+end

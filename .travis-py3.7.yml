@@ -1,0 +1,11 @@
+name: test_env_py37
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7
+  - cdo
+  - netCDF4
+  - six
+  - matplotlib
+  - numpy
+  - xarray

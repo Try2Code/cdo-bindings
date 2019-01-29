@@ -1,6 +1,6 @@
 # Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
-[![Build Status](https://travis-ci.org/Try2Code/cdo-bindings.svg?branch=master)](https://travis-ci.org/Try2Code/cdo-bindings)
+[![Build Status](https://travis-ci.org/Try2Code/cdo-bindings.svg?branch=master)](https://travis-ci.org/Try2Code/cdo-bindings) (Ruby 2.x/Python 2.7/Python 3.x)
 
 Welcome to the scripting interfaces of [CDO](https://code.zmaw.de/projects/cdo/wiki)!
 This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
@@ -37,8 +37,7 @@ The following describes the basic features for both languages
 
 ### Run operators
 
-The Ruby module can be used directly after loading it. For python and ruby
-class interfaces an instance has to be created first
+Befor calling operators, you have to create an object first:
 
 ```ruby
     cdo = Cdo.new   #ruby
@@ -49,7 +48,15 @@ class interfaces an instance has to be created first
 
 Please check the documentation for constructor paramaters. I try to have equal interfaces in both languages for all public methods.
 
-#### Debugging
+### Choose CDO binary
+
+By default the cdo-bindings use the 'cdo' binary found in your $PATH variable. To change that, you can
+
+* load a module before calling your script(```module command``` or another package manager like ```conda``` or ```spack```)
+* use the CDO environment variable to set the path to be used
+* use the python/ruby method ```cdo.setCdo('/path/to/the/CDO/executable/you/want')```. By this technique you can create different objects for different CDO versions.
+
+### Debugging
 
 For debugging purpose, both interfaces provide a "debug" attribute. If it is set to a boolian true, the complete commands and the return values will be printed during execution
 
@@ -83,13 +90,27 @@ The default is false of cause.
 By default the return value of each call is the name of the output files (no matter if its a temporary file or not)
 
 #### Use temporary output files
+If the output key is left out, one or more (depending on the operator) temporary files are generated and used as return value(s). In a regular script or a regularly closed interactive session, these files are removed at the end automatically.
+
 ```ruby
     tminFile = cdo.timmin(input: ifile)  #ruby
 ```
 ```python
     tminFile = cdo.timmin(input = ifile) #python
 ```
-
+However these tempfiles remain if the session/script is killed with SIGKILL or if the bindings are used via Jupyter notebooks. Those session are usually long lasting and the heavy usage if tempfiles can easily fill the system tempdir - your system will become unusable then.
+The bindings offer two ways to cope with that
+* Set another directory for storing tempfiles with a constructor option and remove anything left in there when you experienced a crash or something like this
+```python
+   cdo = Cdo(tempdir=tempPath)      #python
+   cdo = Cdo.new(tempdir: tempPath) #ruby
+```
+* remove all tempfiles created by this or former usage of the cdo-bindings belonging to your current Unix-user with (taking into account user-defined ```tempdir``` from above
+```
+   cdo.cleanTempDir() #python
+   cdo.cleanTempDir   #ruby
+```
+   
 #### Operators with parameter
 ```ruby
     cdo.remap([gridfile,weightfile],input:   ifile, output: ofile)   #ruby
@@ -140,6 +161,8 @@ By default the return value of each call is the name of the output files (no mat
     t = cdo.fldmin(input = ifile,returnArray = 'T')                    #py, version >= 1.2.0
 ```
 
+Other options are so-called _masked arrays_ (use ```returnMaArray```) for ruby and python and XArray/XDataset for python-only: use ```returnXArray``` or ```returnXDataset``` for that.
+
 *) If you use scipy >= 0.14 as netcdf backend, you have to use following code
 instead to avoid possible segmentation faults:
 ```python
@@ -166,9 +189,16 @@ Please use the forum or ticket system of CDOs official web page:
 http://code.zmaw.de/projects/cdo
 
 ## Changelog
-* next:
-  -  use CDOs new (1.9.4) ```--config``` option for implementing propper reflection about the binary
-  - finally fix #16
+* **1.5.0** API change :
+  - simplify the interface:
+    - remove returnCdf from constructor, only use it with operator calls
+    - remove methods setReturnArray/unsetReturnArray: I fear it's not used anyway, but 'returnArray' in each call
+    - remove the optional dependency to scipy since it offers less functionality than netCDF4 and just blows up the code
+    - new attributes: hasNetcdf, hasXArray for checking for the respective support
+* **1.4.0** API change :
+  - the ```operators``` atribute is no longer a list, but a dict (python) or hash (ruby) holding the number of output streams as value
+  - finally fix #16 (missing tempfile generation for more than one output streams)
+  - fix #19 (thx @pgierz for the input)
 * **1.3.6**: 
   - bugfix for non-finding the CDO binary on some systems
   - fix hasCdo (py)
@@ -244,12 +274,3 @@ http://code.zmaw.de/projects/cdo
 ## License
 
 Cdo.{rb,py} makes use of the GPLv2 License, see COPYING
-
----
-
-# Other stuff
-```
-Requires | CDO version 1.5.x or newer
-License  | Copyright 2011-2018 by Ralf Mueller Released under GPLv2 license
-         | See the LICENSE file included in the distribution
-```

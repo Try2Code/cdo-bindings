@@ -3,6 +3,7 @@ require 'open3'
 require 'logger'
 require 'stringio'
 require 'json'
+require 'tempfile'
 
 class Hash
   alias :include? :has_key?
@@ -14,45 +15,53 @@ class Cdo
   # hardcoded fallback list of output operators - from 1.8.0 there is an
   # options for this: --operators_no_output
   # this list works for cdo-1.6.4
-  NoOutputOperators = %w[cdiread diff diffc diffn diffp
-  diffv dumpmap filedes ggstat ggstats gradsdes
-  griddes griddes2 gridverify info infoc infon infop infos infov map ncode
-  ncode ndate nlevel nmon npar ntime nvar nyear output
-  outputarr outputbounds outputboundscpt outputcenter outputcenter2
-  outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
-  outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab
-  partab2 seinfo seinfoc seinfon seinfop showcode showdate showformat showlevel
-  showltype showmon showname showparam showstdname showtime showtimestamp
-  showunit showvar showyear sinfo sinfoc sinfon sinfop sinfov
-  specinfo tinfo vardes vct vct2 vlist zaxisdes]
+  NoOutputOperators = %w[cdiread cmor codetab conv_cmor_table diff diffc diffn
+  diffp diffv dump_cmor_table dumpmap filedes gmtcells gmtxyz gradsdes griddes
+  griddes2 gridverify info infoc infon infop infos infov map ncode ndate
+  ngridpoints ngrids nlevel nmon npar ntime nvar nyear output outputarr
+  outputbounds outputboundscpt outputcenter outputcenter2 outputcentercpt
+  outputext outputf outputfld outputint outputkey outputsrv outputtab outputtri
+  outputts outputvector outputvrml outputxyz pardes partab partab2 seinfo
+  seinfoc seinfon seinfop showattribute showatts showattsglob showattsvar
+  showcode showdate showformat showgrid showlevel showltype showmon showname
+  showparam showstdname showtime showtimestamp showunit showvar showyear sinfo
+  sinfoc sinfon sinfop sinfov spartab specinfo tinfo vardes vct vct2 verifygrid
+  vlist xinfon zaxisdes]
+  TwoOutputOperators = %w[trend samplegridicon mrotuv eoftime
+  eofspatial eof3dtime eof3dspatial eof3d eof complextorect complextopol]
+  MoreOutputOperators = %w[distgrid eofcoeff eofcoeff3d intyear scatter splitcode
+  splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec
+  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis]
+
 
   attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug, :logging, :logFile
-  attr_reader   :operators, :filetypes
+  attr_reader   :operators, :filetypes, :hasNetcdf
 
   def initialize(cdo: 'cdo',
-                 returnCdf: false,
                  returnFalseOnError: false,
+                 returnNilOnError: false,
                  forceOutput: true,
                  env: {},
-                 logging: false,
-                 logFile: StringIO.new,
                  debug: false,
-                 returnNilOnError: false)
+                 tempdir: Dir.tmpdir,
+                 logging: false,
+                 logFile: StringIO.new)
 
     # setup path to cdo executable
     @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
 
     @operators              = getOperators(@cdo)
-    @noOutputOperators      = @operators.select {|op,io| 0 == io[:oStreams]}.keys
+    @noOutputOperators      = @operators.select {|op,io| 0 == io}.keys
 
-    @returnCdf              = returnCdf
+    @hasNetcdf              = loadOptionalLibs
+
     @forceOutput            = forceOutput
     @env                    = env
     @debug                  = ENV.has_key?('DEBUG') ? true : debug
     @returnNilOnError       = returnNilOnError
-
     @returnFalseOnError     = returnFalseOnError
 
+    @tempStore              = CdoTempfileStore.new(tempdir)
     @logging                = logging
     @logFile                = logFile
     @logger                 = Logger.new(@logFile,'a')
@@ -84,9 +93,11 @@ class Cdo
   end
 
   # collect the complete list of possible operators
-  def getOperators(path2cdo)
+  def getOperators(path2cdo) #{{{
     operators = {}
 
+    # little side note: the option --operators_no_output works in 1.8.0 and
+    # 1.8.2, but not in 1.9.0, from 1.9.1 it works again
     case
     when version < '1.7.2' then
       cmd       = path2cdo + ' 2>&1'
@@ -100,22 +111,43 @@ class Cdo
       _operators = help[(help.index("Operators:")+1)..help.index(help.find {|v|
         v =~ /CDO version/
       }) - 2].join(' ').split
-      _operatorsNoOutput = NoOutputOperators
-
 
       # build up operator inventory
-      _operators.each {|op| operators[op] = {oStreams: 1} }
-      _operatorsNoOutput.each {|op| operators[op][:oStreams] = 0}
+      # default is 1 output stream
+      _operators.each {|op| operators[op] = 1 }
+      operators.each {|op,_|
+        operators[op] = 0  if NoOutputOperators.include?(op)
+        operators[op] = 2  if TwoOutputOperators.include?(op)
+        operators[op] = -1 if MoreOutputOperators.include?(op)
+      }
 
-    when version <= '1.9.1' then
+    when (version < '1.8.0'  or '1.9.0' == version) then
+      cmd                = "#{path2cdo} --operators"
+      _operators         = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
+
+      _operators.each {|op| operators[op] = 1 }
+      operators.each {|op,_|
+        operators[op] = 0  if NoOutputOperators.include?(op)
+        operators[op] = 2  if TwoOutputOperators.include?(op)
+        operators[op] = -1 if MoreOutputOperators.include?(op)
+      }
+
+
+    when version < '1.9.3' then
+
       cmd                = "#{path2cdo} --operators"
       _operators         = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
       cmd                = "#{path2cdo} --operators_no_output"
       _operatorsNoOutput = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
 
       # build up operator inventory
-      _operators.each {|op| operators[op] = {oStreams: 1} }
-      _operatorsNoOutput.each {|op| operators[op][:oStreams] = 0}
+      _operators.each {|op| operators[op] = 1 }
+      _operatorsNoOutput.each {|op| operators[op] = 0}
+      operators.each {|op,_|
+        operators[op] = 0  if _operatorsNoOutput.include?(op)
+        operators[op] = 2  if TwoOutputOperators.include?(op)
+        operators[op] = -1 if MoreOutputOperators.include?(op)
+      }
 
     else
       cmd       = "#{path2cdo} --operators"
@@ -123,12 +155,12 @@ class Cdo
       IO.popen(cmd).readlines.map {|line|
         lineContent        = line.chomp.split(' ')
         name               = lineContent[0]
-        iCounter, oCounter = lineContent[-1].tr(')','').tr('(','').split('|')
-        operators[name]    = { iStreams: iCounter.to_i, oStreams: oCounter.to_i }
+        iCounter, oCounter = lineContent[-1][1..-1].split('|')
+        operators[name]    = oCounter.to_i
       }
     end
     return operators
-  end
+  end #}}}
 
   # get meta-data about the CDO installation
   def getFeatures
@@ -205,17 +237,24 @@ class Cdo
            autoSplit:     nil)
     options = options.to_s
 
-    options << '-f nc' if options.empty? and ( \
-                                              (     returnCdf ) or \
-                                              ( not returnArray.nil? ) or \
-                                              ( not returnMaArray.nil?) \
-                                             )
+    # switch netcdf output if data of filehandles are requested as output
+    options << ' -f nc' if ( \
+                             (     returnCdf ) or \
+                             ( not returnArray.nil? ) or \
+                             ( not returnMaArray.nil?) \
+                           )
 
     # setup basic operator execution command
     cmd = "#{@cdo} -O #{options} -#{operatorName}#{operatorParameters} #{input} "
 
     # use an empty hash for non-given environment
     env = {} if env.nil?
+
+    # list of all output streams
+    outputs = []
+
+    # just collect given output(s)
+    outputs << output unless output.nil?
 
     case output
     when $stdout
@@ -235,13 +274,18 @@ class Cdo
         end
       end
     else
+      # if operators was not called with output-forcing given, take the global switch
       force = @forceOutput if force.nil?
+
       if force or not File.exists?(output.to_s)
-        # create a tempfile if output is not given
-        output = MyTempfile.path if output.nil?
+        # create tempfile(s) according to the number of output streams needed
+        # if output argument is missing
+        if output.nil? then
+          operators[operatorName].times { outputs << @tempStore.newFile}
+        end
 
         #finalize the execution command
-        cmd << "#{output}"
+        cmd << "#{outputs.join(' ')}"
 
         retvals = _call(cmd,env)
 
@@ -253,20 +297,25 @@ class Cdo
           end
         end
       else
-        warn "Use existing file '#{output}'" if @debug
+        warn "Use existing file(s) '#{outputs.join(' ')}'" if @debug
       end
     end
 
+    # return data arrays instead - this is for now limitted to fields of the
+    # first output file. number from the second need only one addition line, so
+    # I think this is sufficient
     if not returnArray.nil?
-      readArray(output,returnArray)
+      readArray(outputs[0],returnArray)
     elsif not returnMaArray.nil?
-      readMaArray(output,returnMaArray)
-    elsif returnCdf or @returnCdf
-      readCdf(output)
+      readMaArray(outputs[0],returnMaArray)
+    elsif returnCdf
+      retval = outputs.map{|f| readCdf(f)}
+      return 1 == retval.size ? retval[0] : retval
     elsif /^split/.match(operatorName)
       Dir.glob("#{output}*")
     else
-      output
+      return outputs[0] if outputs.size == 1
+      return outputs
     end
   end
 
@@ -294,12 +343,13 @@ class Cdo
   end
 
   # load the netcdf bindings
-  def loadCdf
+  def loadOptionalLibs
     begin
       require "numru/netcdf_miss"
-    rescue LoadError
-      warn "Could not load ruby's netcdf bindings. Please install it."
-      raise
+      return true
+    rescue
+      warn "Could not load ruby's netcdf bindings"
+      return false
     end
   end
 
@@ -361,15 +411,17 @@ class Cdo
   end
 
   # return cdf handle to given file readonly
-  def readCdf(iFile)
-    loadCdf
-    NumRu::NetCDF.open(iFile)
+  def readCdf(iFile,mode='r')
+    if @hasNetcdf then
+      NumRu::NetCDF.open(iFile,mode)
+    else
+      raise LoadError,"Could not load ruby-netcdf"
+    end
   end
 
   # return cdf handle opened in append more
   def openCdf(iFile)
-    loadCdf
-    NumRu::NetCDF.open(iFile,'r+')
+    readCdf(iFile,'r+')
   end
 
   # return narray for given variable name
@@ -394,6 +446,10 @@ class Cdo
     end
   end
 
+  # remove tempfiles created from this or previous runs
+  def cleanTempDir
+    @tempStore.cleanTempDir
+  end
   # }}}
 
   # Addional operators: {{{
@@ -424,33 +480,50 @@ class Cdo
 
 end
 #
-# Helper module for easy temp file handling
-module MyTempfile
-  require 'tempfile'
-  @@_tempfiles           = []
-  @@persistent_tempfiles = false
-  @@N                    = 10000000
+# Helper module for easy temp file handling {{{
+class CdoTempfileStore
+  # base for persitent temp files - just for debugging
+  N = 10000000
 
-  def MyTempfile.setPersist(value)
-    @@persistent_tempfiles = value
+  def initialize(dir=Dir.tmpdir)
+    @dir                  = dir
+    @tag                  = 'Cdorb'
+    @persistent_tempfiles = false
+
+    # storage for filenames in order to prevent too early removement
+    @_tempfiles           = []
+
+    # make sure the tempdir ie really there
+    Dir.mkdir(@dir) unless Dir.exists?(@dir)
   end
 
-  def MyTempfile.path
-    unless @@persistent_tempfiles
-      t = Tempfile.new(self.class.to_s)
-      @@_tempfiles << t
-      @@_tempfiles << t.path
+  def setPersist(value)
+    @persistent_tempfiles = value
+  end
+
+  def newFile
+    unless @persistent_tempfiles
+      t = Tempfile.new(@tag,@dir)
+      @_tempfiles << t
+      @_tempfiles << t.path
       t.path
     else
-      t = "_"+rand(@@N).to_s
-      @@_tempfiles << t
+      t = "_"+rand(N).to_s
+      @_tempfiles << t
       t
     end
   end
 
-  def MyTempfile.showFiles
-    @@_tempfiles.each {|f| print(f+" ") if f.kind_of? String}
+  def showFiles
+    @_tempfiles.each {|f| print(f+" ") if f.kind_of? String}
   end
-end
 
-#vim:fdm=marker
+  def cleanTempDir
+    # filter by name, realfile and ownership
+    Dir.entries(@dir).map {|f| "#@dir/#{f}"}.find_all {|file|
+      File.file?(file) and File.owned?(file) and file.include?(@tag)
+    }.each {|f| File.unlink(f)}
+  end
+end #}}}
+
+# vim: fdm=marker
