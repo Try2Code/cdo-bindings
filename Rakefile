@@ -13,6 +13,7 @@ RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
 SpackEnv          = "$HOME/src/tools/spack/share/spack/setup-env.sh"
 
 String.disable_colorization = (ENV.has_key?('NO_COLOR'))
+@debug                      = (ENV.has_key?('DEBUG'))
 
 
 def getCdoPackagesFromSpack
