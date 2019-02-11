@@ -158,6 +158,14 @@ class Cdo(object):
     # might be good to use the tempdir keyword to ease this, but deletion can
     # be triggered using cleanTempDir() }}}
 
+  # from 1.9.6 onwards CDO returns 1 of diff* finds a difference
+  def __exit_success(self,operatorName):
+    if ( parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.6') ):
+      return 0
+    if ( 'diff' != operatorName[0:4] ):
+      return 0
+    return 1
+
   # retrieve the list of operators from the CDO binary plus info out number of
   # output streams
   def __getOperators(self):  # {{{
@@ -263,7 +271,7 @@ class Cdo(object):
   def __hasError(self, method_name, cmd, retvals):  # {{{
     if (self.debug):
       print("RETURNCODE:" + retvals["returncode"].__str__())
-    if (0 != retvals["returncode"]):
+    if ( self.__exit_success(method_name) < retvals["returncode"] ):
       print("Error in calling operator " + method_name + " with:")
       print(">>> " + ' '.join(cmd) + "<<<")
       print('STDOUT:' + retvals["stdout"])

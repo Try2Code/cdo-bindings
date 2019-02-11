@@ -75,6 +75,13 @@ class Cdo
         v
       end
     }
+
+    # ignore return code 1 for diff operators (from 1.9.6 onwards)
+    @exit_success = lambda {|operatorName|
+      return 0 if version < '1.9.6'
+      return 0 if 'diff' != operatorName[0,4]
+      return 1
+    }
   end
 
   private # {{{
@@ -208,11 +215,11 @@ class Cdo
   end
 
   # Error handling for the given command
-  def _hasError(cmd,retvals)
+  def _hasError(cmd,operatorName,retvals)
     if @debug
       puts("RETURNCODE: #{retvals[:returncode]}")
     end
-    if ( 0 != retvals[:returncode] )
+    if ( @exit_success[operatorName] < retvals[:returncode] )
       puts("Error in calling:")
       puts(">>> "+cmd+"<<<")
       puts(retvals[:stderr])
@@ -259,7 +266,7 @@ class Cdo
     case output
     when $stdout
       retvals = _call(cmd,env)
-      unless _hasError(cmd,retvals)
+      unless _hasError(cmd,operatorName,retvals)
         _output = retvals[:stdout].split($/).map {|l| l.chomp.strip}
         unless autoSplit.nil?
           _output.map! {|line| line.split(autoSplit)}
@@ -270,10 +277,7 @@ class Cdo
         if @returnNilOnError then
           return nil
         else
-          # ignore return code 1 for diff operators
-          if not ('diff' == operatorName[0,4] and 1 == retvals[:returncode]) then
-            raise ArgumentError,"CDO did NOT run successfully!"
-          end
+          raise ArgumentError,"CDO did NOT run successfully!"
         end
       end
     else
@@ -292,7 +296,7 @@ class Cdo
 
         retvals = _call(cmd,env)
 
-        if _hasError(cmd,retvals)
+        if _hasError(cmd,operatorName,retvals)
           if @returnNilOnError then
             return nil
           else
