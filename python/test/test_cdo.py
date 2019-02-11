@@ -132,7 +132,7 @@ class CdoTest(unittest.TestCase):
         values = cdo.outputkey("value",input="-stdatm,0")[1::]
         self.assertEqual(["1013.25", "288"],values)
         values = cdo.outputkey("value",input="-stdatm,0,10000")[1::]
-        self.assertEqual(["1013.25", "271.913", "288", "240.591"],values)
+        self.assertEqual(["1013.25", "271.913", "288", "240.591"],[str(s) for s in values])
         values = cdo.outputkey("lev",input="-stdatm,0,10000")[1::]
         self.assertEqual(["0", "10000","0", "10000"],values)
 
@@ -182,7 +182,6 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo()
         cdo.debug = DEBUG
         diffv = cdo.diffn(input = "-random,global_0.1 -random,global_0.1")
-        print(diffv)
         self.assertEqual(diffv[1].split(' ')[-1],"random")
         self.assertEqual(diffv[1].split(' ')[-3],"1.0000")
 
@@ -441,6 +440,7 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo()
         cdo.__print__('test_errorException')
         self.assertFalse(hasattr(cdo, 'nonExistingMethod'))
+        self.assertFalse(not 'max' in cdo.operators)
         self.failUnlessRaises(CDOException, cdo.max)
         try:
             cdo.max()
