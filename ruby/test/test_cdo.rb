@@ -66,6 +66,14 @@ class TestCdo < Minitest::Test
     assert(@cdo.operators.size > 700,"cound not find enough operators")
   end
 
+  def test_verifyGridOP
+    if "1.9.5" >= @cdo.version then
+      assert(@cdo.operators.keys.include?('gridverify'))
+    else
+      assert(@cdo.operators.keys.include?('verifygrid'))
+    end
+  end
+
   def test_outputOperators
     @cdo.debug = @@debug
     levels = @cdo.showlevel(:input => "-stdatm,0")
@@ -273,7 +281,7 @@ class TestCdo < Minitest::Test
 
   def test_noOutputOps
     operators = @cdo.operators
-    %w[griddes griddes2 gridverify info infoc infon infop infos infov map
+    %w[griddes griddes2 info infoc infon infop infos infov map
        outputarr outputbounds outputboundscpt outputcenter outputcenter2
        outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
        outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab].each {|op|
