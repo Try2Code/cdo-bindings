@@ -270,7 +270,10 @@ class Cdo
         if @returnNilOnError then
           return nil
         else
-          raise ArgumentError,"CDO did NOT run successfully!"
+          # ignore return code 1 for diff operators
+          if not ('diff' == operatorName[0,4] and 1 == retvals[:returncode]) then
+            raise ArgumentError,"CDO did NOT run successfully!"
+          end
         end
       end
     else
