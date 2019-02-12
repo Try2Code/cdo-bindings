@@ -132,7 +132,7 @@ class CdoTest(unittest.TestCase):
         values = cdo.outputkey("value",input="-stdatm,0")[1::]
         self.assertEqual(["1013.25", "288"],values)
         values = cdo.outputkey("value",input="-stdatm,0,10000")[1::]
-        self.assertEqual(["1013.25", "271.913", "288", "240.591"],[str(s) for s in values])
+        self.assertEqual(["1013.2", "271.9", "288.0", "240.6"],['{:.1f}'.format(float(s)) for s in values])
         values = cdo.outputkey("lev",input="-stdatm,0,10000")[1::]
         self.assertEqual(["0", "10000","0", "10000"],values)
 
