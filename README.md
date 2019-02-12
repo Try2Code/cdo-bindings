@@ -195,6 +195,7 @@ http://code.zmaw.de/projects/cdo
     - remove methods setReturnArray/unsetReturnArray: I fear it's not used anyway, but 'returnArray' in each call
     - remove the optional dependency to scipy since it offers less functionality than netCDF4 and just blows up the code
     - new attributes: hasNetcdf, hasXArray for checking for the respective support
+    - fix for cdo-1.9.6: allow non-zero return code for diff operators
 * **1.4.0** API change :
   - the ```operators``` atribute is no longer a list, but a dict (python) or hash (ruby) holding the number of output streams as value
   - finally fix #16 (missing tempfile generation for more than one output streams)
