@@ -7,6 +7,9 @@ rvm:
   - 2.4
   - 2.5
   - 2.6
+env:
+  global:
+    - HDF5_DISABLE_VERSION_CHECK=1
 before_install:
   - sudo apt-get update
   - sudo apt-get install libnetcdf-dev
