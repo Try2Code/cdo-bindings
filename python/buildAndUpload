@@ -1,3 +1,4 @@
-python setup.py register
+python setup.py check
+python setup.py clean
 python setup.py sdist
-python setup.py sdist upload
+python setup.py upload
