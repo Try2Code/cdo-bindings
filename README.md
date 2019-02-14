@@ -25,7 +25,7 @@ Cdo.{rb,py} requires a working CDO binary and Ruby 2.x or Python 2.7/3.x
 
 Multi-dimensional arrays (numpy for python, narray for ruby) require addtional
 netcdf-io modules. These are [scipy](https://docs.scipy.org/doc/scipy/reference/io.html) or [python-netcdf4](https://pypi.python.org/pypi/netCDF4) for python and
-[ruby-netcdf](https://rubygems.org/gems/ruby-netcdf) for ruby. Because scipy has some difficulties with netcdf, I strongly recommend python-netCDF4.
+[ruby-netcdf](https://rubygems.org/gems/ruby-netcdf) for ruby. Because scipy has some difficulties with netcdf, I dropped the support of it with release 1.5.0.
 
 Thx to Alexander Winkler there is also an IO option for XArray.
 
