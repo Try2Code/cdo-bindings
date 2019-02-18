@@ -29,7 +29,7 @@ except ImportError:
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-CDO_PY_VERSION = "1.5.1"
+CDO_PY_VERSION = "1.5.2"
 
 # build interactive documentation: help(cdo.sinfo) {{{
 def auto_doc(tool, path2cdo):

@@ -20,7 +20,7 @@ URL = 'https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D'
 EMAIL = 'stark.dreamdetective@gmail.com'
 AUTHOR = 'Ralf Mueller'
 REQUIRES_PYTHON = '>=2.7.0'
-VERSION = '1.5.1'
+VERSION = '1.5.2'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -45,7 +45,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 try:
     with io.open(os.path.join(here, '../README.md'), encoding='utf-8') as f:
         long_description = '\n' + f.read()
-except FileNotFoundError:
+except IOError:
     long_description = DESCRIPTION
 
 # Load the package's __version__.py module as a dictionary.
@@ -110,11 +110,11 @@ setup(
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
-    license='License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        license,
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
