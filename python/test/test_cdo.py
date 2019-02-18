@@ -49,11 +49,6 @@ def rm(files):
 
 class CdoTest(unittest.TestCase):
 
-    def testVersions(self):
-        cdo = Cdo()
-        self.assertEqual('1.5.1',cdo.__version__())
-        self.assertTrue(parse_version('1.7.0') <= parse_version(cdo.version()))
-
     def testCDO(self):
         cdo = Cdo()
         newCDO="/usr/bin/cdo"
