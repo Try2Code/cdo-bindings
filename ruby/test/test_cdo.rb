@@ -16,6 +16,8 @@ class TestCdo < Minitest::Test
   @@maintainermode = ENV.has_key?('MAINTAINERMODE')
   @@debug          = ENV.has_key?('DEBUG')
 
+  parallelize_me! unless @@debug
+
   def setup
     @cdo = Cdo.new
     @tempStore = CdoTempfileStore.new
