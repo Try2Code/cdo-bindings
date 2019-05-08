@@ -1,12 +1,12 @@
 from __future__ import print_function
-import unittest,os,tempfile,sys,glob,subprocess,multiprocessing,time
+import unittest2,os,tempfile,sys,glob,subprocess,multiprocessing,time,random
 from pkg_resources import parse_version
 import numpy as np
 from matplotlib import pylab as pl
 
 # add local dir to search path
 sys.path.append(os.path.dirname(sys.path[0]))
-from cdo import Cdo,CDOException
+from cdo import Cdo,CDOException,CdoTempfileStore
 
 
 if 'CDF_MOD' in os.environ:
@@ -47,7 +47,7 @@ def rm(files):
     if os.path.exists(f):
       os.system("rm "+f)
 
-class CdoTest(unittest.TestCase):
+class CdoTest(unittest2.TestCase):
 
     def testCDO(self):
         cdo = Cdo()
@@ -111,7 +111,7 @@ class CdoTest(unittest.TestCase):
         cdo.debug = DEBUG
         s   = cdo.sinfov(input="-topo",options="-f nc")
         s   = cdo.sinfov(input="-remapnn,r36x18 -topo",options="-f nc")
-        f   = 'test_ofile.nc'
+        f   = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy').name
         cdo.expr("'z=log(abs(topo)+1)*9.81'",input="-topo", output=f, options="-f nc")
         s   = cdo.infov(input=f)
         cdo.stdatm("0",output=f,options="-f nc")
@@ -208,7 +208,7 @@ class CdoTest(unittest.TestCase):
         outs = []
 
         # deticated output, force = true (=defaut setting)
-        ofile = 'test_force'
+        ofile = 'test_force_{0}'.format( random.randrange(1,100000))
         outs.append(cdo.stdatm("0,10,20",output = ofile))
         mtime0 = os.stat(ofile).st_mtime
         #to make it compatible with systems providing no nanos.
@@ -221,7 +221,7 @@ class CdoTest(unittest.TestCase):
         outs = []
 
         # dedicated output, force = false
-        ofile = 'test_force_false'
+        ofile = 'test_force_false_{0}'.format( random.randrange(1,100000))
         outs.append(cdo.stdatm("0,10,20",output = ofile,force=False))
         mtime0 = os.stat(outs[0]).st_mtime
         outs.append(cdo.stdatm("0,10,20",output = ofile,force=False))
@@ -232,7 +232,7 @@ class CdoTest(unittest.TestCase):
         outs = []
 
         # dedicated output, global force setting
-        ofile = 'test_force_global'
+        ofile = 'test_force_global_{0}'.format( random.randrange(1,100000))
         cdo.forceOutput = False
         outs.append(cdo.stdatm("0,10,20",output = ofile))
         mtime0 = os.stat(outs[0]).st_mtime
@@ -345,17 +345,19 @@ class CdoTest(unittest.TestCase):
           self.assertEqual(-1889,int(topo.mean()))
           self.assertEqual(259200,topo.count())
 
-          bathy = cdo.setrtomiss(0,10000,
-              input = cdo.topo(options='-f nc'),returnXArray='topo')
+          bathy = cdo.setrtomiss(0,10000, input = " -topo" ,returnXArray='topo')
           self.assertEqual(-3385,int(bathy.mean()))
           self.assertEqual(173565,bathy.count())
+
           oro = cdo.setrtomiss(-10000,0,
               input = cdo.topo(options='-f nc'),returnXArray='topo')
           self.assertEqual(1142,int(oro.mean()))
           self.assertEqual(85567,oro.count())
+
           bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnXArray = 'topo')
           self.assertEqual(-4298.0,bathy[0,0])
           self.assertEqual(-2669.0,bathy[0,1])
+
           ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
           tb = cdo.subc(-2669.0,input = ta)
           withMask = cdo.div(input=ta+" "+tb,returnXArray='topo')
@@ -383,7 +385,8 @@ class CdoTest(unittest.TestCase):
       #check the changes withing xarray
       self.assertEqual(1.0,np.min(dataSet['topo']))
 
-      xarrayFile = 'test_xarray_topoAbs.nc'
+      tfGen = CdoTempfileStore(dir=tempfile.gettempdir())
+      xarrayFile = tfGen.newFile()
       dataSet.to_netcdf(xarrayFile)
 
       if cdo.hasNetcdf:
@@ -544,7 +547,7 @@ class CdoTest(unittest.TestCase):
 
     def test_env(self):
         # clean up
-        tag = 'test___env_test'
+        tag = 'test___env_test_{0}'.format( random.randrange(1,100000))
         files = glob.glob(tag+'*')
         rm(files)
         files = glob.glob(tag+'*')
@@ -612,16 +615,16 @@ class CdoTest(unittest.TestCase):
             cdo.setCdo(os.environ.get('CDO'))
 
           cdo.debug = DEBUG
-          rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
+          rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc')
 
           missRange = '0.25,0.85'
-          withMissRange = 'test_withMissRange.nc'
+          withMissRange = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy').name
           arOrg = cdo.copy(input = rand,returnMaArray = 'v')
           arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
           arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
-          arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
+          arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v')
           if 'setmisstonn' in cdo.operators:
-            arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
+            arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v')
 
           pool = multiprocessing.Pool(8)
           pool.apply_async(plot, (arOrg, ),{"title":'org'      })#ofile='fmOrg')
@@ -634,7 +637,6 @@ class CdoTest(unittest.TestCase):
           pool.close()
           pool.join()
 
-          rm([rand])
         else:
           print("test_fillmiss disables because of missing python-netCDF4")
 
@@ -879,9 +881,9 @@ class CdoTest(unittest.TestCase):
           plot(np.flipud(smooth20[0,:,:]),ofile='smooth20',title='smooth,nsmooth=20')
 #===============================================================================
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)
+    suite = unittest2.TestLoader().loadTestsFromTestCase(CdoTest)
 #   print(suite)
-    unittest.main()
+    unittest2.main()
 #   unittest.TextTestRunner(verbosity=2).run(suite)
 
 # vim:sw=2
