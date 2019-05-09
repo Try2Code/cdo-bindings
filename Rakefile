@@ -7,6 +7,11 @@ CLEAN.include("**/*.pyc")
 CLEAN.include("**/*.log")
 CLEAN.include("**/*.log.[0-9]*")
 CLEAN.include("{ruby,python}/*.{grb,nc,png,svg}")
+CLEAN.include("python/tempPy*")
+CLEAN.include("python/test/tempPy*")
+CLEAN.include("python/__pycache__")
+CLEAN.include("python/test/__pycache__")
+CLEAN.include("python/test/*bla")
 
 PythonInterpreter = ENV.has_key?('PYTHON') ? ENV['PYTHON'] : 'python'
 RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
