@@ -12,6 +12,7 @@ CLEAN.include("python/test/tempPy*")
 CLEAN.include("python/__pycache__")
 CLEAN.include("python/test/__pycache__")
 CLEAN.include("python/test/*bla")
+CLEAN.include("doc")
 
 PythonInterpreter = ENV.has_key?('PYTHON') ? ENV['PYTHON'] : 'python'
 RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
