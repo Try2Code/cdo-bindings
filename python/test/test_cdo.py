@@ -340,35 +340,45 @@ class CdoTest(unittest2.TestCase):
     def test_returnXArray(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        if (cdo.hasXarray):
-          topo = cdo.topo(options='-f nc',returnXArray='topo')
-          self.assertEqual(-1889,int(topo.mean()))
-          self.assertEqual(259200,topo.count())
 
-          bathy = cdo.setrtomiss(0,10000, input = " -topo" ,returnXArray='topo')
-          self.assertEqual(-3385,int(bathy.mean()))
-          self.assertEqual(173565,bathy.count())
+        if not cdo.hasXarray:
+          print("nothing testes for test_returnXArray because of missing xarray")
+          return
 
-          oro = cdo.setrtomiss(-10000,0,
-              input = cdo.topo(options='-f nc'),returnXArray='topo')
-          self.assertEqual(1142,int(oro.mean()))
-          self.assertEqual(85567,oro.count())
+        topo = cdo.topo(options='-f nc',returnXArray='topo')
+        self.assertEqual(-1889,int(topo.mean()))
+        self.assertEqual(259200,topo.count())
 
-          bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnXArray = 'topo')
-          self.assertEqual(-4298.0,bathy[0,0])
-          self.assertEqual(-2669.0,bathy[0,1])
+        bathy = cdo.setrtomiss(0,10000, input = " -topo" ,returnXArray='topo')
+        self.assertEqual(-3385,int(bathy.mean()))
+        self.assertEqual(173565,bathy.count())
 
-          ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
-          tb = cdo.subc(-2669.0,input = ta)
-          withMask = cdo.div(input=ta+" "+tb,returnXArray='topo')
-          from xarray import DataArray
-          self.assertEqual(False,DataArray.to_masked_array(withMask).mask[0,0])
-          self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,0])
-          self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,1])
-          self.assertEqual(True,DataArray.to_masked_array(withMask).mask[0,1])
+        oro = cdo.setrtomiss(-10000,0,
+            input = cdo.topo(options='-f nc'),returnXArray='topo')
+        self.assertEqual(1142,int(oro.mean()))
+        self.assertEqual(85567,oro.count())
+
+        bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnXArray = 'topo')
+        self.assertEqual(-4298.0,bathy[0,0])
+        self.assertEqual(-2669.0,bathy[0,1])
+
+        ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
+        tb = cdo.subc(-2669.0,input = ta)
+        withMask = cdo.div(input=ta+" "+tb,returnXArray='topo')
+        from xarray import DataArray
+        self.assertEqual(False,DataArray.to_masked_array(withMask).mask[0,0])
+        self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,0])
+        self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,1])
+        self.assertEqual(True,DataArray.to_masked_array(withMask).mask[0,1])
 
     def test_xarray_input(self):
+
       cdo = Cdo()
+
+      if not (cdo.hasNetcdf and cdo.hasXarray):
+        print("xarray or netcdf not available! no tests run")
+        return
+
       try:
         import xarray
       except:
@@ -377,38 +387,26 @@ class CdoTest(unittest2.TestCase):
 
       dataSet = xarray.open_dataset(cdo.topo('global_0.1',options = '-f nc'))
 
-      if DEBUG:
-        print(type(dataSet).__name__)
-
       dataSet['topo'] = 1.0 + np.abs(dataSet['topo'])
 
       #check the changes withing xarray
       self.assertEqual(1.0,np.min(dataSet['topo']))
 
-      tfGen = CdoTempfileStore(dir=tempfile.gettempdir())
-      xarrayFile = tfGen.newFile()
-      dataSet.to_netcdf(xarrayFile)
+#     tfGen = CdoTempfileStore(dir=tempfile.gettempdir())
+      xarrayFile = tempfile.NamedTemporaryFile(delete=True,
+                                               prefix='test_xarray_input_',
+                                               dir=tempfile.gettempdir())
+#     xarrayFile = tfGen.newFile()
+      dataSet.to_netcdf(xarrayFile.name)
 
-      if cdo.hasNetcdf:
-        #check change via cdo
-        minByCdo = cdo.fldmin(input=xarrayFile,returnArray='topo').min()
-        self.assertEqual(1.0,minByCdo)
+      #check change via cdo
+      minByCdo = cdo.fldmin(input=xarrayFile.name,returnArray='topo').min()
+      self.assertEqual(1.0,minByCdo)
 
-        #do the same without explicit tempfile
-        self.assertEqual(1.0,cdo.fldmin(input=dataSet,returnArray='topo').min())
-      else:
-        self.assertRaises(ImportError,cdo.fldmin,input=dataSet,returnArray='topo')
+      #do the same without explicit tempfile
+      self.assertEqual(1.0,cdo.fldmin(input=dataSet,returnArray='topo').min())
 
-      if cdo.hasXarray:
-        #check change via cdo
-        minByCdo = cdo.fldmin(input=xarrayFile,returnXArray='topo').min()
-        self.assertEqual(1.0,minByCdo)
-
-        #do the same without explicit tempfile
-        self.assertEqual(1.0,cdo.fldmin(input=dataSet,returnXArray='topo').min())
-      else:
-        self.assertRaises(ImportError,cdo.fldmin,input=dataSet,returnXArray='topo')
-
+      xarrayFile.close()
 
     def test_xarray_output(self):
       cdo = Cdo()
@@ -610,6 +608,8 @@ class CdoTest(unittest2.TestCase):
     def test_fillmiss(self):
         cdo = Cdo()
 
+        if not SHOW:
+          return
         if cdo.hasNetcdf:
           if 'CDO' in os.environ:
             cdo.setCdo(os.environ.get('CDO'))
