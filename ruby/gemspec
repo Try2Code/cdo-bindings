@@ -19,6 +19,14 @@ spec = Gem::Specification.new do |s|
   s.add_development_dependency('facets')
   s.add_development_dependency('colorize')
   s.add_development_dependency('rake')
+  s.metadata = {
+    "bug_tracker_uri"   => "https://github.com/Try2Code/cdo-bindings/issues",
+    "changelog_uri"     => "https://github.com/Try2Code/cdo-bindings#changelog",
+    "documentation_uri" => "https://www.rubydoc.info/gems/cdo/Cdo",
+    "homepage_uri"      => "https://github.com/Try2Code/cdo-bindings",
+    "source_code_uri"   => "https://github.com/Try2Code/cdo-bindings",
+    "wiki_uri"          => "https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D"
+  }
 end
 
 # vim:ft=ruby
