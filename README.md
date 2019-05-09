@@ -276,4 +276,4 @@ http://code.zmaw.de/projects/cdo
 
 ## License
 
-Cdo.{rb,py} makes use of the GPLv2 License, see COPYING
+Cdo.{rb,py} makes use of the BSD-3-clause license

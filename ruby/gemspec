@@ -5,14 +5,14 @@ spec = Gem::Specification.new do |s|
   s.name              = "cdo"
   s.version           = '1.5.0'
   s.platform          = Gem::Platform::RUBY
-  s.files             = ["lib/cdo.rb","gemspec","LICENSE"]
+  s.files             = ["lib/cdo.rb","gemspec"]
   s.test_file         = "test/test_cdo.rb"
   s.description       = "Easy access to the Climate Data operators"
   s.summary           = "Easy access to the Climate Data operators"
   s.author            = "Ralf Mueller"
   s.email             = "stark.dreamdetective@gmail.com"
   s.homepage          = "https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D"
-  s.license           = "GPLv2"
+  s.license           = "BSD"
   s.required_ruby_version = ">= 1.9"
   s.add_development_dependency('unifiedPlot')
   s.add_development_dependency('minitest')
