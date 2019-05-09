@@ -458,8 +458,8 @@ class CdoTest(unittest2.TestCase):
         cdo = Cdo()
         cdo.debug = DEBUG
         # check for file input
-        fileA = cdo.stdatm(0,output='A')
-        fileB = cdo.stdatm(0,output='B')
+        fileA = cdo.stdatm(0,output='A_{0}'.format( random.randrange(1,100000)))
+        fileB = cdo.stdatm(0,output='B_{0}'.format( random.randrange(1,100000)))
         files = [fileA,fileB]
         self.assertEqual(cdo.diffv(input = ' '.join(files)), cdo.diffv(input = files))
         self.assertEqual([],cdo.diffv(input = files))
@@ -472,7 +472,7 @@ class CdoTest(unittest2.TestCase):
     def test_splitOps(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        pattern = 'stdAtm'
+        pattern = 'stdAtm_{0}'.format( random.randrange(1,100000))
         cdo.__print__('test_splitOps')
         resultsFiles = cdo.splitname(input = '-stdatm,0',output = pattern)
         self.assertTrue(2 <= len(resultsFiles))
@@ -483,7 +483,7 @@ class CdoTest(unittest2.TestCase):
           self.assertTrue(pattern+var+'.grb' in resultsFiles)
         rm(resultsFiles)
 
-        pattern = 'sel'
+        pattern = 'sel_{0}'.format( random.randrange(1,100000))
         resultsFiles = cdo.splitsel(1,input = '-for,0,9',output = pattern)
         if DEBUG:
           print(resultsFiles)
@@ -493,7 +493,7 @@ class CdoTest(unittest2.TestCase):
           self.assertTrue(pattern+'00000'+str(var)+'.grb' in resultsFiles)
         rm(resultsFiles)
 
-        pattern = 'lev'
+        pattern = 'lev_{0}'.format( random.randrange(1,100000))
         resultsFiles = cdo.splitlevel(input = '-stdatm,100,2000,5000',output = pattern)
         self.assertTrue(3 <= len(resultsFiles))
         if DEBUG:
@@ -720,7 +720,7 @@ class CdoTest(unittest2.TestCase):
 
     def testTempdir(self):
       # manual set path
-      tempPath = os.path.abspath('.')+'/tempPy'
+      tempPath = os.path.abspath('.')+'/tempPy_{0}'.format( random.randrange(1,100000))
       cdo = Cdo(tempdir=tempPath)
       cdo.topo('r10x10',options = '-f nc')
       self.assertEqual(1,len(os.listdir(tempPath)))
