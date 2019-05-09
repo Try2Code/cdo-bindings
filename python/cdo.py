@@ -350,7 +350,7 @@ class Cdo(object):
             tmpfile = self.tempStore.newFile()
             kwargs["input"].to_netcdf(tmpfile)
             kwargs["input"] = tmpfile
-            print(kwargs['input'])
+
             cmd.append(kwargs["input"])
         else:
           # we assume it's either a list, a tuple or any iterable.
