@@ -12,7 +12,7 @@ spec = Gem::Specification.new do |s|
   s.author            = "Ralf Mueller"
   s.email             = "stark.dreamdetective@gmail.com"
   s.homepage          = "https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D"
-  s.license           = "BSD"
+  s.license           = "BSD-3-Clause"
   s.required_ruby_version = ">= 1.9"
   s.add_development_dependency('unifiedPlot')
   s.add_development_dependency('minitest')
