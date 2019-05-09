@@ -299,33 +299,34 @@ class CdoTest(unittest2.TestCase):
     def test_returnMaArray(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        if cdo.hasNetcdf:
-          topo = cdo.topo(returnMaArray='topo')
-          self.assertEqual(-1890.0,round(topo.mean()))
-          self.assertEqual(259200,topo.count())
-          bathy = cdo.setrtomiss(0,10000,
-              input = cdo.topo(options='-f nc'),returnMaArray='topo')
-          #print(bathy)
-          self.assertEqual(173565,bathy.count())
+        if not cdo.hasNetcdf:
+          print("no tests run for test_returnMaArray")
+          return
 
-          self.assertEqual(-3386.0,round(bathy.mean()))
-          oro = cdo.setrtomiss(-10000,0,
-              input = cdo.topo(options='-f nc'),returnMaArray='topo')
-          self.assertEqual(1142.0,round(oro.mean()))
-          self.assertEqual(85567,oro.count())
-          bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnMaArray = 'topo')
-          self.assertEqual(-4298.0,bathy[0,0])
-          self.assertEqual(-2669.0,bathy[0,1])
-          ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
-          tb = cdo.subc(-2669.0,input = ta)
-          withMask = cdo.div(input=ta+" "+tb,returnMaArray='topo')
-          self.assertEqual('--',withMask[0,1].__str__())
-          self.assertEqual(False,withMask.mask[0,0])
-          self.assertEqual(False,withMask.mask[1,0])
-          self.assertEqual(False,withMask.mask[1,1])
-          self.assertEqual(True,withMask.mask[0,1])
-        else:
-          self.assertRaises(ImportError,cdo.topo,returnMaArray='topo')
+        topo = cdo.topo(returnMaArray='topo')
+        self.assertEqual(-1890.0,round(topo.mean()))
+        self.assertEqual(259200,topo.count())
+        bathy = cdo.setrtomiss(0,10000,
+            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+        #print(bathy)
+        self.assertEqual(173565,bathy.count())
+
+        self.assertEqual(-3386.0,round(bathy.mean()))
+        oro = cdo.setrtomiss(-10000,0,
+            input = cdo.topo(options='-f nc'),returnMaArray='topo')
+        self.assertEqual(1142.0,round(oro.mean()))
+        self.assertEqual(85567,oro.count())
+        bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnMaArray = 'topo')
+        self.assertEqual(-4298.0,bathy[0,0])
+        self.assertEqual(-2669.0,bathy[0,1])
+        ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
+        tb = cdo.subc(-2669.0,input = ta)
+        withMask = cdo.div(input=ta+" "+tb,returnMaArray='topo')
+        self.assertEqual('--',withMask[0,1].__str__())
+        self.assertEqual(False,withMask.mask[0,0])
+        self.assertEqual(False,withMask.mask[1,0])
+        self.assertEqual(False,withMask.mask[1,1])
+        self.assertEqual(True,withMask.mask[0,1])
 
     def test_returnXDataset(self):
         cdo = Cdo()
