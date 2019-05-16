@@ -1,0 +1,35 @@
+version: 2
+    
+jobs:
+  test38:
+    docker:
+      - image:circleci/python:3.8.0a4-stretch
+    steps:
+      - run:
+          name: Install CDO via conda
+          command: sudo apt-get update
+          command: sudo apt-get install libnetcdf-dev
+          command: sudo apt-get install ruby rake
+          command: wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          command: bash miniconda.sh -b -p $HOME/miniconda
+          command: export PATH="$HOME/miniconda/bin:$PATH"
+          command: hash -r
+          command: conda config --set always_yes yes --set changeps1 no
+          command: conda update -q conda
+          command: conda info -a
+          command: conda config --add channels conda-forge
+          command: conda install cdo
+          command: conda update --all
+      - run:
+          name: Install dependencies
+          command: pip install netCDF4 six matplotlib numpy xarray unittest2
+      - run:
+          name: Test
+          command: python --version
+          command: rake testPython CDO=$(type -p cdo) NO_COLOR=1
+    
+workflows:
+  version: 2
+  build:
+    jobs:
+      - test38
