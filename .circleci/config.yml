@@ -8,7 +8,7 @@ jobs:
       - run:
           name: Install CDO via conda
           command: |
-            sudo apt-get updatae
+            sudo apt-get update
             sudo apt-get install gcc gfortran make binutils binutils-dev
             sudo apt-get install libnetcdf-dev libhdf5-dev
             sudo apt-get install ruby rake
