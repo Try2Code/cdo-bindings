@@ -3,7 +3,7 @@ version: 2
 jobs:
   test38:
     docker:
-      - image:circleci/python:3.8.0a4-stretch
+      - image: circleci/python:3.8.0a4-stretch
     steps:
       - run:
           name: Install CDO via conda
