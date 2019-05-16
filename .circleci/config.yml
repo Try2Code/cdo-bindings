@@ -29,7 +29,7 @@ jobs:
       - run:
           name: Install dependencies (pip)
           command: | 
-            pip install six matplotlib numpy xarray unittest2
+            pip install six matplotlib numpy xarray unittest2 --user
       - run:
           name: Run Tests
           command: |
