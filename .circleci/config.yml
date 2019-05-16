@@ -1,6 +1,7 @@
 version: 2
+
 jobs:
-  test38:
+  build:
     docker:
       - image: circleci/python:3.8.0a4-stretch
     steps:
@@ -26,9 +27,3 @@ jobs:
           name: Test
           command: python --version
           command: rake testPython CDO=$(type -p cdo) NO_COLOR=1
-    
-workflows:
-  version: 2
-  build:
-    jobs:
-      - test38
