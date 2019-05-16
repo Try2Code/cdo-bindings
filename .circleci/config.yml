@@ -6,13 +6,15 @@ jobs:
       - image: circleci/python:3.8.0a4-stretch
     steps:
       - run:
-          name: Install CDO via conda
+          name: Install dependencies (debian)
           command: |
             sudo apt-get update
             sudo apt-get install gcc gfortran make binutils binutils-dev
             sudo apt-get install libnetcdf-dev libhdf5-dev
             sudo apt-get install ruby rake
             sudo apt-get install python-netcdf4
+      - run:
+          name: Install dependencies cdo binary via conda
           command: |
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && bash miniconda.sh -b -p $HOME/miniconda
             export PATH="$HOME/miniconda/bin:$PATH"
@@ -24,11 +26,11 @@ jobs:
             conda install cdo
             conda update --all
       - run:
-          name: Install dependencies
+          name: Install dependencies (pip)
           command: | 
             pip install six matplotlib numpy xarray unittest2
       - run:
-          name: Test
+          name: Run Tests
           command: |
             python --version
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
