@@ -8,7 +8,10 @@ jobs:
       - run:
           name: Install CDO via conda
           command: |
-            sudo apt-get updatae ; sudo apt-get install libnetcdf-dev libhdf5-dev ; sudo apt-get install ruby rake
+            sudo apt-get updatae
+            sudo apt-get install libnetcdf-dev libhdf5-dev
+            sudo apt-get install ruby rake
+            sudo apt-get install python-netcdf4
           command: |
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && bash miniconda.sh -b -p $HOME/miniconda
             export PATH="$HOME/miniconda/bin:$PATH"
@@ -22,7 +25,7 @@ jobs:
       - run:
           name: Install dependencies
           command: | 
-            pip install netCDF4 six matplotlib numpy xarray unittest2
+            pip install six matplotlib numpy xarray unittest2
       - run:
           name: Test
           command: |
