@@ -9,7 +9,7 @@ jobs:
           name: Install dependencies (debian)
           command: |
             sudo apt-get update
-            sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev
+            sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev
             sudo apt-get install libnetcdf-dev libhdf5-dev
             sudo apt-get install ruby rake
             sudo apt-get install python-dev libpython-dev
