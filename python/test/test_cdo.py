@@ -173,6 +173,20 @@ class CdoTest(unittest2.TestCase):
         ofile = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")
         self.assertEqual(["veloc"],cdo.showname(input = ofile))
 
+    def test_pychain(self):
+        cdo = Cdo()
+        ofile = cdo.setname("veloc").copy.random("r1x1").add_option("-f nc").read()
+        self.assertEqual(["veloc"],cdo.showname(input = ofile))
+
+    def test_pychain2(self):
+        # compare the two different ways
+        cdo = Cdo()
+        ofile1 = cdo.setname("veloc").copy.random("r1x1").add_option("-f nc").read()
+        cdo = Cdo()
+        ofile2 = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")
+        diff = cdo.diff(input=[ofile1, ofile2])
+        self.assertFalse(diff, msg=diff)
+
     def test_diff(self):
         cdo = Cdo()
         cdo.debug = DEBUG
