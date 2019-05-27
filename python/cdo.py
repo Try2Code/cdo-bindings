@@ -359,6 +359,7 @@ class Cdo(object):
     return self
 
   def __call__(self, *args, **kwargs):
+    user_kwargs = kwargs.copy()
     try:
       method_name = self._cmd[0][1:].split(',')[0]
     except IndexError:
@@ -430,7 +431,7 @@ class Cdo(object):
     if None != kwargs.get("output"):
       outputs.append(kwargs["output"])
 
-    if not kwargs.get('compute') and not 'input' in kwargs:
+    if not user_kwargs or not kwargs.get('compute', True):
       return self
     elif not kwargs.get('keep', True):
       self._cmd.clear()
@@ -662,7 +663,10 @@ class Cdo(object):
     return delta_levels
 
   def read(self, output=None):
-    return self(output=output, compute=True)
+    if output:
+      return self(output=output, compute=True)
+    else:
+      return self(compute=True)
 
   def readCdf(self, iFile=None):
     """Return a cdf handle created by the available cdf library"""

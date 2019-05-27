@@ -450,7 +450,7 @@ class CdoTest(unittest2.TestCase):
         cdo.__print__('test_errorException')
         self.assertFalse(hasattr(cdo, 'nonExistingMethod'))
         self.assertFalse(not 'max' in cdo.operators)
-        self.failUnlessRaises(CDOException, cdo.max)
+        self.failUnlessRaises(CDOException, cdo.max.read)
         try:
             cdo.max()
         except CDOException as e:
@@ -606,10 +606,11 @@ class CdoTest(unittest2.TestCase):
           print(cdo)
         if cdo.hasNetcdf:
           bathy = cdo.setrtomiss(0,10000,
-                                 input = cdo.topo('r100x100'),returnMaArray='var1')
+                                 input = cdo.topo('r100x100').read(),
+                                 returnMaArray='var1')
           plot(bathy)
           oro = cdo.setrtomiss(-10000,0,
-                               input = cdo.topo(),returnMaArray='var1')
+                               input = cdo.topo().read(),returnMaArray='var1')
           plot(oro)
           random = cdo.setname('test_maArray',
                                input = "-setrtomiss,0.4,0.8 -random,r180x90 ",
