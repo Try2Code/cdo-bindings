@@ -122,7 +122,9 @@ class Cdo(object):
   eofspatial eof3dtime eof3dspatial eof3d eof complextorect complextopol'.split()
   MoreOutputOperators = 'distgrid eofcoeff eofcoeff3d intyear scatter splitcode \
   splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec \
-  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split() #}}}
+  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split()
+  AliasOperators = {'seq':'for'}
+  #}}}
 
   def __init__(self,
                cdo='cdo',
@@ -317,7 +319,8 @@ class Cdo(object):
       print("-->> Could not load netCDF4! <<--") #}}}
 
   def __getattr__(self, method_name):  # main method-call handling for Cdo-objects {{{
-
+    if method_name in self.AliasOperators.keys():
+      method_name = self.AliasOperators[method_name]
     @auto_doc(method_name, self.CDO)
     def get(self, *args, **kwargs):
       operatorPrintsOut = method_name in self.noOutputOperators
