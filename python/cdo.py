@@ -125,7 +125,9 @@ class Cdo(object):
   eofspatial eof3dtime eof3dspatial eof3d eof complextorect complextopol'.split()
   MoreOutputOperators = 'distgrid eofcoeff eofcoeff3d intyear scatter splitcode \
   splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec \
-  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split() #}}}
+  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split()
+  AliasOperators = {'seq':'for'}
+  #}}}
 
   name = ''
 
@@ -185,6 +187,9 @@ class Cdo(object):
   def __get__(self, instance, owner):
     if instance is None:
       return self
+    name = self.name
+    if name in self.AliasOperators:
+      name = self.AliasOperators[name]
     return self.__class__(
         instance.CDO,
         instance.returnNoneOnError,
@@ -194,7 +199,7 @@ class Cdo(object):
         instance.tempStore.dir,
         instance.logging,
         instance.logFile,
-        instance._cmd + ['-' + self.name],
+        instance._cmd + ['-' + name],
         instance._options)
 
   # from 1.9.6 onwards CDO returns 1 of diff* finds a difference
@@ -512,7 +517,8 @@ class Cdo(object):
 
   def __getattr__(self, method_name):  # main method-call handling for Cdo-objects {{{
 
-    if ((method_name in self.__dict__) or (method_name in list(self.operators.keys()))):
+    if ((method_name in self.__dict__) or (method_name in list(self.operators.keys()))
+        or (method_name in self.AliasOperators)):
       if self.debug:
         print(("Found method:" + method_name))
 

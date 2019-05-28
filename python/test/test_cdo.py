@@ -776,6 +776,11 @@ class CdoTest(unittest2.TestCase):
       else:
         self.assertRaises(ImportError,cdo.trend, input = "-addc,7 -mulc,44 -for,1,100",returnCdf = True)
 
+    def test_for(self):
+      cdo = Cdo()
+      if cdo.hasNetcdf:
+        sum = cdo.seq(1,10,returnArray='for')
+        self.assertEqual(55.0,sum.flatten('F').sum())
 
     if MAINTAINERMODE:
 
