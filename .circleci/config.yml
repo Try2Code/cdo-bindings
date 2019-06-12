@@ -29,7 +29,7 @@ jobs:
       - run:
           name: Install dependencies (rake)
           command: |
-            gem install minitest colorize facets
+            gem install minitest colorize facets --user
       - run:
           name: Run Tests
           command: |
