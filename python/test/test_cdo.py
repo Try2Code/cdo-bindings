@@ -23,29 +23,32 @@ DEBUG          = 'DEBUG' in os.environ
 MAINTAINERMODE = 'MAINTAINERMODE' in os.environ
 
 def plot(ary,ofile=False,title=None):
-    if not SHOW:
-      return
+  if not SHOW:
+    return
 
-    pl.grid(True)
+  pl.grid(True)
 
-    if not None == title:
-      pl.title(title)
+  if not None == title:
+    pl.title(title)
 
-    if 1 == ary.ndim:
-      pl.plot(ary)
-    else:
-      pl.imshow(ary,origin='lower',interpolation='nearest')
+  if 1 == ary.ndim:
+    pl.plot(ary)
+  else:
+    pl.imshow(ary,origin='lower',interpolation='nearest')
 
-    if not ofile:
-      pl.show()
-    else:
-      pl.savefig(ofile,bbox_inches='tight',dpi=200)
-      subprocess.Popen('sxiv {0}.{1} &'.format(ofile,'png'), shell=True, stderr=subprocess.STDOUT)
+  if not ofile:
+    pl.show()
+  else:
+    pl.savefig(ofile,bbox_inches='tight',dpi=200)
+    subprocess.Popen('sxiv {0}.{1} &'.format(ofile,'png'), shell=True, stderr=subprocess.STDOUT)
 
 def rm(files):
   for f in files:
     if os.path.exists(f):
       os.system("rm "+f)
+
+def cdoShouldHaveSeqOperator(cdoObject):
+  return (parse_version(cdoObject.version()) > parse_version('1.9.6'))
 
 class CdoTest(unittest2.TestCase):
 
@@ -481,9 +484,13 @@ class CdoTest(unittest2.TestCase):
         rm(resultsFiles)
 
         pattern = 'sel_{0}'.format( random.randrange(1,100000))
-        resultsFiles = cdo.splitsel(1,input = '-for,0,9',output = pattern)
+        varname = 'for'
+        if (cdoShouldHaveSeqOperator(cdo)):
+          varname = 'seq'
+        resultsFiles = cdo.splitsel(1,input = '-%s,0,9'%(varname),output = pattern)
         if DEBUG:
           print(resultsFiles)
+          print('pattern=%s'%(pattern))
         self.assertTrue(10 <= len(resultsFiles))
         rm(resultsFiles)
         for var in range(0,10):
@@ -753,18 +760,24 @@ class CdoTest(unittest2.TestCase):
       # check usage of 'returnCdf' with these operators
       if cdo.hasNetcdf:
         aFile, bFile = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnCdf = True)
-        self.assertEqual(51.0, aFile.variables['for'][0],"got wrong value from cdf handle")
-        self.assertEqual(44.0, bFile.variables['for'][0],"got wrong value from cdf handle")
+        varname = 'for'
+        if (cdoShouldHaveSeqOperator(cdo)):
+          varname = 'seq'
+        self.assertEqual(51.0, aFile.variables[varname][0],"got wrong value from cdf handle")
+        self.assertEqual(44.0, bFile.variables[varname][0],"got wrong value from cdf handle")
 
-        avar = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnArray = 'for')[0]
+        avar = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnArray = varname)[0]
         self.assertEqual(51.0, avar,"got wrong value from narray")
       else:
-        self.assertRaises(ImportError,cdo.trend, input = "-addc,7 -mulc,44 -for,1,100",returnCdf = True)
+        self.assertRaises(ImportError,cdo.trend, input = "-addc,7 -mulc,44 -%s,1,100"%(varname),returnCdf = True)
 
     def test_for(self):
       cdo = Cdo()
       if cdo.hasNetcdf:
-        sum = cdo.seq(1,10,returnArray='for')
+        varname = 'for'
+        if (cdoShouldHaveSeqOperator(cdo)):
+          varname = 'seq'
+        sum = cdo.seq(1,10,returnArray=varname)
         self.assertEqual(55.0,sum.flatten('F').sum())
 
     if MAINTAINERMODE:

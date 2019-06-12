@@ -319,8 +319,15 @@ class Cdo(object):
       print("-->> Could not load netCDF4! <<--") #}}}
 
   def __getattr__(self, method_name):  # main method-call handling for Cdo-objects {{{
-    if method_name in self.AliasOperators.keys():
+    # CDO (version 1.9.6 and older) has an operator called 'for', which cannot
+    # called with 'cdo.for()' because 'for' is a keyword in python. 'for' is
+    # renamed to 'seq' in 1.9.7. 
+    # This workaround translates all calls of 'seq' into for in case of
+    # versions prior tp 1.9.7
+    if method_name in self.AliasOperators.keys() and \
+      ( parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.7') ):
       method_name = self.AliasOperators[method_name]
+
     @auto_doc(method_name, self.CDO)
     def get(self, *args, **kwargs):
       operatorPrintsOut = method_name in self.noOutputOperators
