@@ -31,7 +31,7 @@ jobs:
           command: |
             type pip
             python --version
-            pip install six matplotlib numpy xarray unittest2 --user
+            pip install six numpy xarray unittest2 --user
       - run:
           name: Run Tests
           command: |

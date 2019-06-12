@@ -2,7 +2,6 @@ from __future__ import print_function
 import unittest2,os,tempfile,sys,glob,subprocess,multiprocessing,time,random
 from pkg_resources import parse_version
 import numpy as np
-from matplotlib import pylab as pl
 
 # add local dir to search path
 sys.path.insert(0,os.path.dirname(sys.path[0]))
@@ -21,6 +20,9 @@ SHOW           = 'SHOW' in os.environ
 DEBUG          = 'DEBUG' in os.environ
 
 MAINTAINERMODE = 'MAINTAINERMODE' in os.environ
+
+if SHOW:
+  from matplotlib import pylab as pl
 
 def plot(ary,ofile=False,title=None):
   if not SHOW:
