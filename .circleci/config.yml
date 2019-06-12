@@ -49,17 +49,6 @@ jobs:
             cd cdo-bindings
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
       - run:
-          name: Run Tests Python 3.6
-          command: |
-            export PATH="$HOME/miniconda/bin:$PATH"
-            source activate test_env_py36
-            conda update --all
-            cdo -V
-            type -p cdo
-            python --version
-            cd cdo-bindings
-            rake testPython CDO=$(type -p cdo) NO_COLOR=1
-      - run:
           name: Run Tests Python 3.7
           command: |
             export PATH="$HOME/miniconda/bin:$PATH"
