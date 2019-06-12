@@ -712,24 +712,9 @@ class CdoTest(unittest2.TestCase):
       self.assertTrue(opCount > 50)
       self.assertTrue(opCount < 200)
 
-    def test_cdiMeta(self):
-      cdo = Cdo()
-      if cdo.hasNetcdf:
-        ofile = cdo.stdatm("0", returnCdf = True)
-        if DEBUG:
-          print(ofile)
-      if cdo.hasXarray:
-        ofile = cdo.stdatm("0", returnXArray = 'T')
-        if DEBUG:
-          print(ofile)
-          print(ofile.attrs)
-        ofile = cdo.stdatm("0", returnXDataset=True)
-        if DEBUG:
-          print(ofile)
-          print(ofile.attrs)
-
     def test_operators_with_multiple_output_files(self):
       cdo = Cdo()
+      cdo.debug = True
       self.assertEqual(1 ,cdo.operators['topo'],'wrong output counter for "topo"')
       self.assertEqual(0 ,cdo.operators['sinfo'],'wrong output counter for "sinfo"')
       self.assertEqual(-1,cdo.operators['splitsel'],'wrong output counter for "splitsel"')
