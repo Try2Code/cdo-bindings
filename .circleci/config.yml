@@ -14,8 +14,9 @@ jobs:
             sudo apt-get install ruby rake
             sudo apt-get install python-dev libpython-dev
             sudo apt-get install python-netcdf4
+            sudo apt-get install unittest2
       - run:
-          name: Install dependencies cdo binary via conda
+          name: Install conda, CDO and environements for Python 2.7/3.6/3.7
           command: |
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && bash miniconda.sh -b -p $HOME/miniconda
             export PATH="$HOME/miniconda/bin:$PATH"
@@ -24,16 +25,42 @@ jobs:
             conda update -q conda
             conda info -a
             conda config --add channels conda-forge
-            conda install cdo six numpy xarray unittest2
-            conda update --all
+            conda env create --file .travis-py2.7.yml
+            conda env create --file .travis-py3.6.yml
+            conda env create --file .travis-py3.7.yml
       - run:
           name: Install dependencies (rake)
           command: |
             gem install minitest colorize facets --user
       - run:
-          name: Run Tests
+          name: Checkout cdo-bindings
           command: |
-            python --version
             git clone https://github.com/Try2Code/cdo-bindings.git
             cd cdo-bindings
+      - run:
+          name: Run Tests Python 2.7
+          command: |
+            source activate test_env_py27
+            conda update --all
+            cdo -V
+            type -p cdo
+            python --version
+            rake testPython CDO=$(type -p cdo) NO_COLOR=1
+      - run:
+          name: Run Tests Python 3.6
+          command: |
+            source activate test_env_py36
+            conda update --all
+            cdo -V
+            type -p cdo
+            python --version
+            rake testPython CDO=$(type -p cdo) NO_COLOR=1
+      - run:
+          name: Run Tests Python 3.7
+          command: |
+            source activate test_env_py37
+            conda update --all
+            cdo -V
+            type -p cdo
+            python --version
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
