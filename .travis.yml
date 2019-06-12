@@ -25,7 +25,7 @@ before_install:
   - conda env create --file .travis-py3.6.yml
   - conda env create --file .travis-py3.7.yml
 script:
-  - gem install parallel --version '< 1.17'
+  - gem install parallel --version '<= 1.12'
   - gem install narray narray_miss ruby-netcdf minitest rake colorize facets
   - source activate test_env_py27
   - conda update --all
