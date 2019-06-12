@@ -36,4 +36,6 @@ jobs:
           name: Run Tests
           command: |
             python --version
+            git clone https://github.com/Try2Code/cdo-bindings.git
+            cd cdo-bindings
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
