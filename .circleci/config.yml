@@ -20,7 +20,7 @@ jobs:
           command: |
             git clone https://github.com/Try2Code/cdo-bindings.git
       - run:
-          name: Install conda, CDO and environements for Python 2.7/3.6/3.7
+          name: Install conda, CDO and environements for Python 2.7/3.7
           command: |
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && bash miniconda.sh -b -p $HOME/miniconda
             export PATH="$HOME/miniconda/bin:$PATH"
@@ -47,6 +47,8 @@ jobs:
             python --version
             cd cdo-bindings
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
+            conda remove -y numpy netCDF4 xarray
+            rake testPython CDO=$(type -p cdo) NO_COLOR=1
       - run:
           name: Run Tests Python 3.7
           command: |
@@ -56,4 +58,6 @@ jobs:
             type -p cdo
             python --version
             cd cdo-bindings
+            rake testPython CDO=$(type -p cdo) NO_COLOR=1
+            conda remove -y numpy netCDF4 xarray
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
