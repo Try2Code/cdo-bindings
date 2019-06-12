@@ -31,7 +31,7 @@ jobs:
           command: |
             python --version
             type -t pip
-            pip install unittest2 -user
+            pip install unittest2 --user
       - run:
           name: Run Tests
           command: |
