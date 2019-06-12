@@ -47,7 +47,7 @@ jobs:
             python --version
             cd cdo-bindings
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
-            conda remove -y numpy netCDF4 xarray
+            conda remove -y netCDF4 xarray
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
       - run:
           name: Run Tests Python 3.7
@@ -59,5 +59,5 @@ jobs:
             python --version
             cd cdo-bindings
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
-            conda remove -y numpy netCDF4 xarray
+            conda remove -y netCDF4 xarray
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
