@@ -24,14 +24,12 @@ jobs:
             conda update -q conda
             conda info -a
             conda config --add channels conda-forge
-            conda install cdo six numpy xarray
+            conda install cdo six numpy xarray unittest2
             conda update --all
       - run:
-          name: Install dependencies (pip)
+          name: Install dependencies (rake)
           command: |
-            python --version
-            type -t pip
-            pip install unittest2 --user
+            gem install minitest colorize facets
       - run:
           name: Run Tests
           command: |
