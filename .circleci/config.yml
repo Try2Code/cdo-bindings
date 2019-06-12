@@ -16,6 +16,11 @@ jobs:
             sudo apt-get install python-netcdf4
             sudo apt-get install python-unittest2
       - run:
+          name: Checkout cdo-bindings
+          command: |
+            git clone https://github.com/Try2Code/cdo-bindings.git
+            cd cdo-bindings
+      - run:
           name: Install conda, CDO and environements for Python 2.7/3.6/3.7
           command: |
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && bash miniconda.sh -b -p $HOME/miniconda
@@ -32,11 +37,6 @@ jobs:
           name: Install dependencies (rake)
           command: |
             gem install minitest colorize facets --user
-      - run:
-          name: Checkout cdo-bindings
-          command: |
-            git clone https://github.com/Try2Code/cdo-bindings.git
-            cd cdo-bindings
       - run:
           name: Run Tests Python 2.7
           command: |
