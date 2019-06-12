@@ -36,10 +36,11 @@ jobs:
       - run:
           name: Install dependencies (rake)
           command: |
-            gem install minitest colorize facets --user
+            gem install minitest colorize facets --user -N
       - run:
           name: Run Tests Python 2.7
           command: |
+            export PATH="$HOME/miniconda/bin:$PATH"
             source activate test_env_py27
             conda update --all
             cdo -V
@@ -49,6 +50,7 @@ jobs:
       - run:
           name: Run Tests Python 3.6
           command: |
+            export PATH="$HOME/miniconda/bin:$PATH"
             source activate test_env_py36
             conda update --all
             cdo -V
@@ -58,6 +60,7 @@ jobs:
       - run:
           name: Run Tests Python 3.7
           command: |
+            export PATH="$HOME/miniconda/bin:$PATH"
             source activate test_env_py37
             conda update --all
             cdo -V
