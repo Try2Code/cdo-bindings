@@ -46,6 +46,7 @@ jobs:
             cdo -V
             type -p cdo
             python --version
+            cd cdo-bindings
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
       - run:
           name: Run Tests Python 3.6
@@ -56,6 +57,7 @@ jobs:
             cdo -V
             type -p cdo
             python --version
+            cd cdo-bindings
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
       - run:
           name: Run Tests Python 3.7
@@ -66,4 +68,5 @@ jobs:
             cdo -V
             type -p cdo
             python --version
+            cd cdo-bindings
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
