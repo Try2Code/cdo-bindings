@@ -343,13 +343,13 @@ class CdoTest(unittest2.TestCase):
 
     def test_returnXArray(self):
         cdo = Cdo()
-        cdo.debug = DEBUG
-
+        cdo.debug = True
+        print('TEST: test_returnXArray')
         if not cdo.hasXarray:
           print("nothing testes for test_returnXArray because of missing xarray")
           return
 
-        topo = cdo.topo(options='-f nc',returnXArray='topo')
+        topo = cdo.topo(returnXArray='topo',options='-v')
         self.assertEqual(-1889,int(topo.mean()))
         self.assertEqual(259200,topo.count())
 
@@ -726,21 +726,6 @@ class CdoTest(unittest2.TestCase):
           print(ofile)
           print(ofile.attrs)
 
-    def testTempdir(self):
-      # manual set path
-      tempPath = os.path.abspath('.')+'/tempPy_{0}'.format( random.randrange(1,100000))
-      cdo = Cdo(tempdir=tempPath)
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(1,len(os.listdir(tempPath)))
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(3,len(os.listdir(tempPath)))
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(5,len(os.listdir(tempPath)))
-      cdo.cleanTempDir()
-      self.assertEqual(0,len(os.listdir(tempPath)))
-
     def test_operators_with_multiple_output_files(self):
       cdo = Cdo()
       self.assertEqual(1 ,cdo.operators['topo'],'wrong output counter for "topo"')
@@ -760,15 +745,15 @@ class CdoTest(unittest2.TestCase):
       self.assertEqual(51.0,float(cdo.outputkey('value',input = aFile)[-1]))
       self.assertEqual(44.0,float(cdo.outputkey('value',input = bFile)[-1]))
       # check usage of 'returnCdf' with these operators
+      varname = 'for'
+      if (cdoShouldHaveSeqOperator(cdo)):
+        varname = 'seq'
       if cdo.hasNetcdf:
-        aFile, bFile = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnCdf = True)
-        varname = 'for'
-        if (cdoShouldHaveSeqOperator(cdo)):
-          varname = 'seq'
+        aFile, bFile = cdo.trend(input = "-addc,7 -mulc,44 -"+varname+",1,100",returnCdf = True)
         self.assertEqual(51.0, aFile.variables[varname][0],"got wrong value from cdf handle")
         self.assertEqual(44.0, bFile.variables[varname][0],"got wrong value from cdf handle")
 
-        avar = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnArray = varname)[0]
+        avar = cdo.trend(input = "-addc,7 -mulc,44 -"+varname+",1,100",returnArray = varname)[0]
         self.assertEqual(51.0, avar,"got wrong value from narray")
       else:
         self.assertRaises(ImportError,cdo.trend, input = "-addc,7 -mulc,44 -%s,1,100"%(varname),returnCdf = True)
@@ -781,6 +766,22 @@ class CdoTest(unittest2.TestCase):
           varname = 'seq'
         sum = cdo.seq(1,10,returnArray=varname)
         self.assertEqual(55.0,sum.flatten('F').sum())
+
+    def testTempdir(self):
+      # manual set path
+      tempPath = os.path.abspath('.')+'/tempPy_{0}'.format( random.randrange(1,100000))
+      cdo = Cdo(tempdir=tempPath)
+      cdo.debug = True
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(1,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(3,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(5,len(os.listdir(tempPath)))
+      cdo.cleanTempDir()
+      self.assertEqual(0,len(os.listdir(tempPath)))
 
     if MAINTAINERMODE:
 
