@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pylab as pl
 
 # add local dir to search path
-sys.path.append(os.path.dirname(sys.path[0]))
+sys.path.insert(0,os.path.dirname(sys.path[0]))
 from cdo import Cdo,CDOException,CdoTempfileStore
 
 
@@ -54,6 +54,8 @@ class CdoTest(unittest2.TestCase):
 
     def testCDO(self):
         cdo = Cdo()
+        print('this is CDO version %s'%(cdo.version()))
+        print('cdo-bindings version: %s'%(cdo.__version__()))
         newCDO="/usr/bin/cdo"
         if os.path.isfile(newCDO):
             cdo.setCdo(newCDO)
