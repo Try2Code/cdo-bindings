@@ -24,14 +24,14 @@ jobs:
             conda update -q conda
             conda info -a
             conda config --add channels conda-forge
-            conda install cdo
+            conda install cdo six numpy xarray
             conda update --all
       - run:
           name: Install dependencies (pip)
           command: |
-            type pip
             python --version
-            pip install six numpy xarray unittest2 --user
+            type -t pip
+            pip install unittest2 -user
       - run:
           name: Run Tests
           command: |
