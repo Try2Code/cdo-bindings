@@ -175,13 +175,13 @@ class CdoTest(unittest2.TestCase):
 
     def test_pychain(self):
         cdo = Cdo()
-        ofile = cdo.setname("veloc").copy.random("r1x1").add_option("-f nc").read()
+        ofile = cdo.setname("veloc").copy.random("r1x1").add_option("-f nc").run()
         self.assertEqual(["veloc"],cdo.showname(input = ofile))
 
     def test_pychain2(self):
         # compare the two different ways
         cdo = Cdo()
-        ofile1 = cdo.setname("veloc").copy.random("r1x1").add_option("-f nc").read()
+        ofile1 = cdo.setname("veloc").copy.random("r1x1").add_option("-f nc").run()
         cdo = Cdo()
         ofile2 = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")
         diff = cdo.diff(input=[ofile1, ofile2])
@@ -606,11 +606,11 @@ class CdoTest(unittest2.TestCase):
           print(cdo)
         if cdo.hasNetcdf:
           bathy = cdo.setrtomiss(0,10000,
-                                 input = cdo.topo('r100x100').read(),
+                                 input = cdo.topo('r100x100').run(),
                                  returnMaArray='var1')
           plot(bathy)
           oro = cdo.setrtomiss(-10000,0,
-                               input = cdo.topo().read(),returnMaArray='var1')
+                               input = cdo.topo().run(),returnMaArray='var1')
           plot(oro)
           random = cdo.setname('test_maArray',
                                input = "-setrtomiss,0.4,0.8 -random,r180x90 ",

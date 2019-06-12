@@ -668,7 +668,7 @@ class Cdo(object):
 
     return delta_levels
 
-  def read(self, output=None):
+  def run(self, output=None):
     if output:
       return self(output=output, compute=True)
     else:
@@ -677,7 +677,7 @@ class Cdo(object):
   def readCdf(self, iFile=None):
     """Return a cdf handle created by the available cdf library"""
     if iFile is None:
-      iFile = self.read()
+      iFile = self.run()
     if self.hasNetcdf:
       fileObj = self.cdf(iFile, mode='r')
       return fileObj
@@ -688,7 +688,7 @@ class Cdo(object):
   def readArray(self, iFile=None, varname=None):
     """Direcly return a numpy array for a given variable name"""
     if iFile is None:
-      iFile = self.read()
+      iFile = self.run()
     if varname is None:
       raise ValueError("A varname needs to be specified!")
     filehandle = self.readCdf(iFile)
@@ -703,7 +703,7 @@ class Cdo(object):
   def readMaArray(self, iFile=None, varname=None):# {{{
     """Create a masked array based on cdf's FillValue"""
     if iFile is None:
-      iFile = self.read()
+      iFile = self.run()
     if varname is None:
       raise ValueError("A varname needs to be specified!")
     fileObj = self.readCdf(iFile)
@@ -725,7 +725,7 @@ class Cdo(object):
 
   def readXArray(self, ifile=None, varname=None):
     if ifile is None:
-      ifile = self.read()
+      ifile = self.run()
     if varname is None:
       raise ValueError("A varname needs to be specified!")
     if not self.hasXarray:
@@ -741,7 +741,7 @@ class Cdo(object):
 
   def readXDataset(self, ifile=None):
     if ifile is None:
-      ifile = self.read()
+      ifile = self.run()
     if not self.hasXarray:
       print("Could not load XArray")
       six.raise_from(ImportError,None)
