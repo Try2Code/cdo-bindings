@@ -274,15 +274,6 @@ class CdoTest(unittest2.TestCase):
        #sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
        #self.assertEqual(288.0,sum.variables["T"][:])
 
-    def test_cdf(self):
-        cdo = Cdo()
-        self.assertTrue(hasattr(cdo, "cdf"))# not in cdo.__dict__)
-        if cdo.hasNetcdf:
-          sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
-          self.assertEqual(1013.25,sum.variables["P"][:])
-        else:
-          self.assertRaises(ImportError,cdo.fldsum,input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
-
     def test_thickness(self):
         cdo = Cdo()
         levels            = "25 100 250 500 875 1400 2100 3000 4000 5000".split(' ')
