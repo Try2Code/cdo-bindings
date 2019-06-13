@@ -1,6 +1,7 @@
 # Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
-[![Build Status](https://travis-ci.org/Try2Code/cdo-bindings.svg?branch=master)](https://travis-ci.org/Try2Code/cdo-bindings) (Ruby 2.x/Python 2.7/Python 3.x)
+[![Ruby Tests](https://travis-ci.org/Try2Code/cdo-bindings.svg?branch=master)](https://travis-ci.org/Try2Code/cdo-bindings)
+[![Python Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
 
 Welcome to the scripting interfaces of [CDO](https://code.zmaw.de/projects/cdo/wiki)!
 This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
@@ -190,6 +191,7 @@ http://code.zmaw.de/projects/cdo
 
 ## Changelog
 * **1.5.0 (1.5.2 for python)** API change :
+  - **not usable with CDO-1.9.7**
   - simplify the interface:
     - remove returnCdf from constructor, only use it with operator calls
     - remove methods setReturnArray/unsetReturnArray: I fear it's not used anyway, but 'returnArray' in each call

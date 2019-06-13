@@ -43,7 +43,7 @@ except ImportError:
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-CDO_PY_VERSION = "1.5.2"
+CDO_PY_VERSION = "1.5.3rc1"
 
 # build interactive documentation: help(cdo.sinfo) {{{
 def auto_doc(tool, path2cdo):
@@ -188,7 +188,13 @@ class Cdo(object):
     if instance is None:
       return self
     name = self.name
-    if name in self.AliasOperators:
+    # CDO (version 1.9.6 and older) has an operator called 'for', which cannot
+    # called with 'cdo.for()' because 'for' is a keyword in python. 'for' is
+    # renamed to 'seq' in 1.9.7.
+    # This workaround translates all calls of 'seq' into for in case of
+    # versions prior tp 1.9.7
+    if name in self.AliasOperators.keys() and \
+      ( parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.7') ):
       name = self.AliasOperators[name]
     return self.__class__(
         instance.CDO,

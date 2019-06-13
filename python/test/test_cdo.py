@@ -2,10 +2,9 @@ from __future__ import print_function
 import unittest2,os,tempfile,sys,glob,subprocess,multiprocessing,time,random
 from pkg_resources import parse_version
 import numpy as np
-from matplotlib import pylab as pl
 
 # add local dir to search path
-sys.path.append(os.path.dirname(sys.path[0]))
+sys.path.insert(0,os.path.dirname(sys.path[0]))
 from cdo import Cdo,CDOException,CdoTempfileStore
 
 
@@ -22,35 +21,43 @@ DEBUG          = 'DEBUG' in os.environ
 
 MAINTAINERMODE = 'MAINTAINERMODE' in os.environ
 
+if SHOW:
+  from matplotlib import pylab as pl
+
 def plot(ary,ofile=False,title=None):
-    if not SHOW:
-      return
+  if not SHOW:
+    return
 
-    pl.grid(True)
+  pl.grid(True)
 
-    if not None == title:
-      pl.title(title)
+  if not None == title:
+    pl.title(title)
 
-    if 1 == ary.ndim:
-      pl.plot(ary)
-    else:
-      pl.imshow(ary,origin='lower',interpolation='nearest')
+  if 1 == ary.ndim:
+    pl.plot(ary)
+  else:
+    pl.imshow(ary,origin='lower',interpolation='nearest')
 
-    if not ofile:
-      pl.show()
-    else:
-      pl.savefig(ofile,bbox_inches='tight',dpi=200)
-      subprocess.Popen('sxiv {0}.{1} &'.format(ofile,'png'), shell=True, stderr=subprocess.STDOUT)
+  if not ofile:
+    pl.show()
+  else:
+    pl.savefig(ofile,bbox_inches='tight',dpi=200)
+    subprocess.Popen('sxiv {0}.{1} &'.format(ofile,'png'), shell=True, stderr=subprocess.STDOUT)
 
 def rm(files):
   for f in files:
     if os.path.exists(f):
       os.system("rm "+f)
 
+def cdoShouldHaveSeqOperator(cdoObject):
+  return (parse_version(cdoObject.version()) > parse_version('1.9.6'))
+
 class CdoTest(unittest2.TestCase):
 
     def testCDO(self):
         cdo = Cdo()
+        print('this is CDO version %s'%(cdo.version()))
+        print('cdo-bindings version: %s'%(cdo.__version__()))
         newCDO="/usr/bin/cdo"
         if os.path.isfile(newCDO):
             cdo.setCdo(newCDO)
@@ -352,13 +359,13 @@ class CdoTest(unittest2.TestCase):
 
     def test_returnXArray(self):
         cdo = Cdo()
-        cdo.debug = DEBUG
-
+        cdo.debug = True
+        print('TEST: test_returnXArray')
         if not cdo.hasXarray:
           print("nothing testes for test_returnXArray because of missing xarray")
           return
 
-        topo = cdo.topo(options='-f nc',returnXArray='topo')
+        topo = cdo.topo(returnXArray='topo',options='-v')
         self.assertEqual(-1889,int(topo.mean()))
         self.assertEqual(259200,topo.count())
 
@@ -495,9 +502,13 @@ class CdoTest(unittest2.TestCase):
         rm(resultsFiles)
 
         pattern = 'sel_{0}'.format( random.randrange(1,100000))
-        resultsFiles = cdo.splitsel(1,input = '-for,0,9',output = pattern)
+        varname = 'for'
+        if (cdoShouldHaveSeqOperator(cdo)):
+          varname = 'seq'
+        resultsFiles = cdo.splitsel(1,input = '-%s,0,9'%(varname),output = pattern)
         if DEBUG:
           print(resultsFiles)
+          print('pattern=%s'%(pattern))
         self.assertTrue(10 <= len(resultsFiles))
         rm(resultsFiles)
         for var in range(0,10):
@@ -716,39 +727,9 @@ class CdoTest(unittest2.TestCase):
       self.assertTrue(opCount > 50)
       self.assertTrue(opCount < 200)
 
-    def test_cdiMeta(self):
-      cdo = Cdo()
-      if cdo.hasNetcdf:
-        ofile = cdo.stdatm("0", returnCdf = True)
-        if DEBUG:
-          print(ofile)
-      if cdo.hasXarray:
-        ofile = cdo.stdatm("0", returnXArray = 'T')
-        if DEBUG:
-          print(ofile)
-          print(ofile.attrs)
-        ofile = cdo.stdatm("0", returnXDataset=True)
-        if DEBUG:
-          print(ofile)
-          print(ofile.attrs)
-
-    def testTempdir(self):
-      # manual set path
-      tempPath = os.path.abspath('.')+'/tempPy_{0}'.format( random.randrange(1,100000))
-      cdo = Cdo(tempdir=tempPath)
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(1,len(os.listdir(tempPath)))
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(3,len(os.listdir(tempPath)))
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(5,len(os.listdir(tempPath)))
-      cdo.cleanTempDir()
-      self.assertEqual(0,len(os.listdir(tempPath)))
-
     def test_operators_with_multiple_output_files(self):
       cdo = Cdo()
+      cdo.debug = True
       self.assertEqual(1 ,cdo.operators['topo'],'wrong output counter for "topo"')
       self.assertEqual(0 ,cdo.operators['sinfo'],'wrong output counter for "sinfo"')
       self.assertEqual(-1,cdo.operators['splitsel'],'wrong output counter for "splitsel"')
@@ -766,21 +747,43 @@ class CdoTest(unittest2.TestCase):
       self.assertEqual(51.0,float(cdo.outputkey('value',input = aFile)[-1]))
       self.assertEqual(44.0,float(cdo.outputkey('value',input = bFile)[-1]))
       # check usage of 'returnCdf' with these operators
+      varname = 'for'
+      if (cdoShouldHaveSeqOperator(cdo)):
+        varname = 'seq'
       if cdo.hasNetcdf:
-        aFile, bFile = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnCdf = True)
-        self.assertEqual(51.0, aFile.variables['for'][0],"got wrong value from cdf handle")
-        self.assertEqual(44.0, bFile.variables['for'][0],"got wrong value from cdf handle")
+        aFile, bFile = cdo.trend(input = "-addc,7 -mulc,44 -"+varname+",1,100",returnCdf = True)
+        self.assertEqual(51.0, aFile.variables[varname][0],"got wrong value from cdf handle")
+        self.assertEqual(44.0, bFile.variables[varname][0],"got wrong value from cdf handle")
 
-        avar = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnArray = 'for')[0]
+        avar = cdo.trend(input = "-addc,7 -mulc,44 -"+varname+",1,100",returnArray = varname)[0]
         self.assertEqual(51.0, avar,"got wrong value from narray")
       else:
-        self.assertRaises(ImportError,cdo.trend, input = "-addc,7 -mulc,44 -for,1,100",returnCdf = True)
+        self.assertRaises(ImportError,cdo.trend, input = "-addc,7 -mulc,44 -%s,1,100"%(varname),returnCdf = True)
 
     def test_for(self):
       cdo = Cdo()
       if cdo.hasNetcdf:
-        sum = cdo.seq(1,10,returnArray='for')
+        varname = 'for'
+        if (cdoShouldHaveSeqOperator(cdo)):
+          varname = 'seq'
+        sum = cdo.seq(1,10,returnArray=varname)
         self.assertEqual(55.0,sum.flatten('F').sum())
+
+    def testTempdir(self):
+      # manual set path
+      tempPath = os.path.abspath('.')+'/tempPy_{0}'.format( random.randrange(1,100000))
+      cdo = Cdo(tempdir=tempPath)
+      cdo.debug = True
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(1,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(3,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(5,len(os.listdir(tempPath)))
+      cdo.cleanTempDir()
+      self.assertEqual(0,len(os.listdir(tempPath)))
 
     if MAINTAINERMODE:
 
