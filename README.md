@@ -190,8 +190,8 @@ Please use the forum or ticket system of CDOs official web page:
 http://code.zmaw.de/projects/cdo
 
 ## Changelog
-* **1.5.0 (1.5.2 for python)** API change :
-  - **not usable with CDO-1.9.7**
+* **1.5.0 (1.5.3 for python)** API change :
+  - **ruby version curently not usable with CDO-1.9.7**
   - simplify the interface:
     - remove returnCdf from constructor, only use it with operator calls
     - remove methods setReturnArray/unsetReturnArray: I fear it's not used anyway, but 'returnArray' in each call

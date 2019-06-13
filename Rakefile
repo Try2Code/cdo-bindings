@@ -4,6 +4,7 @@ require 'facets/string'
 require 'pp'
 
 CLEAN.include("**/*.pyc")
+CLEAN.include("**/*.bla")
 CLEAN.include("**/*.log")
 CLEAN.include("**/*.log.[0-9]*")
 CLEAN.include("{ruby,python}/*.{grb,nc,png,svg}")
