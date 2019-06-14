@@ -324,7 +324,16 @@ class TestCdo < Minitest::Test
     }
   end
 
+  def test_seqVSfor
+    if @cdo.version < '1.9.7' then
+      @cdo.for(0,1)
+    else
+      @cdo.seq(0,1)
+    end
+
+  end
   def test_operators_with_multiple_output_files
+    varname = ( @cdo.version < '1.9.7' ) ? 'for' : 'seq'
     assert_equal(1,@cdo.operators['topo'],'wrong output counter for "topo"')
     assert_equal(0,@cdo.operators['sinfo'],'wrong output counter for "sinfo"')
     assert_equal(0,@cdo.operators['ngridpoints'],'wrong output counter for "sinfo"') if @cdo.version > '1.6.4'
@@ -334,15 +343,15 @@ class TestCdo < Minitest::Test
     # create input for eof
     #
     # check automatic generation ot two tempfiles
-    aFile, bFile = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100")
+    aFile, bFile = @cdo.trend(input: "-addc,7 -mulc,44 -#{varname},1,100")
     assert_equal(51.0,@cdo.outputkey('value',input: aFile)[-1].to_f)
     assert_equal(44.0,@cdo.outputkey('value',input: bFile)[-1].to_f)
     # check usage of 'returnCdf' with these operators
-    aFile, bFile = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100",returnCdf: true)
-    assert_equal(51.0, aFile.var('for').get.flatten[0],"got wrong value from cdf handle")
-    assert_equal(44.0, bFile.var('for').get.flatten[0],"got wrong value from cdf handle")
+    aFile, bFile = @cdo.trend(input: "-addc,7 -mulc,44 -#{varname},1,100",returnCdf: true)
+    assert_equal(51.0, aFile.var(varname).get.flatten[0],"got wrong value from cdf handle")
+    assert_equal(44.0, bFile.var(varname).get.flatten[0],"got wrong value from cdf handle")
 
-    avar = @cdo.trend(input: "-addc,7 -mulc,44 -for,1,100",returnArray: 'for').flatten[0]
+    avar = @cdo.trend(input: "-addc,7 -mulc,44 -#{varname},1,100",returnArray: varname).flatten[0]
     assert_equal(51.0, avar,"got wrong value from narray")
   end
   def test_tempdir
@@ -436,11 +445,12 @@ class TestCdo < Minitest::Test
     end
   end
   def test_readCdf
-    input = "-settunits,days  -setyear,2000 -for,1,4"
+    varname = ( @cdo.version < '1.9.7' ) ? 'for' : 'seq'
+    input = "-settunits,days  -setyear,2000 -#{varname},1,4"
     cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
     if @cdo.hasNetcdf then
       cdf = @cdo.readCdf(cdfFile)
-      assert_empty(['lon','lat','for','time'] - cdf.var_names)
+      assert_empty(['lon','lat',varname,'time'] - cdf.var_names)
     else
       assert_raises LoadError do
         cdf = @cdo.readCdf(cdfFile)
