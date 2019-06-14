@@ -63,6 +63,9 @@ class CdoTest(unittest2.TestCase):
             cdo.setCdo(newCDO)
             self.assertEqual(newCDO,cdo.getCdo())
             cdo.setCdo('cdo')
+            # now constructor option
+            cdo = Cdo(cdo=newCDO)
+            self.assertEqual(newCDO,cdo.getCdo())
 
     def testDbg(self):
         if not 'DEBUG' in os.environ:
