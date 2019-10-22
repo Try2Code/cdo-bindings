@@ -7,6 +7,14 @@ Welcome to the scripting interfaces of [CDO](https://code.zmaw.de/projects/cdo/w
 This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
 [Why the .... should I use this???](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
 
+## What's going on
+
+Currently this package is in a re-design phase. The target is a 2.0 release that will **not be compatible** with the exising release 1.5.x:
+* Write opertors chains in terms of methods chains with ```.``` as much as possible
+* hopefully reduce the number of ```kwargs``` keys
+* keep the Ruby and Python interface similar
+* possibly drop python-2.x support ... I am not sure when to do this best
+
 ## Installation
 
 Releases are distributed via [pypi](https://pypi.org/project/cdo) and [rubygems](https://rubygems.org/gems/cdo):
