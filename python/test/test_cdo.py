@@ -1,12 +1,11 @@
 from __future__ import print_function
-import unittest,os,tempfile,sys,glob,subprocess,multiprocessing,time
+import unittest2,os,tempfile,sys,glob,subprocess,multiprocessing,time,random
 from pkg_resources import parse_version
 import numpy as np
-from matplotlib import pylab as pl
 
 # add local dir to search path
-sys.path.append(os.path.dirname(sys.path[0]))
-from cdo import Cdo,CDOException
+sys.path.insert(0,os.path.dirname(sys.path[0]))
+from cdo import Cdo,CDOException,CdoTempfileStore
 
 
 if 'CDF_MOD' in os.environ:
@@ -22,40 +21,43 @@ DEBUG          = 'DEBUG' in os.environ
 
 MAINTAINERMODE = 'MAINTAINERMODE' in os.environ
 
+if SHOW:
+  from matplotlib import pylab as pl
+
 def plot(ary,ofile=False,title=None):
-    if not SHOW:
-      return
+  if not SHOW:
+    return
 
-    pl.grid(True)
+  pl.grid(True)
 
-    if not None == title:
-      pl.title(title)
+  if not None == title:
+    pl.title(title)
 
-    if 1 == ary.ndim:
-      pl.plot(ary)
-    else:
-      pl.imshow(ary,origin='lower',interpolation='nearest')
+  if 1 == ary.ndim:
+    pl.plot(ary)
+  else:
+    pl.imshow(ary,origin='lower',interpolation='nearest')
 
-    if not ofile:
-      pl.show()
-    else:
-      pl.savefig(ofile,bbox_inches='tight',dpi=200)
-      subprocess.Popen('sxiv {0}.{1} &'.format(ofile,'png'), shell=True, stderr=subprocess.STDOUT)
+  if not ofile:
+    pl.show()
+  else:
+    pl.savefig(ofile,bbox_inches='tight',dpi=200)
+    subprocess.Popen('sxiv {0}.{1} &'.format(ofile,'png'), shell=True, stderr=subprocess.STDOUT)
 
 def rm(files):
   for f in files:
     if os.path.exists(f):
       os.system("rm "+f)
 
-class CdoTest(unittest.TestCase):
+def cdoShouldHaveSeqOperator(cdoObject):
+  return (parse_version(cdoObject.version()) > parse_version('1.9.6'))
 
-    def testVersions(self):
-        cdo = Cdo()
-        self.assertEqual('1.5.0',cdo.__version__())
-        self.assertTrue(parse_version('1.7.0') <= parse_version(cdo.version()))
+class CdoTest(unittest2.TestCase):
 
     def testCDO(self):
         cdo = Cdo()
+        print('this is CDO version %s'%(cdo.version()))
+        print('cdo-bindings version: %s'%(cdo.__version__()))
         newCDO="/usr/bin/cdo"
         if os.path.isfile(newCDO):
             cdo.setCdo(newCDO)
@@ -116,7 +118,7 @@ class CdoTest(unittest.TestCase):
         cdo.debug = DEBUG
         s   = cdo.sinfov(input="-topo",options="-f nc")
         s   = cdo.sinfov(input="-remapnn,r36x18 -topo",options="-f nc")
-        f   = 'test_ofile.nc'
+        f   = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy').name
         cdo.expr("'z=log(abs(topo)+1)*9.81'",input="-topo", output=f, options="-f nc")
         s   = cdo.infov(input=f)
         cdo.stdatm("0",output=f,options="-f nc")
@@ -132,7 +134,7 @@ class CdoTest(unittest.TestCase):
         values = cdo.outputkey("value",input="-stdatm,0")[1::]
         self.assertEqual(["1013.25", "288"],values)
         values = cdo.outputkey("value",input="-stdatm,0,10000")[1::]
-        self.assertEqual(["1013.25", "271.913", "288", "240.591"],values)
+        self.assertEqual(["1013.2", "271.9", "288.0", "240.6"],['{:.1f}'.format(float(s)) for s in values])
         values = cdo.outputkey("lev",input="-stdatm,0,10000")[1::]
         self.assertEqual(["0", "10000","0", "10000"],values)
 
@@ -178,11 +180,24 @@ class CdoTest(unittest.TestCase):
         ofile = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")
         self.assertEqual(["veloc"],cdo.showname(input = ofile))
 
+    def test_pychain(self):
+        cdo = Cdo()
+        ofile = cdo.setname("veloc").copy.random("r1x1").add_option("-f nc").run()
+        self.assertEqual(["veloc"],cdo.showname(input = ofile))
+
+    def test_pychain2(self):
+        # compare the two different ways
+        cdo = Cdo()
+        ofile1 = cdo.setname("veloc").copy.random("r1x1").add_option("-f nc").run()
+        cdo = Cdo()
+        ofile2 = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")
+        diff = cdo.diff(input=[ofile1, ofile2])
+        self.assertFalse(diff, msg=diff)
+
     def test_diff(self):
         cdo = Cdo()
         cdo.debug = DEBUG
         diffv = cdo.diffn(input = "-random,global_0.1 -random,global_0.1")
-        print(diffv)
         self.assertEqual(diffv[1].split(' ')[-1],"random")
         self.assertEqual(diffv[1].split(' ')[-3],"1.0000")
 
@@ -214,7 +229,7 @@ class CdoTest(unittest.TestCase):
         outs = []
 
         # deticated output, force = true (=defaut setting)
-        ofile = 'test_force'
+        ofile = 'test_force_{0}'.format( random.randrange(1,100000))
         outs.append(cdo.stdatm("0,10,20",output = ofile))
         mtime0 = os.stat(ofile).st_mtime
         #to make it compatible with systems providing no nanos.
@@ -227,7 +242,7 @@ class CdoTest(unittest.TestCase):
         outs = []
 
         # dedicated output, force = false
-        ofile = 'test_force_false'
+        ofile = 'test_force_false_{0}'.format( random.randrange(1,100000))
         outs.append(cdo.stdatm("0,10,20",output = ofile,force=False))
         mtime0 = os.stat(outs[0]).st_mtime
         outs.append(cdo.stdatm("0,10,20",output = ofile,force=False))
@@ -238,7 +253,7 @@ class CdoTest(unittest.TestCase):
         outs = []
 
         # dedicated output, global force setting
-        ofile = 'test_force_global'
+        ofile = 'test_force_global_{0}'.format( random.randrange(1,100000))
         cdo.forceOutput = False
         outs.append(cdo.stdatm("0,10,20",output = ofile))
         mtime0 = os.stat(outs[0]).st_mtime
@@ -258,15 +273,6 @@ class CdoTest(unittest.TestCase):
        #sum = cdo.fldsum(input = stdatm)
        #sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
        #self.assertEqual(288.0,sum.variables["T"][:])
-
-    def test_cdf(self):
-        cdo = Cdo()
-        self.assertTrue(hasattr(cdo, "cdf"))# not in cdo.__dict__)
-        if cdo.hasNetcdf:
-          sum = cdo.fldsum(input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
-          self.assertEqual(1013.25,sum.variables["P"][:])
-        else:
-          self.assertRaises(ImportError,cdo.fldsum,input = cdo.stdatm("0",options="-f nc"),returnCdf=True)
 
     def test_thickness(self):
         cdo = Cdo()
@@ -305,33 +311,32 @@ class CdoTest(unittest.TestCase):
     def test_returnMaArray(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        if cdo.hasNetcdf:
-          topo = cdo.topo(returnMaArray='topo')
-          self.assertEqual(-1890.0,round(topo.mean()))
-          self.assertEqual(259200,topo.count())
-          bathy = cdo.setrtomiss(0,10000,
-              input = cdo.topo(options='-f nc'),returnMaArray='topo')
-          #print(bathy)
-          self.assertEqual(173565,bathy.count())
+        if not cdo.hasNetcdf:
+          print("no tests run for test_returnMaArray")
+          return
 
-          self.assertEqual(-3386.0,round(bathy.mean()))
-          oro = cdo.setrtomiss(-10000,0,
-              input = cdo.topo(options='-f nc'),returnMaArray='topo')
-          self.assertEqual(1142.0,round(oro.mean()))
-          self.assertEqual(85567,oro.count())
-          bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnMaArray = 'topo')
-          self.assertEqual(-4298.0,bathy[0,0])
-          self.assertEqual(-2669.0,bathy[0,1])
-          ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
-          tb = cdo.subc(-2669.0,input = ta)
-          withMask = cdo.div(input=ta+" "+tb,returnMaArray='topo')
-          self.assertEqual('--',withMask[0,1].__str__())
-          self.assertEqual(False,withMask.mask[0,0])
-          self.assertEqual(False,withMask.mask[1,0])
-          self.assertEqual(False,withMask.mask[1,1])
-          self.assertEqual(True,withMask.mask[0,1])
-        else:
-          self.assertRaises(ImportError,cdo.topo,returnMaArray='topo')
+        topo = cdo.topo(returnMaArray='topo')
+        self.assertEqual(-1890.0,round(topo.mean()))
+        self.assertEqual(259200,topo.count())
+        bathy = cdo.setrtomiss(0,10000, input = "-topo",returnMaArray='topo')
+        #print(bathy)
+        self.assertEqual(173565,bathy.count())
+
+        self.assertEqual(-3386.0,round(bathy.mean()))
+        oro = cdo.setrtomiss(-10000,0, input = "-topo",returnMaArray='topo')
+        self.assertEqual(1142.0,round(oro.mean()))
+        self.assertEqual(85567,oro.count())
+        bathy = cdo.remapnn('r2x2',input = "-topo", returnMaArray = 'topo')
+        self.assertEqual(-4298.0,bathy[0,0])
+        self.assertEqual(-2669.0,bathy[0,1])
+        ta = cdo.remapnn('r2x2',input = "-topo", options = '-f nc')
+        tb = cdo.subc(-2669.0,input = ta,options = '-f nc')
+        withMask = cdo.div(input=ta+" "+tb,returnMaArray='topo')
+        self.assertEqual('--',withMask[0,1].__str__())
+        self.assertEqual(False,withMask.mask[0,0])
+        self.assertEqual(False,withMask.mask[1,0])
+        self.assertEqual(False,withMask.mask[1,1])
+        self.assertEqual(True,withMask.mask[0,1])
 
     def test_returnXDataset(self):
         cdo = Cdo()
@@ -345,34 +350,46 @@ class CdoTest(unittest.TestCase):
 
     def test_returnXArray(self):
         cdo = Cdo()
-        cdo.debug = DEBUG
-        if (cdo.hasXarray):
-          topo = cdo.topo(options='-f nc',returnXArray='topo')
-          self.assertEqual(-1889,int(topo.mean()))
-          self.assertEqual(259200,topo.count())
+        cdo.debug = True
+        print('TEST: test_returnXArray')
+        if not cdo.hasXarray:
+          print("nothing testes for test_returnXArray because of missing xarray")
+          return
 
-          bathy = cdo.setrtomiss(0,10000,
-              input = cdo.topo(options='-f nc'),returnXArray='topo')
-          self.assertEqual(-3385,int(bathy.mean()))
-          self.assertEqual(173565,bathy.count())
-          oro = cdo.setrtomiss(-10000,0,
-              input = cdo.topo(options='-f nc'),returnXArray='topo')
-          self.assertEqual(1142,int(oro.mean()))
-          self.assertEqual(85567,oro.count())
-          bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnXArray = 'topo')
-          self.assertEqual(-4298.0,bathy[0,0])
-          self.assertEqual(-2669.0,bathy[0,1])
-          ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
-          tb = cdo.subc(-2669.0,input = ta)
-          withMask = cdo.div(input=ta+" "+tb,returnXArray='topo')
-          from xarray import DataArray
-          self.assertEqual(False,DataArray.to_masked_array(withMask).mask[0,0])
-          self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,0])
-          self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,1])
-          self.assertEqual(True,DataArray.to_masked_array(withMask).mask[0,1])
+        topo = cdo.topo(returnXArray='topo',options='-v')
+        self.assertEqual(-1889,int(topo.mean()))
+        self.assertEqual(259200,topo.count())
+
+        bathy = cdo.setrtomiss(0,10000, input = " -topo" ,returnXArray='topo')
+        self.assertEqual(-3385,int(bathy.mean()))
+        self.assertEqual(173565,bathy.count())
+
+        oro = cdo.setrtomiss(-10000,0,
+            input = cdo.topo(options='-f nc'),returnXArray='topo')
+        self.assertEqual(1142,int(oro.mean()))
+        self.assertEqual(85567,oro.count())
+
+        bathy = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'), returnXArray = 'topo')
+        self.assertEqual(-4298.0,bathy[0,0])
+        self.assertEqual(-2669.0,bathy[0,1])
+
+        ta = cdo.remapnn('r2x2',input = cdo.topo(options = '-f nc'))
+        tb = cdo.subc(-2669.0,input = ta)
+        withMask = cdo.div(input=ta+" "+tb,returnXArray='topo')
+        from xarray import DataArray
+        self.assertEqual(False,DataArray.to_masked_array(withMask).mask[0,0])
+        self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,0])
+        self.assertEqual(False,DataArray.to_masked_array(withMask).mask[1,1])
+        self.assertEqual(True,DataArray.to_masked_array(withMask).mask[0,1])
 
     def test_xarray_input(self):
+
       cdo = Cdo()
+
+      if not (cdo.hasNetcdf and cdo.hasXarray):
+        print("xarray or netcdf not available! no tests run")
+        return
+
       try:
         import xarray
       except:
@@ -381,37 +398,26 @@ class CdoTest(unittest.TestCase):
 
       dataSet = xarray.open_dataset(cdo.topo('global_0.1',options = '-f nc'))
 
-      if DEBUG:
-        print(type(dataSet).__name__)
-
       dataSet['topo'] = 1.0 + np.abs(dataSet['topo'])
 
       #check the changes withing xarray
       self.assertEqual(1.0,np.min(dataSet['topo']))
 
-      xarrayFile = 'test_xarray_topoAbs.nc'
-      dataSet.to_netcdf(xarrayFile)
+#     tfGen = CdoTempfileStore(dir=tempfile.gettempdir())
+      xarrayFile = tempfile.NamedTemporaryFile(delete=True,
+                                               prefix='test_xarray_input_',
+                                               dir=tempfile.gettempdir())
+#     xarrayFile = tfGen.newFile()
+      dataSet.to_netcdf(xarrayFile.name)
 
-      if cdo.hasNetcdf:
-        #check change via cdo
-        minByCdo = cdo.fldmin(input=xarrayFile,returnArray='topo').min()
-        self.assertEqual(1.0,minByCdo)
+      #check change via cdo
+      minByCdo = cdo.fldmin(input=xarrayFile.name,returnArray='topo').min()
+      self.assertEqual(1.0,minByCdo)
 
-        #do the same without explicit tempfile
-        self.assertEqual(1.0,cdo.fldmin(input=dataSet,returnArray='topo').min())
-      else:
-        self.assertRaises(ImportError,cdo.fldmin,input=dataSet,returnArray='topo')
+      #do the same without explicit tempfile
+      self.assertEqual(1.0,cdo.fldmin(input=dataSet,returnArray='topo').min())
 
-      if cdo.hasXarray:
-        #check change via cdo
-        minByCdo = cdo.fldmin(input=xarrayFile,returnXArray='topo').min()
-        self.assertEqual(1.0,minByCdo)
-
-        #do the same without explicit tempfile
-        self.assertEqual(1.0,cdo.fldmin(input=dataSet,returnXArray='topo').min())
-      else:
-        self.assertRaises(ImportError,cdo.fldmin,input=dataSet,returnXArray='topo')
-
+      xarrayFile.close()
 
     def test_xarray_output(self):
       cdo = Cdo()
@@ -441,7 +447,8 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo()
         cdo.__print__('test_errorException')
         self.assertFalse(hasattr(cdo, 'nonExistingMethod'))
-        self.failUnlessRaises(CDOException, cdo.max)
+        self.assertFalse(not 'max' in cdo.operators)
+        self.failUnlessRaises(CDOException, cdo.max.read)
         try:
             cdo.max()
         except CDOException as e:
@@ -460,8 +467,8 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo()
         cdo.debug = DEBUG
         # check for file input
-        fileA = cdo.stdatm(0,output='A')
-        fileB = cdo.stdatm(0,output='B')
+        fileA = cdo.stdatm(0,output='A_{0}'.format( random.randrange(1,100000)))
+        fileB = cdo.stdatm(0,output='B_{0}'.format( random.randrange(1,100000)))
         files = [fileA,fileB]
         self.assertEqual(cdo.diffv(input = ' '.join(files)), cdo.diffv(input = files))
         self.assertEqual([],cdo.diffv(input = files))
@@ -474,7 +481,7 @@ class CdoTest(unittest.TestCase):
     def test_splitOps(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        pattern = 'stdAtm'
+        pattern = 'stdAtm_{0}'.format( random.randrange(1,100000))
         cdo.__print__('test_splitOps')
         resultsFiles = cdo.splitname(input = '-stdatm,0',output = pattern)
         self.assertTrue(2 <= len(resultsFiles))
@@ -485,17 +492,21 @@ class CdoTest(unittest.TestCase):
           self.assertTrue(pattern+var+'.grb' in resultsFiles)
         rm(resultsFiles)
 
-        pattern = 'sel'
-        resultsFiles = cdo.splitsel(1,input = '-for,0,9',output = pattern)
+        pattern = 'sel_{0}'.format( random.randrange(1,100000))
+        varname = 'for'
+        if (cdoShouldHaveSeqOperator(cdo)):
+          varname = 'seq'
+        resultsFiles = cdo.splitsel(1,input = '-%s,0,9'%(varname),output = pattern)
         if DEBUG:
           print(resultsFiles)
+          print('pattern=%s'%(pattern))
         self.assertTrue(10 <= len(resultsFiles))
         rm(resultsFiles)
         for var in range(0,10):
           self.assertTrue(pattern+'00000'+str(var)+'.grb' in resultsFiles)
         rm(resultsFiles)
 
-        pattern = 'lev'
+        pattern = 'lev_{0}'.format( random.randrange(1,100000))
         resultsFiles = cdo.splitlevel(input = '-stdatm,100,2000,5000',output = pattern)
         self.assertTrue(3 <= len(resultsFiles))
         if DEBUG:
@@ -549,7 +560,7 @@ class CdoTest(unittest.TestCase):
 
     def test_env(self):
         # clean up
-        tag = 'test___env_test'
+        tag = 'test___env_test_{0}'.format( random.randrange(1,100000))
         files = glob.glob(tag+'*')
         rm(files)
         files = glob.glob(tag+'*')
@@ -597,10 +608,11 @@ class CdoTest(unittest.TestCase):
           print(cdo)
         if cdo.hasNetcdf:
           bathy = cdo.setrtomiss(0,10000,
-                                 input = cdo.topo('r100x100'),returnMaArray='var1')
+                                 input = cdo.topo('r100x100').run(),
+                                 returnMaArray='var1')
           plot(bathy)
           oro = cdo.setrtomiss(-10000,0,
-                               input = cdo.topo(),returnMaArray='var1')
+                               input = cdo.topo().run(),returnMaArray='var1')
           plot(oro)
           random = cdo.setname('test_maArray',
                                input = "-setrtomiss,0.4,0.8 -random,r180x90 ",
@@ -612,21 +624,23 @@ class CdoTest(unittest.TestCase):
     def test_fillmiss(self):
         cdo = Cdo()
 
+        if not SHOW:
+          return
         if cdo.hasNetcdf:
           if 'CDO' in os.environ:
             cdo.setCdo(os.environ.get('CDO'))
 
           cdo.debug = DEBUG
-          rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc',output = '/tmp/rand.nc')
+          rand = cdo.setname('v',input = '-random,r25x25 ', options = ' -f nc')
 
           missRange = '0.25,0.85'
-          withMissRange = 'test_withMissRange.nc'
+          withMissRange = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy').name
           arOrg = cdo.copy(input = rand,returnMaArray = 'v')
           arWmr = cdo.setrtomiss(missRange,input = rand,output = withMissRange,returnMaArray='v')
           arFm  = cdo.fillmiss(            input = withMissRange,returnMaArray = 'v')
-          arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
+          arFm1s= cdo.fillmiss2(2,         input = withMissRange,returnMaArray = 'v')
           if 'setmisstonn' in cdo.operators:
-            arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v',output='test_foo.nc')
+            arM2NN= cdo.setmisstonn(         input = withMissRange,returnMaArray = 'v')
 
           pool = multiprocessing.Pool(8)
           pool.apply_async(plot, (arOrg, ),{"title":'org'      })#ofile='fmOrg')
@@ -639,7 +653,6 @@ class CdoTest(unittest.TestCase):
           pool.close()
           pool.join()
 
-          rm([rand])
         else:
           print("test_fillmiss disables because of missing python-netCDF4")
 
@@ -705,39 +718,9 @@ class CdoTest(unittest.TestCase):
       self.assertTrue(opCount > 50)
       self.assertTrue(opCount < 200)
 
-    def test_cdiMeta(self):
-      cdo = Cdo()
-      if cdo.hasNetcdf:
-        ofile = cdo.stdatm("0", returnCdf = True)
-        if DEBUG:
-          print(ofile)
-      if cdo.hasXarray:
-        ofile = cdo.stdatm("0", returnXArray = 'T')
-        if DEBUG:
-          print(ofile)
-          print(ofile.attrs)
-        ofile = cdo.stdatm("0", returnXDataset=True)
-        if DEBUG:
-          print(ofile)
-          print(ofile.attrs)
-
-    def testTempdir(self):
-      # manual set path
-      tempPath = os.path.abspath('.')+'/tempPy'
-      cdo = Cdo(tempdir=tempPath)
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(1,len(os.listdir(tempPath)))
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(3,len(os.listdir(tempPath)))
-      cdo.topo('r10x10',options = '-f nc')
-      cdo.topo('r10x10',options = '-f nc')
-      self.assertEqual(5,len(os.listdir(tempPath)))
-      cdo.cleanTempDir()
-      self.assertEqual(0,len(os.listdir(tempPath)))
-
     def test_operators_with_multiple_output_files(self):
       cdo = Cdo()
+      cdo.debug = True
       self.assertEqual(1 ,cdo.operators['topo'],'wrong output counter for "topo"')
       self.assertEqual(0 ,cdo.operators['sinfo'],'wrong output counter for "sinfo"')
       self.assertEqual(-1,cdo.operators['splitsel'],'wrong output counter for "splitsel"')
@@ -755,16 +738,43 @@ class CdoTest(unittest.TestCase):
       self.assertEqual(51.0,float(cdo.outputkey('value',input = aFile)[-1]))
       self.assertEqual(44.0,float(cdo.outputkey('value',input = bFile)[-1]))
       # check usage of 'returnCdf' with these operators
+      varname = 'for'
+      if (cdoShouldHaveSeqOperator(cdo)):
+        varname = 'seq'
       if cdo.hasNetcdf:
-        aFile, bFile = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnCdf = True)
-        self.assertEqual(51.0, aFile.variables['for'][0],"got wrong value from cdf handle")
-        self.assertEqual(44.0, bFile.variables['for'][0],"got wrong value from cdf handle")
+        aFile, bFile = cdo.trend(input = "-addc,7 -mulc,44 -"+varname+",1,100",returnCdf = True)
+        self.assertEqual(51.0, aFile.variables[varname][0],"got wrong value from cdf handle")
+        self.assertEqual(44.0, bFile.variables[varname][0],"got wrong value from cdf handle")
 
-        avar = cdo.trend(input = "-addc,7 -mulc,44 -for,1,100",returnArray = 'for')[0]
+        avar = cdo.trend(input = "-addc,7 -mulc,44 -"+varname+",1,100",returnArray = varname)[0]
         self.assertEqual(51.0, avar,"got wrong value from narray")
       else:
-        self.assertRaises(ImportError,cdo.trend, input = "-addc,7 -mulc,44 -for,1,100",returnCdf = True)
+        self.assertRaises(ImportError,cdo.trend, input = "-addc,7 -mulc,44 -%s,1,100"%(varname),returnCdf = True)
 
+    def test_for(self):
+      cdo = Cdo()
+      if cdo.hasNetcdf:
+        varname = 'for'
+        if (cdoShouldHaveSeqOperator(cdo)):
+          varname = 'seq'
+        sum = cdo.seq(1,10,returnArray=varname)
+        self.assertEqual(55.0,sum.flatten('F').sum())
+
+    def testTempdir(self):
+      # manual set path
+      tempPath = os.path.abspath('.')+'/tempPy_{0}'.format( random.randrange(1,100000))
+      cdo = Cdo(tempdir=tempPath)
+      cdo.debug = True
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(1,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(3,len(os.listdir(tempPath)))
+      cdo.topo('r10x10',options = '-f nc')
+      cdo.topo('r10x10',options = '-f nc')
+      self.assertEqual(5,len(os.listdir(tempPath)))
+      cdo.cleanTempDir()
+      self.assertEqual(0,len(os.listdir(tempPath)))
 
     if MAINTAINERMODE:
 
@@ -884,9 +894,9 @@ class CdoTest(unittest.TestCase):
           plot(np.flipud(smooth20[0,:,:]),ofile='smooth20',title='smooth,nsmooth=20')
 #===============================================================================
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)
+    suite = unittest2.TestLoader().loadTestsFromTestCase(CdoTest)
 #   print(suite)
-    unittest.main()
+    unittest2.main()
 #   unittest.TextTestRunner(verbosity=2).run(suite)
 
 # vim:sw=2

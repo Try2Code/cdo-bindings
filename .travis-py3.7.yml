@@ -6,6 +6,6 @@ dependencies:
   - cdo
   - netCDF4
   - six
-  - matplotlib
   - numpy
   - xarray
+  - unittest2

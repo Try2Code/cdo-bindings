@@ -3,22 +3,30 @@ $:.unshift File.join(File.dirname(__FILE__),"..","lib")
 
 spec = Gem::Specification.new do |s|
   s.name              = "cdo"
-  s.version           = '1.4.0'
+  s.version           = '1.5.0'
   s.platform          = Gem::Platform::RUBY
-  s.files             = ["lib/cdo.rb","gemspec","LICENSE"]
+  s.files             = ["lib/cdo.rb","gemspec"]
   s.test_file         = "test/test_cdo.rb"
-  s.description       = "Easy access to the Climate Data operators"
-  s.summary           = "Easy access to the Climate Data operators"
+  s.description       = "Easy access to the Climate Data operators of MPI (https://code.mpimet.mpg.de/projects/cdo)"
+  s.summary           = "Easy access to the Climate Data operators "
   s.author            = "Ralf Mueller"
   s.email             = "stark.dreamdetective@gmail.com"
   s.homepage          = "https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D"
-  s.license           = "GPLv2"
-  s.required_ruby_version = ">= 1.9"
-  s.add_development_dependency('unifiedPlot')
-  s.add_development_dependency('minitest')
-  s.add_development_dependency('facets')
-  s.add_development_dependency('colorize')
-  s.add_development_dependency('rake')
+  s.license           = "BSD-3-Clause"
+  s.required_ruby_version = '>= 2.0'
+  s.add_development_dependency('unifiedPlot', '~> 0', '>= 0.0.6')
+  s.add_development_dependency('minitest', '~> 5', '>= 5.10')
+  s.add_development_dependency('facets', '~> 3', '>= 3.0')
+  s.add_development_dependency('colorize', '~> 0.8', '>= 0.8')
+  s.add_development_dependency('rake', '~> 10', '>= 10')
+  s.metadata = {
+    "bug_tracker_uri"   => "https://github.com/Try2Code/cdo-bindings/issues",
+    "changelog_uri"     => "https://github.com/Try2Code/cdo-bindings#changelog",
+    "documentation_uri" => "https://www.rubydoc.info/gems/cdo/Cdo",
+    "homepage_uri"      => "https://github.com/Try2Code/cdo-bindings",
+    "source_code_uri"   => "https://github.com/Try2Code/cdo-bindings",
+    "wiki_uri"          => "https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D"
+  }
 end
 
 # vim:ft=ruby

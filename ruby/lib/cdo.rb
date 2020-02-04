@@ -9,6 +9,31 @@ class Hash
   alias :include? :has_key?
 end
 
+# Copyright 2011-2019 Ralf Mueller, ralf.mueller@dkrz.de
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors
+#    may be used to endorse or promote products derived from this software without
+#    specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 
 class Cdo
 
@@ -74,6 +99,13 @@ class Cdo
       self.class.send :define_method, k.tr('-','_') do
         v
       end
+    }
+
+    # ignore return code 1 for diff operators (from 1.9.6 onwards)
+    @exit_success = lambda {|operatorName|
+      return 0 if version < '1.9.6'
+      return 0 if 'diff' != operatorName[0,4]
+      return 1
     }
   end
 
@@ -208,11 +240,11 @@ class Cdo
   end
 
   # Error handling for the given command
-  def _hasError(cmd,retvals)
+  def _hasError(cmd,operatorName,retvals)
     if @debug
       puts("RETURNCODE: #{retvals[:returncode]}")
     end
-    if ( 0 != retvals[:returncode] )
+    if ( @exit_success[operatorName] < retvals[:returncode] )
       puts("Error in calling:")
       puts(">>> "+cmd+"<<<")
       puts(retvals[:stderr])
@@ -259,7 +291,7 @@ class Cdo
     case output
     when $stdout
       retvals = _call(cmd,env)
-      unless _hasError(cmd,retvals)
+      unless _hasError(cmd,operatorName,retvals)
         _output = retvals[:stdout].split($/).map {|l| l.chomp.strip}
         unless autoSplit.nil?
           _output.map! {|line| line.split(autoSplit)}
@@ -289,7 +321,7 @@ class Cdo
 
         retvals = _call(cmd,env)
 
-        if _hasError(cmd,retvals)
+        if _hasError(cmd,operatorName,retvals)
           if @returnNilOnError then
             return nil
           else

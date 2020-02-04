@@ -1,21 +1,129 @@
 #!/usr/bin/env python
-from setuptools import setup
+# -*- coding: utf-8 -*-
 
-setup (name   = 'cdo',
-  version     = '1.4.1rc1',
-  author      = "Ralf Mueller",
-  author_email= "stark.dreamdetective@gmail.com",
-  license     = "GPLv2",
-  description = """python bindings to CDO""",
-  long_description="CDO is an analysis tool for climate/weather data. This package offers a python-style interface to CDO. Requirement is a working CDO binary.",
-  long_description_content_type="text",
-  py_modules  = ["cdo"],
-  url         = "https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D",
-  classifiers = [
-        "Development Status :: 4 - Beta",
-        "Topic :: Utilities",
-        "Operating System :: POSIX",
-        "Programming Language :: Python",
+# original code from https://github.com/kennethreitz/setup.py
+
+# Note: To use the 'upload' functionality of this file, you must:
+#   $ pip install twine
+
+import io
+import os
+import sys
+from shutil import rmtree
+
+from setuptools import find_packages, setup, Command
+
+# Package meta-data.
+NAME = 'cdo'
+DESCRIPTION = 'python bindings to CDO'
+URL = 'https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D'
+EMAIL = 'stark.dreamdetective@gmail.com'
+AUTHOR = 'Ralf Mueller'
+REQUIRES_PYTHON = '>=2.7.0'
+VERSION = '1.5.2'
+
+# What packages are required for this module to be executed?
+REQUIRED = [
+    'six'
+]
+
+# What packages are optional?
+EXTRAS = {
+    'Numpy output': ['netCDF4'],
+    'XArray output': ['xarray'],
+}
+
+# The rest you shouldn't have to touch too much :)
+# ------------------------------------------------
+# Except, perhaps the License and Trove Classifiers!
+# If you do change the License, remember to change the Trove Classifier for that!
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+# Import the README and use it as the long-description.
+# Note: this will only work if 'README.md' is present in your MANIFEST.in file!
+try:
+    with io.open(os.path.join(here, '../README.md'), encoding='utf-8') as f:
+        long_description = '\n' + f.read()
+except IOError:
+    long_description = DESCRIPTION
+
+# Load the package's __version__.py module as a dictionary.
+about = {}
+if not VERSION:
+    project_slug = NAME.lower().replace("-", "_").replace(" ", "_")
+    with open(os.path.join(here, project_slug, '__version__.py')) as f:
+        exec(f.read(), about)
+else:
+    about['__version__'] = VERSION
+
+
+class UploadCommand(Command):
+    """Support setup.py upload."""
+
+    description = 'Build and publish the package.'
+    user_options = []
+
+    @staticmethod
+    def status(s):
+        """Prints things in bold."""
+        print('\033[1m{0}\033[0m'.format(s))
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            self.status('Removing previous builds…')
+            rmtree(os.path.join(here, 'dist'))
+        except OSError:
+            pass
+
+        self.status('Building Source and Wheel (universal) distribution…')
+        os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
+
+        self.status('Uploading the package to PyPI via Twine…')
+        os.system('twine upload dist/cdo-{0}.tar.gz'.format(about['__version__']))
+
+        #self.status('Pushing git tags…')
+        #os.system('git tag v{0}'.format(about['__version__']))
+        #os.system('git push --tags')
+
+        sys.exit()
+
+
+# Where the magic happens:
+setup(
+    name=NAME,
+    version=about['__version__'],
+    description=DESCRIPTION,
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    author=AUTHOR,
+    author_email=EMAIL,
+    python_requires=REQUIRES_PYTHON,
+    url=URL,
+    py_modules  = ["cdo"],
+    install_requires=REQUIRED,
+    extras_require=EXTRAS,
+    include_package_data=True,
+
+    classifiers=[
+        # Trove classifiers
+        # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
+        'License :: OSI Approved :: BSD License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy'
     ],
-  install_requires=['six'],
-  )
+    # $ setup.py publish support.
+    cmdclass={
+        'upload': UploadCommand,
+    },
+)

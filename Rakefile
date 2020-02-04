@@ -7,12 +7,22 @@ CLEAN.include("**/*.pyc")
 CLEAN.include("**/*.log")
 CLEAN.include("**/*.log.[0-9]*")
 CLEAN.include("{ruby,python}/*.{grb,nc,png,svg}")
+CLEAN.include("python/tempPy*")
+CLEAN.include("python/test/tempPy*")
+CLEAN.include("python/__pycache__")
+CLEAN.include("python/test/__pycache__")
+CLEAN.include("python/test/*bla")
+CLEAN.include("doc")
 
 PythonInterpreter = ENV.has_key?('PYTHON') ? ENV['PYTHON'] : 'python'
 RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
 SpackEnv          = "$HOME/src/tools/spack/share/spack/setup-env.sh"
 
 String.disable_colorization = (ENV.has_key?('NO_COLOR'))
+@debug                      = (ENV.has_key?('DEBUG'))
+
+# following test should not be run in parallel with other tests
+SERIAL_TESTS = %w[test_system_tempdir]
 
 
 def getCdoPackagesFromSpack
@@ -44,9 +54,22 @@ def pythonTest(name: nil,interpreter: PythonInterpreter)
   cmd
 end
 def rubyTest(name: nil,interpreter: RubyInterpreter, testFile: nil)
+
   testFile = 'test/test_cdo.rb' if testFile.nil?
+
+  # Run everything but the test that need serial execution
   cmd = "cd ruby; #{interpreter} #{testFile}"
   cmd << " --name=#{name}" unless name.nil?
+
+  if name.nil? then
+    SERIAL_TESTS.each {|test| cmd << " --exclude #{test}"}
+
+    # now the rest if the whole suite supposed to be run
+    SERIAL_TESTS.each {|test|
+      cmd << "; #{interpreter} #{testFile} --name=#{test}"
+    }
+  end
+
   cmd
 end
 

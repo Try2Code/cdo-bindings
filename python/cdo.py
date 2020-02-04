@@ -17,19 +17,33 @@ except ImportError:
   strip = str.strip
 #}}}
 
-# Copyright (C) 2011-2018 Ralf Mueller, ralf.mueller@mpimet.mpg.de
-# See COPYING file for copying and redistribution conditions.
+# Copyright 2011-2019 Ralf Mueller, ralf.mueller@dkrz.de
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors
+#    may be used to endorse or promote products derived from this software without
+#    specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 
-CDO_PY_VERSION = "1.5.0"
+CDO_PY_VERSION = "1.5.3rc1"
 
 # build interactive documentation: help(cdo.sinfo) {{{
 def auto_doc(tool, path2cdo):
@@ -38,15 +52,18 @@ def auto_doc(tool, path2cdo):
     c = cdo.Cdo()
     help(c.sinfov)"""
   def desc(func):
+    func.__doc__ = operator_doc(tool, path2cdo)
+    return func
+  return desc
+#}}}
+
+def operator_doc(tool, path2cdo):
     proc = subprocess.Popen('%s -h %s ' % (path2cdo, tool),
                             shell=True,
                             stderr=subprocess.PIPE,
                             stdout=subprocess.PIPE)
     retvals = proc.communicate()
-    func.__doc__ = retvals[0].decode("utf-8")
-    return func
-  return desc
-#}}}
+    return retvals[0].decode("utf-8")
 
 # some helper functions without side effects {{{
 def getCdoVersion(path2cdo, verbose=False):
@@ -108,7 +125,11 @@ class Cdo(object):
   eofspatial eof3dtime eof3dspatial eof3d eof complextorect complextopol'.split()
   MoreOutputOperators = 'distgrid eofcoeff eofcoeff3d intyear scatter splitcode \
   splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec \
-  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split() #}}}
+  splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split()
+  AliasOperators = {'seq':'for'}
+  #}}}
+
+  name = ''
 
   def __init__(self,
                cdo='cdo',
@@ -118,12 +139,17 @@ class Cdo(object):
                debug=False,
                tempdir=tempfile.gettempdir(),
                logging=False,
-               logFile=StringIO()):
+               logFile=StringIO(),
+               cmd=[],
+               options=[]):
 
     if 'CDO' in os.environ:
       self.CDO = os.environ['CDO']
     else:
       self.CDO = cdo
+
+    self._cmd = cmd
+    self._options = options
 
     self.operators         = self.__getOperators()
     self.noOutputOperators = [op for op in self.operators.keys() if 0 == self.operators[op]]
@@ -157,6 +183,38 @@ class Cdo(object):
     # other left-overs can only be handled afterwards
     # might be good to use the tempdir keyword to ease this, but deletion can
     # be triggered using cleanTempDir() }}}
+
+  def __get__(self, instance, owner):
+    if instance is None:
+      return self
+    name = self.name
+    # CDO (version 1.9.6 and older) has an operator called 'for', which cannot
+    # called with 'cdo.for()' because 'for' is a keyword in python. 'for' is
+    # renamed to 'seq' in 1.9.7.
+    # This workaround translates all calls of 'seq' into for in case of
+    # versions prior tp 1.9.7
+    if name in self.AliasOperators.keys() and \
+      ( parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.7') ):
+      name = self.AliasOperators[name]
+    return self.__class__(
+        instance.CDO,
+        instance.returnNoneOnError,
+        instance.forceOutput,
+        instance.env,
+        instance.debug,
+        instance.tempStore.dir,
+        instance.logging,
+        instance.logFile,
+        instance._cmd + ['-' + name],
+        instance._options)
+
+  # from 1.9.6 onwards CDO returns 1 of diff* finds a difference
+  def __exit_success(self,operatorName):
+    if ( parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.6') ):
+      return 0
+    if ( 'diff' != operatorName[0:4] ):
+      return 0
+    return 1
 
   # retrieve the list of operators from the CDO binary plus info out number of
   # output streams
@@ -263,7 +321,7 @@ class Cdo(object):
   def __hasError(self, method_name, cmd, retvals):  # {{{
     if (self.debug):
       print("RETURNCODE:" + retvals["returncode"].__str__())
-    if (0 != retvals["returncode"]):
+    if ( self.__exit_success(method_name) < retvals["returncode"] ):
       print("Error in calling operator " + method_name + " with:")
       print(">>> " + ' '.join(cmd) + "<<<")
       print('STDOUT:' + retvals["stdout"])
@@ -276,7 +334,7 @@ class Cdo(object):
       return False  # }}}
 
   # {{{ attempt to load optional libraries: netcdf-IO + XArray
-  # numpy is a dependency of both, so no need to check that 
+  # numpy is a dependency of both, so no need to check that
   def __loadOptionalLibs(self):
     try:
       import xarray
@@ -294,158 +352,191 @@ class Cdo(object):
     except:
       print("-->> Could not load netCDF4! <<--") #}}}
 
-  def __getattr__(self, method_name):  # main method-call handling for Cdo-objects {{{
+  def infile(self, *infiles):
+    for infile in infiles:
+      if isinstance(infile, six.string_types):
+        self._cmd.append(infile)
+      elif self.hasXarray:
+        import xarray #<<-- python2 workaround
+        if (type(infile) == xarray.core.dataset.Dataset):
+          # create a temp nc file from input data
+          tmpfile = self.tempStore.newFile()
+          infile.to_netcdf(tmpfile)
+          self._cmd.append(tmpfile)
+    return self
 
-    @auto_doc(method_name, self.CDO)
-    def get(self, *args, **kwargs):
-      operatorPrintsOut = method_name in self.noOutputOperators
+  def add_option(self, *options):
+    self._options = self._options + list(options)
+    return self
 
-      self.envByCall = {}
+  def __call__(self, *args, **kwargs):
+    user_kwargs = kwargs.copy()
+    try:
+      method_name = self._cmd[0][1:].split(',')[0]
+    except IndexError:
+      method_name = ''
+    operatorPrintsOut = method_name in self.noOutputOperators
 
-      # Build the cdo command
-      # 0. the cdo command itself
-      cmd = [self.CDO]
+    self.envByCall = {}
 
-      # 1. OVERWRITE EXISTING FILES
-      cmd.append('-O')
+    # Build the cdo command
+    # 0. the cdo command itself
+    cmd = [self.CDO]
 
-      # 2. set the options
-      # switch to netcdf output in case of numpy/xarray usage
-      if (   None != kwargs.get('returnArray')
-          or None != kwargs.get('returnMaArray')
-          or None != kwargs.get('returnXArray')
-          or None != kwargs.get('returnXDataset')
-          or None != kwargs.get('returnCdf')):
-        cmd.append('-f nc')
-      if 'options' in kwargs:
-        cmd += kwargs['options'].split()
+    # 1. OVERWRITE EXISTING FILES
+    cmd.append('-O')
+    cmd.extend(self._options)
 
-      # 3. add operators
-      #   collect operator parameters and pad them to the operator name
-      operator = ['-'+method_name]
-      if args.__len__() != 0:
-        for arg in args:
-          operator.append(arg.__str__())
-      operatorCall = ','.join(operator)
-      cmd.append(operatorCall)
+    # 2. set the options
+    # switch to netcdf output in case of numpy/xarray usage
+    if (   None != kwargs.get('returnArray')
+        or None != kwargs.get('returnMaArray')
+        or None != kwargs.get('returnXArray')
+        or None != kwargs.get('returnXDataset')
+        or None != kwargs.get('returnCdf')):
+      cmd.append('-f nc')
+    if 'options' in kwargs:
+      cmd += kwargs['options'].split()
 
-      # 4. input files or other operators
-      if 'input' in kwargs:
-        if isinstance(kwargs["input"], six.string_types):
+
+    # 3. add operators
+    #   collect operator parameters and pad them to the operator name
+    if len(args) != 0:
+      self._cmd[-1] += ',' + ','.join(map(str, args))
+    if self._cmd:
+      cmd.extend(self._cmd)
+
+    # 4. input files or other operators
+    if 'input' in kwargs:
+      if isinstance(kwargs["input"], six.string_types):
+        cmd.append(kwargs["input"])
+      elif type(kwargs["input"]) == list:
+        cmd.append(' '.join(kwargs["input"]))
+      elif self.hasXarray:
+        import xarray #<<-- python2 workaround
+        if (type(kwargs["input"]) == xarray.core.dataset.Dataset):
+          # create a temp nc file from input data
+          tmpfile = self.tempStore.newFile()
+          kwargs["input"].to_netcdf(tmpfile)
+          kwargs["input"] = tmpfile
+
           cmd.append(kwargs["input"])
-        elif type(kwargs["input"]) == list:
-          cmd.append(' '.join(kwargs["input"]))
-        elif self.hasXarray:
-          import xarray #<<-- python2 workaround
-          if (type(kwargs["input"]) == xarray.core.dataset.Dataset):
-            # create a temp nc file from input data
-            tmpfile = self.tempStore.newFile()
-            kwargs["input"].to_netcdf(tmpfile)
-            kwargs["input"] = tmpfile
-            print(kwargs['input'])
-            cmd.append(kwargs["input"])
-        else:
-          # we assume it's either a list, a tuple or any iterable.
-          cmd.append(kwargs["input"])
+      else:
+        # we assume it's either a list, a tuple or any iterable.
+        cmd.append(kwargs["input"])
 
-      # 5. handle rewrite of existing output files
-      if not kwargs.__contains__("force"):
-        kwargs["force"] = self.forceOutput
+    # 5. handle rewrite of existing output files
+    if not kwargs.__contains__("force"):
+      kwargs["force"] = self.forceOutput
 
-      # 6. handle environment setup per call
-      envOfCall = {}
-      if kwargs.__contains__("env"):
-        for k, v in kwargs["env"].items():
-          envOfCall[k] = v
+    # 6. handle environment setup per call
+    envOfCall = {}
+    if kwargs.__contains__("env"):
+      for k, v in kwargs["env"].items():
+        envOfCall[k] = v
 
-      # 7. output handling: use given outputs or create temporary files
-      outputs = []
+    # 7. output handling: use given outputs or create temporary files
+    outputs = []
 
-      # collect the given output
-      if None != kwargs.get("output"):
-        outputs.append(kwargs["output"])
+    # collect the given output
+    if None != kwargs.get("output"):
+      outputs.append(kwargs["output"])
 
-      if operatorPrintsOut:
-        retvals = self.__call(cmd, envOfCall)
-        if (not self.__hasError(method_name, cmd, retvals)):
-          r = list(map(strip, retvals["stdout"].split(os.linesep)))
-          if "autoSplit" in kwargs:
-            splitString = kwargs["autoSplit"]
-            _output = [x.split(splitString) for x in r[:len(r) - 1]]
-            if (1 == len(_output)):
-                return _output[0]
-            else:
-                return _output
+    if not user_kwargs or not kwargs.get('compute', True):
+      return self
+    elif not kwargs.get('keep', True):
+      self._cmd.clear()
+
+    if operatorPrintsOut:
+      retvals = self.__call(cmd, envOfCall)
+      if (not self.__hasError(method_name, cmd, retvals)):
+        r = list(map(strip, retvals["stdout"].split(os.linesep)))
+        if "autoSplit" in kwargs:
+          splitString = kwargs["autoSplit"]
+          _output = [x.split(splitString) for x in r[:len(r) - 1]]
+          if (1 == len(_output)):
+              return _output[0]
           else:
-           return r[:len(r) - 1]
+              return _output
         else:
+         return r[:len(r) - 1]
+      else:
+        if self.returnNoneOnError:
+          return None
+        else:
+          raise CDOException(**retvals)
+    else:
+      if kwargs["force"] or \
+         (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
+        if not kwargs.__contains__("output") or None == kwargs["output"]:
+          for i in range(0, self.operators[method_name]):
+            outputs.append(self.tempStore.newFile())
+
+        cmd.append(' '.join(outputs))
+
+        retvals = self.__call(cmd, envOfCall)
+        if self.__hasError(method_name, cmd, retvals):
           if self.returnNoneOnError:
             return None
           else:
             raise CDOException(**retvals)
       else:
-        if kwargs["force"] or \
-           (kwargs.__contains__("output") and not os.path.isfile(kwargs["output"])):
-          if not kwargs.__contains__("output") or None == kwargs["output"]:
-            for i in range(0, self.operators[method_name]):
-              outputs.append(self.tempStore.newFile())
+        if self.debug:
+          print(("Use existing file'" + kwargs["output"] + "'"))
 
-          cmd.append(' '.join(outputs))
+    # defaults for file handles as return values
+    if not kwargs.__contains__("returnCdf"):
+      kwargs["returnCdf"] = False
+    if not kwargs.__contains__("returnXDataset"):
+      kwargs["returnXDataset"] = False
 
-          retvals = self.__call(cmd, envOfCall)
-          if self.__hasError(method_name, cmd, retvals):
-            if self.returnNoneOnError:
-              return None
-            else:
-              raise CDOException(**retvals)
-        else:
-          if self.debug:
-            print(("Use existing file'" + kwargs["output"] + "'"))
+    # return data arrays
+    if None != kwargs.get("returnArray"):
+      return self.readArray(outputs[0], kwargs["returnArray"])
+    elif None != kwargs.get("returnMaArray"):
+      return self.readMaArray(outputs[0], kwargs["returnMaArray"])
+    elif None != kwargs.get("returnXArray"):
+      return self.readXArray(outputs[0], kwargs.get("returnXArray"))
 
-      # defaults for file handles as return values
-      if not kwargs.__contains__("returnCdf"):
-        kwargs["returnCdf"] = False
-      if not kwargs.__contains__("returnXDataset"):
-        kwargs["returnXDataset"] = False
-
-      # return data arrays
-      if None != kwargs.get("returnArray"):
-        return self.readArray(outputs[0], kwargs["returnArray"])
-      elif None != kwargs.get("returnMaArray"):
-        return self.readMaArray(outputs[0], kwargs["returnMaArray"])
-      elif None != kwargs.get("returnXArray"):
-        return self.readXArray(outputs[0], kwargs.get("returnXArray"))
-
-      # return files handles (or lists of them)
-      elif kwargs["returnCdf"]:
-        if 1 == len(outputs):
-          return self.readCdf(outputs[0])
-        else:
-          return [self.readCdf(file) for file in outputs]
-      elif kwargs["returnXDataset"]:
-        if 1 == len(outputs):
-          return self.readXDataset(outputs[0])
-        else:
-          return [self.readXDataset(file) for file in outputs]
-
-      # handle split-operator outputs
-      elif ('split' == method_name[0:5]):
-        return glob.glob(kwargs["output"] + '*')
-
-      # default: return filename (given or tempfile)
+    # return files handles (or lists of them)
+    elif kwargs["returnCdf"]:
+      if 1 == len(outputs):
+        return self.readCdf(outputs[0])
       else:
-        if (1 == len(outputs)):
-          return outputs[0]
-        else:
-          return outputs
+        return [self.readCdf(file) for file in outputs]
+    elif kwargs["returnXDataset"]:
+      if 1 == len(outputs):
+        return self.readXDataset(outputs[0])
+      else:
+        return [self.readXDataset(file) for file in outputs]
 
-    if ((method_name in self.__dict__) or (method_name in list(self.operators.keys()))):
+    # handle split-operator outputs
+    elif ('split' == method_name[0:5]):
+      return glob.glob(kwargs["output"] + '*')
+
+    # default: return filename (given or tempfile)
+    else:
+      if (1 == len(outputs)):
+        return outputs[0]
+      else:
+        return outputs
+
+  def __getattr__(self, method_name):  # main method-call handling for Cdo-objects {{{
+
+    if ((method_name in self.__dict__) or (method_name in list(self.operators.keys()))
+        or (method_name in self.AliasOperators)):
       if self.debug:
         print(("Found method:" + method_name))
 
       # cache the method for later
-      setattr(self.__class__, method_name, get)
-      return get.__get__(self)
+      class Operator(self.__class__):
+
+        __doc__ = operator_doc(method_name, self.CDO)
+
+        name = method_name
+
+      setattr(self.__class__, method_name, Operator())
+      return getattr(self, method_name)
     else:
       # given method might match part of know operators: autocompletion
       if (len(list(filter(lambda x: re.search(method_name, x), list(self.operators.keys())))) == 0):
@@ -583,8 +674,16 @@ class Cdo(object):
 
     return delta_levels
 
-  def readCdf(self, iFile):
+  def run(self, output=None):
+    if output:
+      return self(output=output, compute=True)
+    else:
+      return self(compute=True)
+
+  def readCdf(self, iFile=None):
     """Return a cdf handle created by the available cdf library"""
+    if iFile is None:
+      iFile = self.run()
     if self.hasNetcdf:
       fileObj = self.cdf(iFile, mode='r')
       return fileObj
@@ -592,19 +691,27 @@ class Cdo(object):
       print("Could not import data from file '%s' (python-netCDF4)" % iFile)
       six.raise_from(ImportError,None)
 
-  def readArray(self, iFile, varname):
+  def readArray(self, iFile=None, varname=None):
     """Direcly return a numpy array for a given variable name"""
+    if iFile is None:
+      iFile = self.run()
+    if varname is None:
+      raise ValueError("A varname needs to be specified!")
     filehandle = self.readCdf(iFile)
     try:
       # return the data array for given variable name
       return filehandle.variables[varname][:].copy()
-    except: 
+    except:
       print("Cannot find variable '%s'" % varname)
       six.raise_from(LookupError,None)
 
 
-  def readMaArray(self, iFile, varname):# {{{
+  def readMaArray(self, iFile=None, varname=None):# {{{
     """Create a masked array based on cdf's FillValue"""
+    if iFile is None:
+      iFile = self.run()
+    if varname is None:
+      raise ValueError("A varname needs to be specified!")
     fileObj = self.readCdf(iFile)
 
     if not varname in fileObj.variables:
@@ -622,7 +729,11 @@ class Cdo(object):
 
     return retval# }}}
 
-  def readXArray(self, ifile, varname):
+  def readXArray(self, ifile=None, varname=None):
+    if ifile is None:
+      ifile = self.run()
+    if varname is None:
+      raise ValueError("A varname needs to be specified!")
     if not self.hasXarray:
       print("Could not load XArray")
       six.raise_from(ImportError,None)
@@ -634,11 +745,13 @@ class Cdo(object):
       print("Cannot find variable '%s'" % varname)
       six.raise_from(LookupError,None)
 
-  def readXDataset(self, ifile):
+  def readXDataset(self, ifile=None):
+    if ifile is None:
+      ifile = self.run()
     if not self.hasXarray:
       print("Could not load XArray")
       six.raise_from(ImportError,None)
-    
+
     return self.xa_open(ifile)
 
   # internal helper methods:
@@ -658,18 +771,26 @@ class CdoTempfileStore(object):
 
   __tempfiles = []
 
+  __tempdirs = []
+
   def __init__(self, dir):
     self.persistent_tempfile = False
     self.fileTag = 'cdoPy'
     self.dir = dir
     if not os.path.isdir(dir):
       os.makedirs(dir)
+    self.__tempdirs.append(dir)
 
   def __del__(self):
     # remove temporary files
-    for filename in self.__class__.__tempfiles:
-      if os.path.isfile(filename):
-        os.remove(filename)
+    try:
+      self.__tempdirs.remove(self.dir)
+    except ValueError:
+      pass
+    if self.dir not in self.__tempdirs:
+      for filename in self.__class__.__tempfiles:
+        if os.path.isfile(filename):
+          os.remove(filename)
 
   def cleanTempDir(self):
     leftOvers = [os.path.join(self.dir, f) for f in os.listdir(self.dir)]

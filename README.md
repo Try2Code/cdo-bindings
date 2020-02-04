@@ -1,10 +1,19 @@
 # Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
-[![Build Status](https://travis-ci.org/Try2Code/cdo-bindings.svg?branch=master)](https://travis-ci.org/Try2Code/cdo-bindings) (Ruby 2.x/Python 2.7/Python 3.x)
+[![Ruby Tests](https://travis-ci.org/Try2Code/cdo-bindings.svg?branch=master)](https://travis-ci.org/Try2Code/cdo-bindings)
+[![Python Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
 
 Welcome to the scripting interfaces of [CDO](https://code.zmaw.de/projects/cdo/wiki)!
 This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
 [Why the .... should I use this???](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
+
+## What's going on
+
+Currently this package is in a re-design phase. The target is a 2.0 release that will **not be compatible** with the exising release 1.5.x:
+* Write opertors chains in terms of methods chains with ```.``` as much as possible
+* hopefully reduce the number of ```kwargs``` keys
+* keep the Ruby and Python interface similar
+* possibly drop python-2.x support ... I am not sure when to do this best
 
 ## Installation
 
@@ -25,7 +34,7 @@ Cdo.{rb,py} requires a working CDO binary and Ruby 2.x or Python 2.7/3.x
 
 Multi-dimensional arrays (numpy for python, narray for ruby) require addtional
 netcdf-io modules. These are [scipy](https://docs.scipy.org/doc/scipy/reference/io.html) or [python-netcdf4](https://pypi.python.org/pypi/netCDF4) for python and
-[ruby-netcdf](https://rubygems.org/gems/ruby-netcdf) for ruby. Because scipy has some difficulties with netcdf, I strongly recommend python-netCDF4.
+[ruby-netcdf](https://rubygems.org/gems/ruby-netcdf) for ruby. Because scipy has some difficulties with netcdf, I dropped the support of it with release 1.5.0.
 
 Thx to Alexander Winkler there is also an IO option for XArray.
 
@@ -189,12 +198,15 @@ Please use the forum or ticket system of CDOs official web page:
 http://code.zmaw.de/projects/cdo
 
 ## Changelog
-* **1.5.0** API change :
+* **1.5.0 (1.5.3 for python)** API change :
   - simplify the interface:
     - remove returnCdf from constructor, only use it with operator calls
     - remove methods setReturnArray/unsetReturnArray: I fear it's not used anyway, but 'returnArray' in each call
     - remove the optional dependency to scipy since it offers less functionality than netCDF4 and just blows up the code
     - new attributes: hasNetcdf, hasXArray for checking for the respective support
+    - fix for cdo-1.9.6: allow non-zero return code for diff operators
+  - the 1.5.2 relase for python is identical to 1.5.0 (was testing a new setup.py and version cannot be used twice in pipy)
+  - 1.5.1 had building problems with pip based on python2
 * **1.4.0** API change :
   - the ```operators``` atribute is no longer a list, but a dict (python) or hash (ruby) holding the number of output streams as value
   - finally fix #16 (missing tempfile generation for more than one output streams)
@@ -273,4 +285,4 @@ http://code.zmaw.de/projects/cdo
 
 ## License
 
-Cdo.{rb,py} makes use of the GPLv2 License, see COPYING
+Cdo.{rb,py} makes use of the BSD-3-clause license
