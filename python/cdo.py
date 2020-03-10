@@ -353,6 +353,7 @@ class Cdo(object):
       print("-->> Could not load netCDF4! <<--") #}}}
 
   def infile(self, *infiles):
+    # if this function still used?
     for infile in infiles:
       if isinstance(infile, six.string_types):
         self._cmd.append(infile)
@@ -773,7 +774,23 @@ class Cdo(object):
     return tmpfile
 
   def _input_str(self, input):
-    """Creates an input string from input argument.
+    """Creates an input string from input arguments.
+
+    If input is of type list, each element will be parse by
+    the function _input_arg_to_str. List elements might be of
+    different types.
+    """
+    space = ' '
+    input_str = ''
+    if type(input) == list:
+      for element in input:
+        input_str += space + self._input_arg_to_str(element)
+    else:
+      input_str = space + self._input_arg_to_str(input)
+    return input_str
+
+  def _input_arg_to_str(self, input):
+    """Creates string input element from input argument.
 
     Input arguments might be any type of filename string,
     xarray or netcdf4 dataset.
@@ -781,8 +798,8 @@ class Cdo(object):
     input_str = None
     if isinstance(input, six.string_types):
       input_str = input
-    if type(input) == list:
-      input_str = ' '.join(input)
+    #if type(input) == list:
+    #  input_str = ' '.join(input)
     # removed elif so we can have netcdf dataset also
     # when self.hasXarray is true.
     if self.hasXarray:
