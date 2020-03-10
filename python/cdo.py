@@ -363,6 +363,12 @@ class Cdo(object):
           tmpfile = self.tempStore.newFile()
           infile.to_netcdf(tmpfile)
           self._cmd.append(tmpfile)
+      elif self.hasNetcdf:
+        if (type(infile) == type(self.cdf)):
+          # create a temp nc file from input data
+          tmpfile = self.tempStore.newFile()
+          self.copyNC4Dataset(infile, tmpfile)
+          self._cmd.append(tmpfile)
     return self
 
   def add_option(self, *options):
@@ -753,6 +759,33 @@ class Cdo(object):
       six.raise_from(ImportError,None)
 
     return self.xa_open(ifile)
+
+  def copyNC4Dataset(self, infile, tmpfile):
+    """Creates a temporary file from a netCDF4 Dataset.
+    """
+    ds = self.cdf(tmpfile, mode='w')
+    # copy global attributes
+    for name in infile.ncattrs():
+        ds.setncattr(name, getattr(infile, name))
+    # copy dimensions
+    for name, dimension in infile.dimensions.items():
+        ds.createDimension(
+            name, (len(dimension) if not dimension.isunlimited() else None))
+    # copy data and data attributes
+    for name, variable in infile.variables.items():
+        # _FillValue has to be defined during variable definition
+        if hasattr(variable, '_FillValue'):
+            fill_value = getattr(variable, '_FillValue')
+        else:
+            fill_value = None
+        var = ds.createVariable(name, variable.dtype, variable.dimensions, fill_value=fill_value)
+        for attr in variable.ncattrs():
+            if attr != '_FillValue':
+                ds.variables[name].setncattr(attr, getattr(variable, attr))
+        if variable.shape:
+            ds.variables[name][:] = infile.variables[name][:]
+    ds.close()
+    return tmpfile
 
   # internal helper methods:
   # return internal cdo.py version
