@@ -414,22 +414,7 @@ class Cdo(object):
 
     # 4. input files or other operators
     if 'input' in kwargs:
-      if isinstance(kwargs["input"], six.string_types):
-        cmd.append(kwargs["input"])
-      elif type(kwargs["input"]) == list:
-        cmd.append(' '.join(kwargs["input"]))
-      elif self.hasXarray:
-        import xarray #<<-- python2 workaround
-        if (type(kwargs["input"]) == xarray.core.dataset.Dataset):
-          # create a temp nc file from input data
-          tmpfile = self.tempStore.newFile()
-          kwargs["input"].to_netcdf(tmpfile)
-          kwargs["input"] = tmpfile
-
-          cmd.append(kwargs["input"])
-      else:
-        # we assume it's either a list, a tuple or any iterable.
-        cmd.append(kwargs["input"])
+      cmd.append(self._input_str(kwargs["input"]))
 
     # 5. handle rewrite of existing output files
     if not kwargs.__contains__("force"):
@@ -786,6 +771,37 @@ class Cdo(object):
             ds.variables[name][:] = infile.variables[name][:]
     ds.close()
     return tmpfile
+
+  def _input_str(self, input):
+    """Creates an input string from input argument.
+
+    Input arguments might be any type of filename string,
+    xarray or netcdf4 dataset.
+    """
+    input_str = None
+    if isinstance(input, six.string_types):
+      input_str = input
+    if type(input) == list:
+      input_str = ' '.join(input)
+    # removed elif so we can have netcdf dataset also
+    # when self.hasXarray is true.
+    if self.hasXarray:
+      import xarray #<<-- python2 workaround
+      if (type(input) == xarray.core.dataset.Dataset):
+        # create a temp nc file from input data
+        tmpfile = self.tempStore.newFile()
+        input.to_netcdf(tmpfile)
+        input_str = tmpfile
+    if self.hasNetcdf:
+      if isinstance(input, self.cdf):
+        # create a temp nc file from input data
+        tmpfile = self.tempStore.newFile()
+        self.copyNC4Dataset(input, tmpfile)
+        input_str = tmpfile
+    if input_str is None:
+      # we assume it's either a list, a tuple or any iterable.
+      input_str = input
+    return input_str
 
   # internal helper methods:
   # return internal cdo.py version
