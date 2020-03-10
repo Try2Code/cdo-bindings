@@ -365,7 +365,8 @@ class Cdo(object):
           infile.to_netcdf(tmpfile)
           self._cmd.append(tmpfile)
       elif self.hasNetcdf:
-        if (type(infile) == type(self.cdf)):
+        # we don't get here if self.hasXarray is true!!
+        if isinstance(infile, self.cdf):
           # create a temp nc file from input data
           tmpfile = self.tempStore.newFile()
           self.copyNC4Dataset(infile, tmpfile)
