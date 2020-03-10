@@ -815,9 +815,12 @@ class Cdo(object):
         input_str = tmpfile
     if self.hasNetcdf:
       if isinstance(input, self.cdf):
-        # create a temp nc file from input data
-        tmpfile = self.tempStore.newFile()
-        self.copyNC4Dataset(input, tmpfile)
+        if os.path.isfile(input.filepath()):
+          tmpfile = input.filepath()
+        else:
+          # create a temp nc file (if dataset is diskless)
+          tmpfile = self.tempStore.newFile()
+          self.copyNC4Dataset(input, tmpfile)
         input_str = tmpfile
     if input_str is None:
       # we assume it's either a list, a tuple or any iterable.
