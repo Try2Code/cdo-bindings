@@ -749,6 +749,9 @@ class Cdo(object):
 
   def copyNC4Dataset(self, infile, tmpfile):
     """Creates a temporary file from a netCDF4 Dataset.
+
+    Create a dataset copy to allow also diskless and
+    non-persistent datasets.
     """
     ds = self.cdf(tmpfile, mode='w')
     # copy global attributes
