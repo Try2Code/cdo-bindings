@@ -10,7 +10,7 @@ This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Py
 ## What's going on
 
 Currently this package is in a re-design phase. The target is a 2.0 release that will **not be compatible** with the exising release 1.5.x:
-* Write opertors chains in terms of methods chains with ```.``` as much as possible
+* Write operator chains like methods chains with ```.``` as much as possible
 * hopefully reduce the number of ```kwargs``` keys
 * keep the Ruby and Python interface similar
 * possibly drop python-2.x support ... I am not sure when to do this best
@@ -107,7 +107,7 @@ If the output key is left out, one or more (depending on the operator) temporary
 ```python
     tminFile = cdo.timmin(input = ifile) #python
 ```
-However these tempfiles remain if the session/script is killed with SIGKILL or if the bindings are used via Jupyter notebooks. Those session are usually long lasting and the heavy usage if tempfiles can easily fill the system tempdir - your system will become unusable then.
+However these tempfiles remain if the session/script is killed with SIGKILL or if the bindings are used via Jupyter notebooks. Those session are usually long lasting and the heavy usage of tempfiles can easily fill the system tempdir - your system will become unusable then.
 The bindings offer two ways to cope with that
 * Set another directory for storing tempfiles with a constructor option and remove anything left in there when you experienced a crash or something like this
 ```python
@@ -119,6 +119,7 @@ The bindings offer two ways to cope with that
    cdo.cleanTempDir() #python
    cdo.cleanTempDir   #ruby
 ```
+Alternatively you can use environment variables to set this. Python's and Ruby's ```tempfile``` libraries support the variables 'TMPDIR', 'TEMP' and 'TMP' in their current versions (python-3.8.2, ruby-2.7.0). This feature might be used by administrators to keep users from filling up system directories.
    
 #### Operators with parameter
 ```ruby
