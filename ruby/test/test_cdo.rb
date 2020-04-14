@@ -515,7 +515,7 @@ class TestCdo < Minitest::Test
   def test_log
     cmd = '-fldmean -mul -random,r20x20 -topo,r20x20'
     #  logging without a real file
-    @cdo = Cdo.new(                    returnNilOnError: true)
+    @cdo = Cdo.new(returnNilOnError: true)
     @cdo.debug = false
     @cdo.logging = true
     @cdo.topo
@@ -531,6 +531,27 @@ class TestCdo < Minitest::Test
     @cdo.temp
     @cdo.sinfov(input: cmd)
     puts @cdo.showLog
+  end
+  def test_proj
+    myTempfile=@tempStore.newFile
+    File.open(myTempfile,'w') {|f|
+    f << '
+gridtype = projection
+xsize     = 10
+ysize     = 10
+xunits   = "meter"
+yunits   = "meter"
+xfirst    = -638000
+xinc      = 100
+yfirst    = -3349350
+yinc      = 100
+grid_mapping = crs
+grid_mapping_name = polar_stereographic
+proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
+'
+    }
+    data = @cdo.remapnn(myTempfile,input: '-topo',returnArray: 'topo', options: '-f nc')
+    assert_equal(-3190.0,data.flatten[0])
   end
   if @@maintainermode  then
     require 'unifiedPlot'
