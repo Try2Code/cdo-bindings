@@ -805,8 +805,11 @@ class CdoTest(unittest2.TestCase):
 
       def test_longChain(self):
         cdo = Cdo()
+        dataCreationOperator = 'seq'
+        if (parse_version(cdo.version()) < parse_version('1.9.8')):
+          dataCreationOperator = 'for'
         if cdo.hasNetcdf:
-          ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
+          ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin({0}*3.141529/180.0)' -{0},1,10".format(dataCreationOperator)
           t = cdo.fldmax(input="-div -sub -timmean -seltimestep,2,3 %s -seltimestep,1 %s -gridarea %s"%(ifile,ifile,ifile),
               returnMaArray="t")
           self.assertTrue(abs(8.9813e-09 - t[0][0][0]) < 1.0e-10, 'Found non-zero diff')
@@ -837,7 +840,10 @@ class CdoTest(unittest2.TestCase):
         cdfFile = cdo.copy(options="-f nc",input=input)
         if cdo.hasNetcdf:
           cdf     = cdo.readCdf(cdfFile)
-          self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
+          if (parse_version(cdo.version()) < parse_version('1.9.8')):
+            self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
+          else:
+            self.assertEqual(sorted(['lat','lon','seq','time']),sorted(list(cdf.variables.keys())))
 
       def test_phc(self):
         ifile = "-select,level=0 " + DATA_DIR + '/icon/phc.nc'
