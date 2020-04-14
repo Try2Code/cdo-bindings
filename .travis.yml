@@ -26,4 +26,4 @@ script:
   - gem install parallel --version '<= 1.12'
   - gem install narray narray_miss ruby-netcdf minitest rake colorize facets
   - source activate test_env_py37
-  - rake testRuby   CDO=$(type -p cdo) NO_COLOR=1
+  - cd ruby; ruby test/test_cdo.rb CDO=$(type -p cdo) NO_COLOR=1
