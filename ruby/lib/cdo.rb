@@ -89,7 +89,7 @@ class Cdo
     @tempStore              = CdoTempfileStore.new(tempdir)
     @logging                = logging
     @logFile                = logFile
-    @logger                 = Logger.new(@logFile,'a')
+    @logger                 = Logger.new(@logFile,'daily')
     @logger.level           = Logger::INFO
 
     @config                 = getFeatures
