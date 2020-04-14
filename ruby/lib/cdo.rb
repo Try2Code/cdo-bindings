@@ -260,14 +260,13 @@ class Cdo
            operatorParameters,
            input:         nil,
            output:        nil,
-           options:       nil,
+           options:       '',
            returnCdf:     false,
            force:         nil,
            returnArray:   nil,
            returnMaArray: nil,
            env:           nil,
            autoSplit:     nil)
-    options = options.to_s
 
     # switch netcdf output if data of filehandles are requested as output
     options << ' -f nc' if ( \
@@ -371,7 +370,7 @@ class Cdo
     # mark calls for operators without output files
     io[:output] = $stdout if @noOutputOperators.include?(operatorName)
 
-    _run(operatorName,operatorParameters,io)
+    _run(operatorName,operatorParameters,**io)
   end
 
   # load the netcdf bindings
