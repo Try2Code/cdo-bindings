@@ -199,6 +199,8 @@ Please use the forum or ticket system of CDOs official web page:
 http://code.zmaw.de/projects/cdo
 
 ## Changelog
+* **1.5.1(ruby-only)**:
+  - fix some warnings with latest ruby release 2.7.x
 * **1.5.0(ruby)/1.5.3(python)** API change :
   - simplify the interface:
     - remove returnCdf from constructor, only use it with operator calls
