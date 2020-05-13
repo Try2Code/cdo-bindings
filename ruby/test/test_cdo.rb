@@ -582,7 +582,7 @@ proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
       assert_equal(0,Dir.glob(pattern).size)
     end
     def test_longChain
-      ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
+      ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(seq*3.141529/180.0)' -seq,1,10"
       t = @cdo.fldmax(input: "-div -sub -timmean -seltimestep,2,3 #{ifile} -seltimestep,1 #{ifile}  -gridarea #{ifile}",returnArray: "t")
       assert_equal(8.981299259858133e-09,t[0])
     end
