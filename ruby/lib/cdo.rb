@@ -221,8 +221,16 @@ class Cdo
     status = {
       :stdout     => stdout.read,
       :stderr     => stderr.read,
-      :returncode => wait_thr.value.exitstatus
+      :returncode => wait_thr.value
     }
+
+
+    # popen3 does not catch exitcode in case of an abort (128+SIGABRT=134)
+    st = -1
+    st = status[:returncode].exitstatus if not status[:returncode].exitstatus.nil?
+    st = 128 + status[:returncode].termsig if (status[:returncode].signaled? and (status[:returncode].termsig != 0))
+    status[:returncode] = st
+
 
     if (@debug)
       puts '# DEBUG - start ============================================================='
