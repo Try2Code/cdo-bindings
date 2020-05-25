@@ -901,6 +901,19 @@ class CdoTest(unittest2.TestCase):
 
           smooth20 = cdo.smooth('nsmooth=20',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
           plot(np.flipud(smooth20[0,:,:]),ofile='smooth20',title='smooth,nsmooth=20')
+
+      def test_ydiv(self):
+        cdo = Cdo()
+        cdo.debug = True
+        if ('yeardiv' in cdo.operators):
+          input = "-expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
+          values = cdo.yeardiv(input=input,returnArray='seq')
+          print(np.zeros(len(values))+1.0)
+          print(np.ravel(values))
+          self.assertTrue((np.zeros(len(values))+1.0 == np.ravel(values)).all())
+        else:
+          print("no tests for 'yeardiv': operator does not exist")
+
 #===============================================================================
 if __name__ == '__main__':
     suite = unittest2.TestLoader().loadTestsFromTestCase(CdoTest)
