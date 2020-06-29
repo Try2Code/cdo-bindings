@@ -199,6 +199,13 @@ Please use the forum or ticket system of CDOs official web page:
 http://code.zmaw.de/projects/cdo
 
 ## Changelog
+* **next 2.0**:
+  - reduced usage of keywords:
+    - many of them just set return type, so they will go to the _run()_ method
+    - options only has effect during run of the tool, so this can also go into _run()_
+    - the different input types can be handled in something like _input()_ or
+      _infiles()_. This should clean up the lengthy code, which does this
+      currently
 * **1.5.1(ruby-only)**:
   - fix some warnings with latest ruby release 2.7.x
 * **1.5.0(ruby)/1.5.3(python)** API change :
