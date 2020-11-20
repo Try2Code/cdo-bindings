@@ -63,6 +63,9 @@ class CdoTest(unittest2.TestCase):
             cdo.setCdo(newCDO)
             self.assertEqual(newCDO,cdo.getCdo())
             cdo.setCdo('cdo')
+            # now constructor option
+            cdo = Cdo(cdo=newCDO)
+            self.assertEqual(newCDO,cdo.getCdo())
 
     def testDbg(self):
         if not 'DEBUG' in os.environ:
@@ -802,8 +805,11 @@ class CdoTest(unittest2.TestCase):
 
       def test_longChain(self):
         cdo = Cdo()
+        dataCreationOperator = 'seq'
+        if (parse_version(cdo.version()) < parse_version('1.9.8')):
+          dataCreationOperator = 'for'
         if cdo.hasNetcdf:
-          ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
+          ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin({0}*3.141529/180.0)' -{0},1,10".format(dataCreationOperator)
           t = cdo.fldmax(input="-div -sub -timmean -seltimestep,2,3 %s -seltimestep,1 %s -gridarea %s"%(ifile,ifile,ifile),
               returnMaArray="t")
           self.assertTrue(abs(8.9813e-09 - t[0][0][0]) < 1.0e-10, 'Found non-zero diff')
@@ -834,7 +840,10 @@ class CdoTest(unittest2.TestCase):
         cdfFile = cdo.copy(options="-f nc",input=input)
         if cdo.hasNetcdf:
           cdf     = cdo.readCdf(cdfFile)
-          self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
+          if (parse_version(cdo.version()) < parse_version('1.9.8')):
+            self.assertEqual(sorted(['lat','lon','for','time']),sorted(list(cdf.variables.keys())))
+          else:
+            self.assertEqual(sorted(['lat','lon','seq','time']),sorted(list(cdf.variables.keys())))
 
       def test_phc(self):
         ifile = "-select,level=0 " + DATA_DIR + '/icon/phc.nc'
@@ -892,6 +901,19 @@ class CdoTest(unittest2.TestCase):
 
           smooth20 = cdo.smooth('nsmooth=20',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
           plot(np.flipud(smooth20[0,:,:]),ofile='smooth20',title='smooth,nsmooth=20')
+
+      def test_ydiv(self):
+        cdo = Cdo()
+        cdo.debug = True
+        if ('yeardiv' in cdo.operators):
+          input = "-expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
+          values = cdo.yeardiv(input=input,returnArray='seq')
+          print(np.zeros(len(values))+1.0)
+          print(np.ravel(values))
+          self.assertTrue((np.zeros(len(values))+1.0 == np.ravel(values)).all())
+        else:
+          print("no tests for 'yeardiv': operator does not exist")
+
 #===============================================================================
 if __name__ == '__main__':
     suite = unittest2.TestLoader().loadTestsFromTestCase(CdoTest)

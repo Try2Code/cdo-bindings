@@ -143,7 +143,7 @@ class Cdo(object):
                cmd=[],
                options=[]):
 
-    if 'CDO' in os.environ:
+    if 'CDO' in os.environ and os.path.isfile(os.environ['CDO']):
       self.CDO = os.environ['CDO']
     else:
       self.CDO = cdo

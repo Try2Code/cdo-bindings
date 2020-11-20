@@ -515,7 +515,7 @@ class TestCdo < Minitest::Test
   def test_log
     cmd = '-fldmean -mul -random,r20x20 -topo,r20x20'
     #  logging without a real file
-    @cdo = Cdo.new(                    returnNilOnError: true)
+    @cdo = Cdo.new(returnNilOnError: true)
     @cdo.debug = false
     @cdo.logging = true
     @cdo.topo
@@ -531,6 +531,27 @@ class TestCdo < Minitest::Test
     @cdo.temp
     @cdo.sinfov(input: cmd)
     puts @cdo.showLog
+  end
+  def test_proj
+    myTempfile=@tempStore.newFile
+    File.open(myTempfile,'w') {|f|
+    f << '
+gridtype = projection
+xsize     = 10
+ysize     = 10
+xunits   = "meter"
+yunits   = "meter"
+xfirst    = -638000
+xinc      = 100
+yfirst    = -3349350
+yinc      = 100
+grid_mapping = crs
+grid_mapping_name = polar_stereographic
+proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
+'
+    }
+    data = @cdo.remapnn(myTempfile,input: '-topo',returnArray: 'topo', options: '-f nc')
+    assert_equal(-3190.0,data.flatten[0])
   end
   if @@maintainermode  then
     require 'unifiedPlot'
@@ -561,7 +582,7 @@ class TestCdo < Minitest::Test
       assert_equal(0,Dir.glob(pattern).size)
     end
     def test_longChain
-      ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(for*3.141529/180.0)' -for,1,10"
+      ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin(seq*3.141529/180.0)' -seq,1,10"
       t = @cdo.fldmax(input: "-div -sub -timmean -seltimestep,2,3 #{ifile} -seltimestep,1 #{ifile}  -gridarea #{ifile}",returnArray: "t")
       assert_equal(8.981299259858133e-09,t[0])
     end
@@ -648,5 +669,21 @@ class TestCdo < Minitest::Test
       ifile = 'https://www.esrl.noaa.gov/psd/thredds/dodsC/Datasets/cpc_global_precip/precip.1979.nc'
       @cdo.sinfov(input: ifile)
     end if @@debug
+
+    def test_ydiv
+      @cdo.debug = true
+
+      if @cdo.operators.include?('yeardiv')
+
+        input='-settaxis,2001-01-01,12:00:00,12hours -for,1,10000'
+
+        opChain = "-expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
+
+        values = @cdo.yeardiv(input: opChain, returnArray: 'seq').flatten
+        assert(Array.new(values.size,1.0),values.to_a)
+      else
+        puts "no tests for 'yeardiv' because operator is missing"
+      end
+    end
   end
 end
