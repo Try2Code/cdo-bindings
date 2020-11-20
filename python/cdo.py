@@ -353,7 +353,6 @@ class Cdo(object):
       print("-->> Could not load netCDF4! <<--") #}}}
 
   def infile(self, *infiles):
-    # if this function still used?
     for infile in infiles:
       if isinstance(infile, six.string_types):
         self._cmd.append(infile)
@@ -363,13 +362,6 @@ class Cdo(object):
           # create a temp nc file from input data
           tmpfile = self.tempStore.newFile()
           infile.to_netcdf(tmpfile)
-          self._cmd.append(tmpfile)
-      elif self.hasNetcdf:
-        # we don't get here if self.hasXarray is true!!
-        if isinstance(infile, self.cdf):
-          # create a temp nc file from input data
-          tmpfile = self.tempStore.newFile()
-          self.copyNC4Dataset(infile, tmpfile)
           self._cmd.append(tmpfile)
     return self
 
