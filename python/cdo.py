@@ -408,22 +408,7 @@ class Cdo(object):
 
     # 4. input files or other operators
     if 'input' in kwargs:
-      if isinstance(kwargs["input"], six.string_types):
-        cmd.append(kwargs["input"])
-      elif type(kwargs["input"]) == list:
-        cmd.append(' '.join(kwargs["input"]))
-      elif self.hasXarray:
-        import xarray #<<-- python2 workaround
-        if (type(kwargs["input"]) == xarray.core.dataset.Dataset):
-          # create a temp nc file from input data
-          tmpfile = self.tempStore.newFile()
-          kwargs["input"].to_netcdf(tmpfile)
-          kwargs["input"] = tmpfile
-
-          cmd.append(kwargs["input"])
-      else:
-        # we assume it's either a list, a tuple or any iterable.
-        cmd.append(kwargs["input"])
+      cmd.append(self._input_str(kwargs["input"]))
 
     # 5. handle rewrite of existing output files
     if not kwargs.__contains__("force"):
@@ -753,6 +738,86 @@ class Cdo(object):
       six.raise_from(ImportError,None)
 
     return self.xa_open(ifile)
+
+  def copyNC4Dataset(self, infile, tmpfile):
+    """Creates a temporary file from a netCDF4 Dataset.
+
+    Create a dataset copy to allow also diskless and
+    non-persistent datasets.
+    """
+    ds = self.cdf(tmpfile, mode='w')
+    # copy global attributes
+    for name in infile.ncattrs():
+        ds.setncattr(name, getattr(infile, name))
+    # copy dimensions
+    for name, dimension in infile.dimensions.items():
+        ds.createDimension(
+            name, (len(dimension) if not dimension.isunlimited() else None))
+    # copy data and data attributes
+    for name, variable in infile.variables.items():
+        # _FillValue has to be defined during variable definition
+        if hasattr(variable, '_FillValue'):
+            fill_value = getattr(variable, '_FillValue')
+        else:
+            fill_value = None
+        var = ds.createVariable(name, variable.dtype, variable.dimensions, fill_value=fill_value)
+        for attr in variable.ncattrs():
+            if attr != '_FillValue':
+                ds.variables[name].setncattr(attr, getattr(variable, attr))
+        if variable.shape:
+            ds.variables[name][:] = infile.variables[name][:]
+    ds.close()
+    return tmpfile
+
+  def _input_str(self, input):
+    """Creates an input string from input arguments.
+
+    If input is of type list, each element will be parse by
+    the function _input_arg_to_str. List elements might be of
+    different types.
+    """
+    space = ' '
+    input_str = ''
+    if type(input) == list:
+      for element in input:
+        input_str += space + self._input_arg_to_str(element)
+    else:
+      input_str = space + self._input_arg_to_str(input)
+    return input_str
+
+  def _input_arg_to_str(self, input):
+    """Creates string input element from input argument.
+
+    Input arguments might be any type of filename string,
+    xarray or netcdf4 dataset.
+    """
+    input_str = None
+    if isinstance(input, six.string_types):
+      input_str = input
+    #if type(input) == list:
+    #  input_str = ' '.join(input)
+    # removed elif so we can have netcdf dataset also
+    # when self.hasXarray is true.
+    if self.hasXarray:
+      import xarray #<<-- python2 workaround
+      if (type(input) == xarray.core.dataset.Dataset):
+        # create a temp nc file from input data
+        tmpfile = self.tempStore.newFile()
+        input.to_netcdf(tmpfile)
+        input_str = tmpfile
+    if self.hasNetcdf:
+      if isinstance(input, self.cdf):
+        if os.path.isfile(input.filepath()):
+          tmpfile = input.filepath()
+        else:
+          # create a temp nc file (if dataset is diskless)
+          tmpfile = self.tempStore.newFile()
+          self.copyNC4Dataset(input, tmpfile)
+        input_str = tmpfile
+    if input_str is None:
+      # we assume it's either a list, a tuple or any iterable.
+      input_str = input
+    return input_str
 
   # internal helper methods:
   # return internal cdo.py version
