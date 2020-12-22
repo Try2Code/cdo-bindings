@@ -20,7 +20,7 @@ URL = 'https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D'
 EMAIL = 'stark.dreamdetective@gmail.com'
 AUTHOR = 'Ralf Mueller'
 REQUIRES_PYTHON = '>=2.7.0'
-VERSION = '1.5.2'
+VERSION = '1.5.4'
 
 # What packages are required for this module to be executed?
 REQUIRED = [

@@ -43,7 +43,7 @@ except ImportError:
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-CDO_PY_VERSION = "1.5.3rc1"
+CDO_PY_VERSION = "1.5.4"
 
 # build interactive documentation: help(cdo.sinfo) {{{
 def auto_doc(tool, path2cdo):
