@@ -206,6 +206,8 @@ http://code.zmaw.de/projects/cdo
     - the different input types can be handled in something like _input()_ or
       _infiles()_. This should clean up the lengthy code, which does this
       currently
+* **1.5.4(python-only)**:
+  - bugfix release for @pgierz regarding #30
 * **1.5.1(ruby-only)**:
   - fix some warnings with latest ruby release 2.7.x
 * **1.5.0(ruby)/1.5.3(python)** API change :
