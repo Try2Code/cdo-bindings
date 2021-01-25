@@ -1,5 +1,5 @@
 from __future__ import print_function
-import unittest2,os,tempfile,sys,glob,subprocess,multiprocessing,time,random
+import unittest,os,tempfile,sys,glob,subprocess,multiprocessing,time,random
 from pkg_resources import parse_version
 import numpy as np
 
@@ -52,7 +52,7 @@ def rm(files):
 def cdoShouldHaveSeqOperator(cdoObject):
   return (parse_version(cdoObject.version()) > parse_version('1.9.6'))
 
-class CdoTest(unittest2.TestCase):
+class CdoTest(unittest.TestCase):
 
     def testCDO(self):
         cdo = Cdo()
@@ -916,9 +916,9 @@ class CdoTest(unittest2.TestCase):
 
 #===============================================================================
 if __name__ == '__main__':
-    suite = unittest2.TestLoader().loadTestsFromTestCase(CdoTest)
+    suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)
 #   print(suite)
-    unittest2.main()
+    unittest.main()
 #   unittest.TextTestRunner(verbosity=2).run(suite)
 
 # vim:sw=2
