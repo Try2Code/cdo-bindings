@@ -4,6 +4,7 @@ require 'logger'
 require 'stringio'
 require 'json'
 require 'tempfile'
+require 'semverse'
 
 class Hash
   alias :include? :has_key?
@@ -60,7 +61,7 @@ class Cdo
 
 
   attr_accessor :cdo, :returnCdf, :forceOutput, :env, :debug, :logging, :logFile
-  attr_reader   :operators, :filetypes, :hasNetcdf
+  attr_reader   :operators, :filetypes, :hasNetcdf, :version
 
   def initialize(cdo: 'cdo',
                  returnFalseOnError: false,
@@ -73,9 +74,10 @@ class Cdo
                  logFile: StringIO.new)
 
     # setup path to cdo executable
-    @cdo = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
+    @cdo                    = ENV.has_key?('CDO') ? ENV['CDO'] : cdo
+    @version              ||= getVersion
 
-    @operators              = getOperators(@cdo)
+    @operators              = getOperators(@cdo, @version)
     @noOutputOperators      = @operators.select {|op,io| 0 == io}.keys
 
     @hasNetcdf              = loadOptionalLibs
@@ -92,7 +94,7 @@ class Cdo
     @logger                 = Logger.new(@logFile,'daily')
     @logger.level           = Logger::INFO
 
-    @config                 = getFeatures
+    @config                 = getFeatures(@version)
 
     # create methods to descibe what can be done with the binary
     @config.each {|k,v|
@@ -103,7 +105,7 @@ class Cdo
 
     # ignore return code 1 for diff operators (from 1.9.6 onwards)
     @exit_success = lambda {|operatorName|
-      return 0 if version < '1.9.6'
+      return 0 if @version < Cdo.version('1.9.6')
       return 0 if 'diff' != operatorName[0,4]
       return 1
     }
@@ -124,14 +126,18 @@ class Cdo
     return [io,opArguments]
   end
 
+  def Cdo.version(str)
+    Semverse::Version.new(str)
+  end
+
   # collect the complete list of possible operators
-  def getOperators(path2cdo) #{{{
+  def getOperators(path2cdo, version) #{{{
     operators = {}
 
     # little side note: the option --operators_no_output works in 1.8.0 and
     # 1.8.2, but not in 1.9.0, from 1.9.1 it works again
     case
-    when version < '1.7.2' then
+    when version < Cdo.version('1.7.2') then
       cmd       = path2cdo + ' 2>&1'
       help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
       if 5 >= help.size
@@ -153,7 +159,7 @@ class Cdo
         operators[op] = -1 if MoreOutputOperators.include?(op)
       }
 
-    when (version < '1.8.0'  or '1.9.0' == version) then
+    when (version < Cdo.version('1.8.0')  or Cdo.version('1.9.0') == version) then
       cmd                = "#{path2cdo} --operators"
       _operators         = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
 
@@ -165,8 +171,7 @@ class Cdo
       }
 
 
-    when version < '1.9.3' then
-
+    when version < Cdo.version('1.9.3') then
       cmd                = "#{path2cdo} --operators"
       _operators         = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
       cmd                = "#{path2cdo} --operators_no_output"
@@ -195,11 +200,11 @@ class Cdo
   end #}}}
 
   # get meta-data about the CDO installation
-  def getFeatures
+  def getFeatures(version)
     config = {}
     config.default(false)
 
-    if version > '1.9.3' then
+    if version > Cdo.version('1.9.3') then
       config.merge!(JSON.parse(IO.popen(@cdo + " --config all").read.chomp))
       config.each {|k,v| config[k] = ('yes' == v) ? true : false}
     else
@@ -211,6 +216,11 @@ class Cdo
       }
     end
     config
+  end
+
+  def getVersion
+    info = IO.popen(@cdo+' -V 2>&1').readlines.first
+    Cdo.version(info.split(' ').grep(%r{\d+\.\d+.*})[0].to_s)
   end
 
   # Execute the given cdo call and return all outputs
@@ -439,15 +449,6 @@ class Cdo
     return true
   end
 
-  # return CDO version string
-  def version(verbose=false)
-    info = IO.popen("#{@cdo} -V 2>&1").readlines
-    if verbose then
-      return info.join
-    else
-      return info.first.split(/version/i).last.strip.split(' ').first
-    end
-  end
 
   # return cdf handle to given file readonly
   def readCdf(iFile,mode='r')

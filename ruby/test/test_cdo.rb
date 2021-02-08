@@ -43,9 +43,7 @@ class TestCdo < Minitest::Test
     pp @@maintainermode
     pp @@show
   end
-  def test_V
-    puts @cdo.version(verbose=true)
-  end
+
   def test_hasCdo
     assert(@cdo.hasCdo)
     @cdo.cdo = 'cccccccc'
@@ -55,7 +53,7 @@ class TestCdo < Minitest::Test
     assert(@cdo.hasCdo) if File.exist?(@cdo.cdo)
   end
   def test_getOperators
-    %w[for random stdatm info showlevel sinfo remap geopotheight mask topo thicknessOfLevels].each {|op|
+    %w[seq random stdatm info showlevel sinfo remap geopotheight mask topo thicknessOfLevels].each {|op|
       if ["thicknessOfLevels"].include?(op)
         assert(@cdo.respond_to?(op),"Operator '#{op}' not found")
       else
@@ -69,7 +67,7 @@ class TestCdo < Minitest::Test
   end
 
   def test_verifyGridOP
-    if "1.9.5" >= @cdo.version then
+    if Cdo.version("1.9.5") >= @cdo.version then
       assert(@cdo.operators.keys.include?('gridverify'))
     else
       assert(@cdo.operators.keys.include?('verifygrid'))
@@ -92,9 +90,9 @@ class TestCdo < Minitest::Test
     assert_equal(["0", "10000","0", "10000"],values[-4..-1])
   end
   def test_CDO_version
-    assert("1.4.3.1" < @cdo.version,"Version too low: #{@cdo.version}")
-    assert("1.6.3" < @cdo.version,"Version too low: #{@cdo.version}")
-    assert("3.0" > @cdo.version,"Version too high: #{@cdo.version}")
+    assert(Cdo.version('1.4.3') < @cdo.version,"Version too low: #{@cdo.version}")
+    assert(Cdo.version('1.6.3') < @cdo.version,"Version too low: #{@cdo.version}")
+    assert(Cdo.version('3.0') > @cdo.version,"Version too high: #{@cdo.version}")
   end
   def test_args
     ofile0 = @cdo.stdatm(0,20,40,80,200,230,400,600,1100)
@@ -325,7 +323,7 @@ class TestCdo < Minitest::Test
   end
 
   def test_seqVSfor
-    if @cdo.version < '1.9.7' then
+    if @cdo.version < Cdo.version('1.9.7') then
       @cdo.for(0,1)
     else
       @cdo.seq(0,1)
@@ -333,10 +331,10 @@ class TestCdo < Minitest::Test
 
   end
   def test_operators_with_multiple_output_files
-    varname = ( @cdo.version < '1.9.7' ) ? 'for' : 'seq'
+    varname = ( @cdo.version < Cdo.version('1.9.7') ) ? 'for' : 'seq'
     assert_equal(1,@cdo.operators['topo'],'wrong output counter for "topo"')
     assert_equal(0,@cdo.operators['sinfo'],'wrong output counter for "sinfo"')
-    assert_equal(0,@cdo.operators['ngridpoints'],'wrong output counter for "sinfo"') if @cdo.version > '1.6.4'
+    assert_equal(0,@cdo.operators['ngridpoints'],'wrong output counter for "sinfo"') if @cdo.version > Cdo.version('1.6.4')
 
     assert_equal(-1,@cdo.operators['splitsel'],'wrong output counter for "splitsel"')
     assert_equal(2,@cdo.operators['trend'],'wrong output counter for "trend"')
@@ -445,7 +443,7 @@ class TestCdo < Minitest::Test
     end
   end
   def test_readCdf
-    varname = ( @cdo.version < '1.9.7' ) ? 'for' : 'seq'
+    varname = ( @cdo.version < Cdo.version('1.9.7') ) ? 'for' : 'seq'
     input = "-settunits,days  -setyear,2000 -#{varname},1,4"
     cdfFile = @cdo.copy(:options =>"-f nc",:input=>input)
     if @cdo.hasNetcdf then
