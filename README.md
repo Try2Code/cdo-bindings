@@ -3,9 +3,9 @@
 [![Ruby Tests](https://travis-ci.org/Try2Code/cdo-bindings.svg?branch=master)](https://travis-ci.org/Try2Code/cdo-bindings)
 [![Python Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
 
-Welcome to the scripting interfaces of [CDO](https://code.zmaw.de/projects/cdo/wiki)!
+Welcome to the scripting interfaces of [CDO](https://code.mpimet.mpg.de/projects/cdo/wiki)!
 This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
-[Why the .... should I use this???](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
+[Why the .... should I use this???](https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
 
 ## What's going on
 
@@ -180,7 +180,7 @@ instead to avoid possible segmentation faults:
     temperatures = cdf.variables['T'][:]
 ```
 More examples can be found in test/cdo-examples.rb and [on the
-homepage](https://code.zmaw.de/projects/cdo/wiki/Cdo%7Brbpy%7D)
+homepage](https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D)
 
 ### Avoid re-processing
 
@@ -196,7 +196,7 @@ For more information, please have a look at the unit tests.
 ## Support, Issues, Bugs, ...
 
 Please use the forum or ticket system of CDOs official web page:
-http://code.zmaw.de/projects/cdo
+http://code.mpimet.mpg.de/projects/cdo
 
 ## Changelog
 * **next 2.0**:
