@@ -86,7 +86,7 @@ The default is false of cause.
 ```
 ```python
     cdo.infov(input=ifile)         #python
-    cdo.showlevels(input=ifile)
+    cdo.showlevel(input=ifile)
 ```
 
 #### Operators with user defined regular output files
