@@ -180,8 +180,7 @@ class CdoTest(unittest.TestCase):
 
     def test_chain(self):
         cdo = Cdo()
-        ofile = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")
-        self.assertEqual(["veloc"],cdo.showname(input = ofile))
+        self.assertEqual(["veloc"],cdo.showname(input = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")))
 
     def test_pychain(self):
         cdo = Cdo()
