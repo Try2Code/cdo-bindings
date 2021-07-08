@@ -26,6 +26,7 @@ Releases are distributed via [pypi](https://pypi.org/project/cdo) and [rubygems]
 *  Python
 ```
     pip install cdo (--user)
+    conda -c conda-forge install python-cdo
 ```
 
 ### Requirements
