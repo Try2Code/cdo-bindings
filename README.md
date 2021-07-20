@@ -1,6 +1,5 @@
 # Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
-[![Ruby Tests](https://travis-ci.org/Try2Code/cdo-bindings.svg?branch=master)](https://travis-ci.org/Try2Code/cdo-bindings)
 [![Python Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
 
 Welcome to the scripting interfaces of [CDO](https://code.mpimet.mpg.de/projects/cdo/wiki)!
