@@ -450,7 +450,7 @@ class CdoTest(unittest.TestCase):
         cdo.__print__('test_errorException')
         self.assertFalse(hasattr(cdo, 'nonExistingMethod'))
         self.assertFalse(not 'max' in cdo.operators)
-        self.failUnlessRaises(CDOException, cdo.max.read)
+        self.assertRaises(CDOException, cdo.max)
         try:
             cdo.max()
         except CDOException as e:

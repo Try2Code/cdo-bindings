@@ -9,6 +9,7 @@ from pkg_resources import parse_version
 from io import StringIO
 import logging as pyLog
 import six
+import threading
 
 # workaround for python2/3 string handling {{{
 try:
@@ -174,12 +175,13 @@ class Cdo(object):
 
     # handling different exits from interactive sessions {{{
     #   remove tempfiles from those sessions
-    signal.signal(signal.SIGINT, self.__catch__)
-    signal.signal(signal.SIGTERM, self.__catch__)
-    signal.signal(signal.SIGSEGV, self.__catch__)
-    signal.siginterrupt(signal.SIGINT, False)
-    signal.siginterrupt(signal.SIGTERM, False)
-    signal.siginterrupt(signal.SIGSEGV, False)
+    if threading.current_thread() is threading.main_thread():
+      signal.signal(signal.SIGINT, self.__catch__)
+      signal.signal(signal.SIGTERM, self.__catch__)
+      signal.signal(signal.SIGSEGV, self.__catch__)
+      signal.siginterrupt(signal.SIGINT, False)
+      signal.siginterrupt(signal.SIGTERM, False)
+      signal.siginterrupt(signal.SIGSEGV, False)
     # other left-overs can only be handled afterwards
     # might be good to use the tempdir keyword to ease this, but deletion can
     # be triggered using cleanTempDir() }}}
