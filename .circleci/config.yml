@@ -30,8 +30,8 @@ jobs:
             conda update -q --all
             conda info -a
             cd cdo-bindings
-            conda env create --file .travis-py2.7.yml
-            conda env create --file .travis-py3.7.yml
+            conda env create --file .circleci/py2.7.yml
+            conda env create --file .circleci/py3.7.yml
       - run:
           name: Install dependencies (rake)
           command: |
