@@ -450,13 +450,8 @@ class CdoTest(unittest.TestCase):
         cdo.__print__('test_errorException')
         self.assertFalse(hasattr(cdo, 'nonExistingMethod'))
         self.assertFalse(not 'max' in cdo.operators)
-        self.assertRaises(CDOException, cdo.max.read)
-        try:
-            cdo.max()
-        except CDOException as e:
-            self.assertTrue(e.returncode != 0)
-            self.assertTrue(len(e.stderr) > 1)
-            self.assertTrue(hasattr(e, 'stdout'))
+        with self.assertRaises(AttributeError):
+          cdo.notAnOperator()
 
         try:
             cdo.stdatm(0,10,input="",output="")
