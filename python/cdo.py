@@ -176,12 +176,12 @@ class Cdo(object):
     # handling different exits from interactive sessions {{{
     #   remove tempfiles from those sessions
     if threading.current_thread() is threading.main_thread():
-        signal.signal(signal.SIGINT, self.__catch__)
-        signal.signal(signal.SIGTERM, self.__catch__)
-        signal.signal(signal.SIGSEGV, self.__catch__)
-        signal.siginterrupt(signal.SIGINT, False)
-        signal.siginterrupt(signal.SIGTERM, False)
-        signal.siginterrupt(signal.SIGSEGV, False)
+      signal.signal(signal.SIGINT, self.__catch)
+      signal.signal(signal.SIGTERM, self._catch)
+      signal.signal(signal.SIGSEGV, self._catch)
+      signal.siginterrupt(signal.SIGINT,  False)
+      signal.siginterrupt(signal.SIGTERM, False)
+      signal.siginterrupt(signal.SIGSEGV, False)
     # other left-overs can only be handled afterwards
     # might be good to use the tempdir keyword to ease this, but deletion can
     # be triggered using cleanTempDir() }}}
