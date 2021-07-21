@@ -1,7 +1,24 @@
 from __future__ import print_function
-import unittest2,os,tempfile,sys,glob,subprocess,multiprocessing,time,random
+import os
+import tempfile
+import sys
+import glob
+import subprocess
+import multiprocessing
+import time
+import random
 from pkg_resources import parse_version
 import numpy as np
+if (2 == sys.version_info[0]):
+  import unittest2
+  testModule=unittest2
+  testClass=unittest2.TestCase
+  testLoader=unittest2.TestLoader()
+else:
+  import unittest
+  testModule=unittest
+  testClass=unittest.TestCase
+  testLoader=unittest.TestLoader()
 
 # add local dir to search path
 sys.path.insert(0,os.path.dirname(sys.path[0]))
@@ -52,7 +69,7 @@ def rm(files):
 def cdoShouldHaveSeqOperator(cdoObject):
   return (parse_version(cdoObject.version()) > parse_version('1.9.6'))
 
-class CdoTest(unittest2.TestCase):
+class CdoTest(testClass):
 
     def testCDO(self):
         cdo = Cdo()
@@ -911,9 +928,9 @@ class CdoTest(unittest2.TestCase):
 
 #===============================================================================
 if __name__ == '__main__':
-    suite = unittest2.TestLoader().loadTestsFromTestCase(CdoTest)
+    suite = testLoader.loadTestsFromTestCase(CdoTest)
 #   print(suite)
-    unittest2.main()
+    testModule.main()
 #   unittest.TextTestRunner(verbosity=2).run(suite)
 
 # vim:sw=2

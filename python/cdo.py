@@ -10,6 +10,7 @@ from io import StringIO
 import logging as pyLog
 import six
 import sys
+import threading
 
 # workaround for python2/3 string handling {{{
 try:
