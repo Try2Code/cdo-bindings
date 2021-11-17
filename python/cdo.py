@@ -11,6 +11,7 @@ import logging as pyLog
 import six
 import sys
 import threading
+import json
 try:
     from shutil import which
 except ImportError:
@@ -203,6 +204,9 @@ class Cdo(object):
     if (self.logging):
         self.logger = setupLogging(self.logFile)  # }}}
 
+    # CDO build configuration available since cdo-1.9x
+    self.config = self.__getConfig()
+
     # handling different exits from interactive sessions {{{
     # python3 has threading.main_thread(), but python2 doesn't
     if (2 == sys.version_info[0]): # check python major version
@@ -256,6 +260,15 @@ class Cdo(object):
     if ( 'diff' != operatorName[0:4] ):
       return 0
     return 1
+
+  # read json formatted output of 'cdo --config all'
+  def __getConfig(self):
+    proc = subprocess.Popen([self.CDO, '--config','all'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    ret  = proc.communicate()
+    try:
+      return json.loads(ret[0].decode('utf-8'))
+    except:
+      return {}
 
   # retrieve the list of operators from the CDO binary plus info out number of
   # output streams
