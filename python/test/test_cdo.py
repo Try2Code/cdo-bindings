@@ -230,9 +230,9 @@ class CdoTest(testClass):
     def test_diff(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        diffv = cdo.diffn(input = "-random,global_0.1 -random,global_0.1")
-        self.assertEqual(diffv[1].split(' ')[-1],"random")
-        self.assertEqual(diffv[1].split(' ')[-3],"1.0000")
+        diffv = cdo.diffn(input = "-random,global_0.5 -random,global_0.5")
+        self.assertEqual('random', diffv[-2].split(' ')[-1],"random")
+        self.assertEqual('1 of 1 records differ',diffv[-1])
 
     def test_returnCdf(self):
         cdo = Cdo()
@@ -530,8 +530,9 @@ class CdoTest(testClass):
           print('pattern=%s'%(pattern))
         self.assertTrue(10 <= len(resultsFiles))
         rm(resultsFiles)
+        expectedFilename = pattern+'00000'+str('2')+'.grb'
         for var in range(0,10):
-          self.assertTrue(pattern+'00000'+str(var)+'.grb' in resultsFiles)
+          self.assertTrue(expectedFilename in resultsFiles)
         rm(resultsFiles)
 
         pattern = 'lev_{0}'.format( random.randrange(1,100000))
