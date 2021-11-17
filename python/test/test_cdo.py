@@ -66,20 +66,33 @@ def rm(files):
     if os.path.exists(f):
       os.system("rm "+f)
 
+def msg(strings,channel=sys.stderr):
+  tag = '#' + '--DEBUG'*10
+  print(tag,file=channel)
+  print(strings,file=channel)
+  print(tag,file=channel)
+
 def cdoShouldHaveSeqOperator(cdoObject):
   return (parse_version(cdoObject.version()) > parse_version('1.9.6'))
 
 class CdoTest(testClass):
 
+    def test_ju(self):
+        cdo = Cdo()
+        cdo.debug = True
+        print(cdo.version())
+        print(cdo.sinfov(input='-topo'))
+
     def testCDO(self):
         cdo = Cdo()
         print('this is CDO version %s'%(cdo.version()))
         print('cdo-bindings version: %s'%(cdo.__version__()))
-        newCDO="/usr/bin/cdo"
+        newCDO="/home/ram/src/tools/spack/opt/spack/linux-antergos-skylake/gcc-11.1.0/cdo-1.9.9-switof25xqmlys765t7aonnc564wl3jl/bin/cdo"
         if os.path.isfile(newCDO):
             cdo.setCdo(newCDO)
             self.assertEqual(newCDO,cdo.getCdo())
             cdo.setCdo('cdo')
+            self.assertEqual('cdo',cdo.getCdo())
             # now constructor option
             cdo = Cdo(cdo=newCDO)
             self.assertEqual(newCDO,cdo.getCdo())
