@@ -23,7 +23,7 @@ except ImportError:
   strip = str.strip
 #}}}
 
-# Copyright 2011-2019 Ralf Mueller, ralf.mueller@dkrz.de
+# Copyright 2011-2019 Ralf Mueller, ralf.mueller@dkrz.de {{{
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -48,6 +48,7 @@ except ImportError:
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+# }}}
 
 CDO_PY_VERSION = "1.5.4"
 
