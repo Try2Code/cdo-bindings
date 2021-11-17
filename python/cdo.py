@@ -11,6 +11,7 @@ import logging as pyLog
 import six
 import sys
 import threading
+import shutil
 
 # workaround for python2/3 string handling {{{
 try:
@@ -146,9 +147,9 @@ class Cdo(object):
                options=[]):
 
     if 'CDO' in os.environ and os.path.isfile(os.environ['CDO']):
-      self.CDO = os.environ['CDO']
+      self.CDO = shutil.which(os.environ['CDO'])
     else:
-      self.CDO = cdo
+      self.CDO = shutil.which(cdo)
 
     self._cmd = cmd
     self._options = options
