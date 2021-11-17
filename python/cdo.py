@@ -11,7 +11,10 @@ import logging as pyLog
 import six
 import sys
 import threading
-import shutil
+try:
+    from shutil import which
+except ImportError:
+    from backports.shutil_which import which
 
 # workaround for python2/3 string handling {{{
 try:
@@ -147,9 +150,9 @@ class Cdo(object):
                options=[]):
 
     if 'CDO' in os.environ and os.path.isfile(os.environ['CDO']):
-      self.CDO = shutil.which(os.environ['CDO'])
+      self.CDO = which(os.environ['CDO'])
     else:
-      self.CDO = shutil.which(cdo)
+      self.CDO = which(cdo)
 
     self._cmd = cmd
     self._options = options
