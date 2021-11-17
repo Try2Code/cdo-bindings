@@ -76,7 +76,22 @@ def operator_doc(tool, path2cdo):
 def getCdoVersion(path2cdo, verbose=False):
   proc = subprocess.Popen([path2cdo, '-V'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
   ret = proc.communicate()
-  cdo_help = ret[1].decode("utf-8")
+
+  cdo_help_stdout = ret[0].decode("utf-8")
+  cdo_help_stderr = ret[1].decode("utf-8")
+
+  # there was a change in cdo-2.0.0 to print out more to stdout instead of stderr
+  # so both have to be checked
+  match_stdout = re.search("Climate Data Operators version (\d.*) .*", cdo_help_stdout)
+  match_stderr = re.search("Climate Data Operators version (\d.*) .*", cdo_help_stderr)
+
+  if (None == match_stderr):
+    if (None == match_stdout):
+      raise CDOException(*ret)
+    else:
+      return match_stdout.group(1)
+  else:
+    return match_stderr.group(1)
   if verbose:
     return cdo_help
   match = re.search("Climate Data Operators version (\d.*) .*", cdo_help)
@@ -134,6 +149,16 @@ class Cdo(object):
   splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec \
   splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split()
   AliasOperators = {'seq':'for'}
+
+  # the following operators introduce additional new lines in cdo-2.0.0 for
+  # increased readability in the therminal. This leads to inconsistens parsing
+  # behaviour here because before new lines indicated meta data for a new
+  # variable for all show* operators.
+  ShowTimeOperators = 'showdate showtime showtimestamp showyear showmon'.split()
+  # operators are now called with '-s' to ease the parsing process. diff* does
+  # not print the errors when '-s' is given, so these operators need special
+  # treatment
+  DiffOperators = 'diff diffc diffn diffv diffp'.split()
   #}}}
 
   name = ''
@@ -402,6 +427,8 @@ class Cdo(object):
 
     # 1. OVERWRITE EXISTING FILES
     cmd.append('-O')
+    if not method_name in self.DiffOperators:
+      cmd.append('-s')
     cmd.extend(self._options)
 
     # 2. set the options
@@ -468,15 +495,28 @@ class Cdo(object):
       retvals = self.__call(cmd, envOfCall)
       if (not self.__hasError(method_name, cmd, retvals)):
         r = list(map(strip, retvals["stdout"].split(os.linesep)))
+        # skip the last newline
+        r = r[:len(r) - 1]
+        # join the list into a single one in case we deal with time
+        # axis-related output. This output must me on a single line since CDO
+        # can handle only one time axis. cdo-2.0.0 introduced newlines for
+        # readability
+        if method_name in self.ShowTimeOperators:
+          r = ['  '.join(r)]
+        # starting with cdo-2.0.0 diff* operators print more warnings. those
+        # lines start with 'cdo' and must be removed
+        if method_name in self.DiffOperators:
+          r = [item for item in r if 'cdo' != item[0:3]]
+
         if "autoSplit" in kwargs:
           splitString = kwargs["autoSplit"]
-          _output = [x.split(splitString) for x in r[:len(r) - 1]]
+          _output = [x.split(splitString) for x in r]
           if (1 == len(_output)):
               return _output[0]
           else:
               return _output
         else:
-         return r[:len(r) - 1]
+         return r
       else:
         if self.returnNoneOnError:
           return None
