@@ -204,9 +204,6 @@ class CdoTest(testClass):
         cdo.debug = DEBUG
         names = cdo.showname(input = "-stdatm,0",options = "-f nc")
         self.assertEqual(["P T"],names)
-        if cdo.hasLib("sz"):
-          ofile = cdo.topo(options = "-z szip")
-          #self.assertEqual(["GRIB SZIP"],cdo.showformat(input = ofile))
 
     def test_chain(self):
         cdo = Cdo()
@@ -549,18 +546,6 @@ class CdoTest(testClass):
         cdo = Cdo()
         self.assertEqual(str,type(cdo.topo(output = None)))
         self.assertEqual("GRIB",cdo.sinfov(input = "-topo", output = None)[0].split(' ')[-1])
-
-    def test_libs(self):
-        cdo = Cdo()
-        cdo.debug = DEBUG
-        if DEBUG:
-          print(cdo.libs)
-        self.assertTrue(cdo.hasLib("nc4"),"netcdf4 support missing")
-        self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
-        self.assertTrue(cdo.hasLib("udunits2"),"netcdf support missing")
-        self.assertFalse(cdo.hasLib("udunits"),'boost is not a CDO dependency')
-        self.assertFalse(cdo.hasLib("boost"),'boost is not a CDO dependency')
-        self.assertRaises(AttributeError, cdo.libsVersion,"foo")
 
     def test_returnNone(self):
         cdo = Cdo()
