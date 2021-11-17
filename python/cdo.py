@@ -117,12 +117,12 @@ def setupLogging(logFile):
 # extra execptions for CDO {{{
 class CDOException(Exception):
 
-  def __init__(self, stdout, stderr, returncode):
+  def __init__(self, stdout, stderr, returncode, msg=''):
     super(CDOException, self).__init__()
     self.stdout = stdout
     self.stderr = stderr
     self.returncode = returncode
-    self.msg = '(returncode:%s) %s' % (returncode, stderr)
+    self.msg = '(returncode:%s) %s :: %s' % (returncode, stderr,msg)
 
   def __str__(self):
     return self.msg
