@@ -190,7 +190,6 @@ class Cdo(object):
     self.forceOutput       = forceOutput
     self.env               = env
     self.debug             = True if 'DEBUG' in os.environ else debug
-    self.libs              = self.getSupportedLibs()
 
     # optional IO libraries for additional return types {{{
     self.hasNetcdf         = False
@@ -601,39 +600,6 @@ class Cdo(object):
         raise AttributeError("Unknown method '" + method_name + "'!")
   # }}}
 
-
-  def getSupportedLibs(self, force=False):
-    proc = subprocess.Popen(self.CDO + ' -V',
-                            shell=True,
-                            stderr=subprocess.PIPE,
-                            stdout=subprocess.PIPE)
-    retvals = proc.communicate()
-
-    withs = list(re.findall('(with|Features): (.*)',
-                            retvals[1].decode("utf-8"))[0])[1].split(' ')
-    # do an additional split, if the entry has a / and collect everything into a flatt list
-    withs = list(map(lambda x: x.split('/') if re.search('\/', x) else x, withs))
-    allWiths = []
-    for _withs in withs:
-      if isinstance(_withs, list):
-        for __withs in _withs:
-          allWiths.append(__withs)
-      else:
-        allWiths.append(_withs)
-    withs = allWiths
-
-    libs = re.findall('(\w+) library version : (\d+\.\S+) ',
-                      retvals[1].decode("utf-8"))
-    libraries = dict({})
-    for w in withs:
-      libraries[w.lower()] = True
-
-    for lib in libs:
-      l, v = lib
-      libraries[l.lower()] = v
-
-    return libraries
-
   def collectLogs(self):
     if isinstance(self.logFile, six.string_types):
       content = []
@@ -675,19 +641,6 @@ class Cdo(object):
   # return the path to the CDO binary currently used
   def getCdo(self):
     return self.CDO
-
-  def hasLib(self, lib):
-    return (lib in self.libs.keys())
-
-  def libsVersion(self, lib):
-    if not self.hasLib(lib):
-      raise AttributeError("Cdo does NOT have support for '#{lib}'")
-    else:
-      if True != self.libs[lib]:
-        return self.libs[lib]
-      else:
-        print("No version information available about '" + lib + "'")
-        return False
 
   def cleanTempDir(self):
     self.tempStore.cleanTempDir()
