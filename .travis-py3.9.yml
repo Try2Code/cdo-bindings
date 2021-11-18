@@ -9,3 +9,14 @@ dependencies:
   - numpy
   - xarray
   - unittest2
+name: test_env_py39
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - cdo
+  - netCDF4
+  - six
+  - numpy
+  - xarray
+  - unittest2
