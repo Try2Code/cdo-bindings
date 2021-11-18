@@ -11,33 +11,23 @@ jobs:
             sudo apt-get update
             sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev
             sudo apt-get install libnetcdf-dev libhdf5-dev
+            sudo apt-get install colorize
+            sudo apt-get install cdo
+            sudo apt-get install python3-xarray python3-netcdf4 python3-six python3-numpy python3-unittest2
+            sudo apt-get install rake
+            sudo apt-get install ruby-mintest ruby-minitest-utils 
       - run:
           name: Checkout cdo-bindings
           command: |
             git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
       - run:
-          name: Install conda, CDO and environements for Python 3
-          command: |
-            wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && bash miniconda.sh -b -p $HOME/miniconda
-            export PATH="$HOME/miniconda/bin:$PATH"
-            hash -r
-            conda config --set always_yes yes --set changeps1 no
-            conda config --add channels conda-forge
-            conda update -q --all
-            conda info -a
-            cd cdo-bindings
-            conda env create --file .circleci/python-3.9.yml
-            conda env list
-      - run:
-          name: Install dependencies (rake)
+          name: Install dependencies for testing
           command: |
             gem install parallel --version '<= 1.12' --user -N
-            gem install minitest colorize facets --user -N
+            gem install colorize facets --user -N
       - run:
           name: Run Tests Python 3.9
           command: |
-            export PATH="$HOME/miniconda/bin:$PATH"
-            source activate test_env_py3
             cdo -V
             type -p cdo
             python --version
@@ -46,16 +36,14 @@ jobs:
       - run:
           name: Run Tests Python 3.9 - no netCDF4/Xarray
           command: |
-            export PATH="$HOME/miniconda/bin:$PATH"
-            source activate test_env_py3
             cdo -V
             type -p cdo
             python --version
             cd cdo-bindings
-            conda remove -y netCDF4 xarray
+            sudo apt-get remove python3-xarray python3-netcdf4
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
       - run:
-          name: Run Tests Ruby 3.0
+          name: Run Tests Ruby 2.7
           command: |
             cdo -V
             type -p cdo
