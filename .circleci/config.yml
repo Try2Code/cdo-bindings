@@ -81,3 +81,11 @@ jobs:
             cd cdo-bindings
             conda remove -y netCDF4 xarray
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
+      - run:
+          name: Run Tests Ruby
+          command: |
+            cdo -V
+            type -p cdo
+            ruby --version
+            cd cdo-bindings
+            rake testRuby CDO=$(type -p cdo) NO_COLOR=1
