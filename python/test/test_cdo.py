@@ -790,13 +790,13 @@ class CdoTest(testClass):
       cdo.cleanTempDir()
       self.assertEqual(0,len(os.listdir(tempPath)))
 
-    def test_config(self):
-      cdo = Cdo()
-      if (parse_version(cdo.version()) > parse_version('1.9.8')):
-        self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext': 'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes', 'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2': 'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes', 'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes', 'has-threads': 'yes', 'has-wordexp': 'yes'},
-            cdo.config)
-
     if MAINTAINERMODE:
+
+      def test_config(self):
+        cdo = Cdo()
+        if (parse_version(cdo.version()) > parse_version('1.9.8')):
+          self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext': 'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes', 'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2': 'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes', 'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes', 'has-threads': 'yes', 'has-wordexp': 'yes'},
+              cdo.config)
 
       def test_system_tempdir(self):
         # automatic path
