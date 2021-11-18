@@ -15,7 +15,6 @@ jobs:
             sudo apt-get install cdo
             sudo apt-get install python3-xarray python3-netcdf4 python3-six python3-numpy python3-unittest2
             sudo apt-get install rake
-            sudo apt-get install ruby-mintest ruby-minitest-utils 
       - run:
           name: Checkout cdo-bindings
           command: |
@@ -24,7 +23,7 @@ jobs:
           name: Install dependencies for testing
           command: |
             gem install parallel --version '<= 1.12' --user -N
-            gem install colorize facets --user -N
+            gem install minitest colorize facets --user -N
       - run:
           name: Run Tests Python 3.9
           command: |
