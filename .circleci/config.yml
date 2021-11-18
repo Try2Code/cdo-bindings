@@ -65,12 +65,12 @@ jobs:
   build:
     docker:
       - image: circleci/ruby:3.0
-      steps:
-        - run:
-          name: Test with Ruby 3.0
-          command: |
-            sudo apt-get install cdo
-            cdo -V
-            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
-            cd cdo-bindings
-            rake testRuby
+    steps:
+      - run:
+        name: Test with Ruby 3.0
+        command: |
+          sudo apt-get install cdo
+          cdo -V
+          git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
+          cd cdo-bindings
+          rake testRuby
