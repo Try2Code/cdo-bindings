@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.8.0a4-stretch
+      - image: circleci/python
     steps:
       - run:
           name: Install dependencies (debian)
@@ -20,7 +20,7 @@ jobs:
           command: |
             git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
       - run:
-          name: Install conda, CDO and environements for Python 2.7/3.9
+          name: Install conda, CDO and environements for Python 3.9
           command: |
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && bash miniconda.sh -b -p $HOME/miniconda
             export PATH="$HOME/miniconda/bin:$PATH"
@@ -29,37 +29,13 @@ jobs:
             conda config --add channels conda-forge
             conda update -q --all
             conda info -a
-            ls -alh
             cd cdo-bindings
-            ls -alh
-            conda env create --file .circleci/python-2.7.yml
             conda env create --file .circleci/python-3.9.yml
       - run:
           name: Install dependencies (rake)
           command: |
             gem install parallel --version '<= 1.12' --user -N
             gem install minitest colorize facets --user -N
-      - run:
-          name: Run Tests Python 2.7
-          command: |
-            export PATH="$HOME/miniconda/bin:$PATH"
-            source activate test_env_py27
-            cdo -V
-            type -p cdo
-            python --version
-            cd cdo-bindings
-            rake testPython CDO=$(type -p cdo) NO_COLOR=1
-      - run:
-          name: Run Tests Python 2.7 - no netCDF4/Xarray
-          command: |
-            export PATH="$HOME/miniconda/bin:$PATH"
-            source activate test_env_py27
-            cdo -V
-            type -p cdo
-            python --version
-            cd cdo-bindings
-            conda remove -y netCDF4 xarray
-            rake testPython CDO=$(type -p cdo) NO_COLOR=1
       - run:
           name: Run Tests Python 3.9
           command: |
