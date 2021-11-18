@@ -12,9 +12,6 @@ jobs:
             sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev
             sudo apt-get install libnetcdf-dev libhdf5-dev
             sudo apt-get install ruby rake
-            sudo apt-get install python-dev libpython-dev
-            sudo apt-get install python-netcdf4
-            sudo apt-get install python-unittest2
       - run:
           name: Checkout cdo-bindings
           command: |
@@ -58,10 +55,22 @@ jobs:
             conda remove -y netCDF4 xarray
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
       - run:
-          name: Run Tests Ruby
+          name: Run Tests Ruby 2.7
           command: |
             cdo -V
             type -p cdo
             ruby --version
             cd cdo-bindings
             rake testRuby CDO=$(type -p cdo) NO_COLOR=1
+  build:
+    docker:
+      - image: circleci/ruby:3.0
+      steps:
+        - run:
+          name: Test with Ruby 3.0
+          command: |
+            sudo apt-get install cdo
+            cdo -V
+            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
+            cd cdo-bindings
+            rake testRuby
