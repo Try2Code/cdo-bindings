@@ -9,3 +9,5 @@ dependencies:
   - numpy
   - xarray
   - unittest2
+  - pip:
+    - backports.shutil_which
