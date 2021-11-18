@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/ruby:3.0
+      - image: circleci/python:3.9
     steps:
       - run:
           name: Install dependencies (debian)
@@ -11,13 +11,12 @@ jobs:
             sudo apt-get update
             sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev
             sudo apt-get install libnetcdf-dev libhdf5-dev
-            sudo apt-get install ruby rake
       - run:
           name: Checkout cdo-bindings
           command: |
             git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
       - run:
-          name: Install conda, CDO and environements for Python 3.9
+          name: Install conda, CDO and environements for Python 3
           command: |
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && bash miniconda.sh -b -p $HOME/miniconda
             export PATH="$HOME/miniconda/bin:$PATH"
@@ -28,6 +27,7 @@ jobs:
             conda info -a
             cd cdo-bindings
             conda env create --file .circleci/python-3.9.yml
+            conda env list
       - run:
           name: Install dependencies (rake)
           command: |
@@ -37,7 +37,7 @@ jobs:
           name: Run Tests Python 3.9
           command: |
             export PATH="$HOME/miniconda/bin:$PATH"
-            source activate test_env_py39
+            source activate test_env_py3
             cdo -V
             type -p cdo
             python --version
@@ -47,7 +47,7 @@ jobs:
           name: Run Tests Python 3.9 - no netCDF4/Xarray
           command: |
             export PATH="$HOME/miniconda/bin:$PATH"
-            source activate test_env_py39
+            source activate test_env_py3
             cdo -V
             type -p cdo
             python --version
