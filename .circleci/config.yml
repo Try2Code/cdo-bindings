@@ -29,7 +29,9 @@ jobs:
             conda config --add channels conda-forge
             conda update -q --all
             conda info -a
+            ls -alh
             cd cdo-bindings
+            ls -alh
             conda env create --file .travis-py2.7.yml
             conda env create --file .travis-py3.7.yml
       - run:
