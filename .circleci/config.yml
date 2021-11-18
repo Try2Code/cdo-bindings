@@ -31,7 +31,7 @@ jobs:
             type -p cdo
             python --version
             cd cdo-bindings
-            rake testPython CDO=$(type -p cdo) NO_COLOR=1
+            rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
       - run:
           name: Run Tests Python 3.9 - no netCDF4/Xarray
           command: |
@@ -40,7 +40,7 @@ jobs:
             python --version
             cd cdo-bindings
             sudo apt-get remove python3-xarray python3-netcdf4
-            rake testPython CDO=$(type -p cdo) NO_COLOR=1
+            rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
       - run:
           name: Run Tests Ruby 2.7
           command: |
