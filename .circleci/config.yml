@@ -15,15 +15,15 @@ jobs:
             sudo apt-get install cdo
             sudo apt-get install rake
       - run:
-          name: Checkout cdo-bindings
-          command: |
-            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
-      - run:
-          name: Install dependencies for testing
+          name: Install dependencies (testing)
           command: |
             pip install xarray netcdf4 six numpy unittest2
             gem install parallel --version '<= 1.12' --user -N
             gem install minitest colorize facets --user -N
+      - run:
+          name: Checkout cdo-bindings
+          command: |
+            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
       - run:
           name: Run Tests Python 3.9
           command: |
@@ -39,7 +39,7 @@ jobs:
             type -p cdo
             python3 --version
             cd cdo-bindings
-            pip uninstall xarray netcdf4
+            pip uninstall -y xarray netcdf4
             rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
       - run:
           name: Run Tests Ruby 2.7
