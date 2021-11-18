@@ -16,9 +16,9 @@ jobs:
             sudo apt-get install python-netcdf4
             sudo apt-get install python-unittest2
       - run:
-          name: Check content
+          name: Checkout cdo-bindings
           command: |
-            find .
+            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
       - run:
           name: Install conda, CDO and environements for Python 2.7/3.7
           command: |
@@ -29,6 +29,8 @@ jobs:
             conda config --add channels conda-forge
             conda update -q --all
             conda info -a
+            ls -alh
+            cd cdo-bindings
             ls -alh
             conda env create --file .travis-py2.7.yml
             conda env create --file .travis-py3.7.yml
