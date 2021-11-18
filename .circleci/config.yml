@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python
+      - image: circleci/ruby:3.0
     steps:
       - run:
           name: Install dependencies (debian)
@@ -55,22 +55,10 @@ jobs:
             conda remove -y netCDF4 xarray
             rake testPython CDO=$(type -p cdo) NO_COLOR=1
       - run:
-          name: Run Tests Ruby 2.7
+          name: Run Tests Ruby 3.0
           command: |
             cdo -V
             type -p cdo
             ruby --version
             cd cdo-bindings
             rake testRuby CDO=$(type -p cdo) NO_COLOR=1
-  build:
-    docker:
-      - image: circleci/ruby:3.0
-    steps:
-      - run:
-        name: Test with Ruby 3.0
-        command: |
-          sudo apt-get install cdo
-          cdo -V
-          git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
-          cd cdo-bindings
-          rake testRuby
