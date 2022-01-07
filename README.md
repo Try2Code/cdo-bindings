@@ -1,7 +1,6 @@
 # Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
-[![Ruby Tests](https://travis-ci.org/Try2Code/cdo-bindings.svg?branch=master)](https://travis-ci.org/Try2Code/cdo-bindings)
-[![Python Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
+[![Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
 
 Welcome to the scripting interfaces of [CDO](https://code.zmaw.de/projects/cdo/wiki)!
 This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
@@ -31,6 +30,9 @@ Releases are distributed via [pypi](https://pypi.org/project/cdo) and [rubygems]
 ### Requirements
 
 Cdo.{rb,py} requires a working CDO binary and Ruby 2.x or Python 2.7/3.x
+
+**PLEASE NOTE: python-2.7 is unmaintained since January 2021**
+Many dependencies dropped support for 2.7 so I do manual testing with it,only.
 
 Multi-dimensional arrays (numpy for python, narray for ruby) require addtional
 netcdf-io modules. These are [scipy](https://docs.scipy.org/doc/scipy/reference/io.html) or [python-netcdf4](https://pypi.python.org/pypi/netCDF4) for python and
@@ -199,6 +201,11 @@ Please use the forum or ticket system of CDOs official web page:
 http://code.zmaw.de/projects/cdo
 
 ## Changelog
+* **1.5.6**:
+  - slight adoptions for CDO-2.0.0
+  - limitted support for python-2.7: many other libs dropped support for it so I can only do limitted testing
+  - new API: `cdo.config` holds a dictionary/hash with built-in CDO features (availble sind CDO-1.9.x), empty otherwise
+  - removed cdo.hasLib() and cdo.libsVersion(): relied on unstable output of `cdo -V`. use cdo.config instead
 * **1.5.1(ruby-only)**:
   - fix some warnings with latest ruby release 2.7.x
 * **1.5.0(ruby)/1.5.3(python)** API change :
