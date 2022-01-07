@@ -24,28 +24,31 @@ String.disable_colorization = (ENV.has_key?('NO_COLOR'))
 # following test should not be run in parallel with other tests
 SERIAL_TESTS = %w[test_system_tempdir]
 
+spackEnvCommand = lambda {|modhash|
+  lambda {|command| [". #{SpackEnv}" ,
+                     "spack load /#{modhash}",
+                     command,
+                     "spack unload /#{modhash}"].join(';')
+  }
+}
 
-def getCdoPackagesFromSpack
+def getCdoPackagesFromSpack(hash: true)
   # list possible cdo modules provided by spack
-  cmd = [". #{SpackEnv}" , 'spack module tcl loads cdo | grep module'].join(';')
-  modules = IO.popen(cmd).readlines.map(&:chomp)
+  cmd = (hash) \
+    ? [". #{SpackEnv}" , 'spack find -lp cdo | grep cdo | cut -d " " -f 1'].join(';') \
+    : [". #{SpackEnv}" , 'spack find -lp cdo | grep cdo'].join(';')
+  moduleHashes = IO.popen(cmd).readlines.map(&:chomp)
 end
 
 desc "run each CDO binary from the regression tests"
 task :checkRegression do |t|
-  getCdoPackagesFromSpack.each {|spackModule|
-    cmd = [". #{SpackEnv}" ,
-           "module purge",
-           spackModule,
-           "cdo -V",
-           "module purge"].join(';')
-
-    sh cmd
+  getCdoPackagesFromSpack.each {|spackHash|
+    sh spackEnvCommand[spackHash]["cdo -V"]
   }
 end
 desc "list spack modules available for regression testing"
 task :listRegressionModules do |t|
-  getCdoPackagesFromSpack.each {|mod| puts mod}
+  getCdoPackagesFromSpack(hash: false).each {|mod| puts mod}
 end
 
 def pythonTest(name: nil,interpreter: PythonInterpreter)
@@ -89,7 +92,7 @@ end
 
   desc "test for correct tempfile deletion (#{lang})"
   task "test#{lang}_tempfiles".to_sym do |t|
-    # make sure no other testing process has already created cdo-tempfile 
+    # make sure no other testing process has already created cdo-tempfile
     unless Dir.glob("/tmp/Cdo*").empty? then
       warn "Cannot run temp file test - target dir /tmp is no empty"
       exit(1)
@@ -107,11 +110,7 @@ end
   task "test#{lang}Regression".to_sym, :name do |t,args|
     runTests = args.name.nil? ? "rake test#{lang}" : "rake test#{lang}[#{args.name}]"
     getCdoPackagesFromSpack.each {|spackModule|
-      cmd = [". #{SpackEnv}" ,
-             "module purge",
-             spackModule,
-             runTests,
-             "module purge"].join(';')
+      cmd = spackEnvCommand[spackModule][runTests]
       puts spackModule.split.last.colorize(:green)
       sh cmd
     }
@@ -123,18 +122,14 @@ end
         ? "rake test#{lang}#{pythonRelease}" \
         : "rake test#{lang}#{pythonRelease}[#{args.name}]"
       getCdoPackagesFromSpack.each {|spackModule|
-        cmd = [". #{SpackEnv}" ,
-               "module purge",
-               spackModule,
-               runTests,
-               "module purge"].join(';')
+        cmd = spackEnvCommand[spackModule][runTests]
         puts spackModule.split.last.colorize(:green)
         sh cmd
       }
     end
     desc "test for correct tempfile deletion (#{lang}#{pythonRelease})"
     task "test#{lang}#{pythonRelease}_tempfiles".to_sym do |t|
-      # make sure no other testing process has already created cdo-tempfile 
+      # make sure no other testing process has already created cdo-tempfile
       unless Dir.glob("/tmp/Cdo*").empty? then
         warn "Cannot run temp file test - target dir /tmp is no empty"
         exit(1)
