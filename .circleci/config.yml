@@ -51,4 +51,4 @@ jobs:
             type -p cdo
             ruby --version
             cd cdo-bindings
-            rake testRuby CDO=$(type -p cdo) NO_COLOR=1
+            cd ruby; ruby test/test_cdo.rb CDO=$(type -p cdo)
