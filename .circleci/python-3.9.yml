@@ -1,8 +1,8 @@
-name: test_env_py39
+name: test_env_py
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3
   - cdo
   - netCDF4
   - six
