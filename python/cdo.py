@@ -864,4 +864,4 @@ class CdoTempfileStore(object):
             return "_" + random.randint(0, N).__str__()
 # }}}
 
-# vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2 fdm=marker
+# vim: expandtab tabstop=4 shiftwidth=4 softtabstop=4 fdm=marker
