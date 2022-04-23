@@ -6,6 +6,7 @@ import random
 import glob
 import signal
 import threading
+import functools
 from pkg_resources import parse_version
 from io import StringIO
 import logging as pyLog
@@ -105,7 +106,6 @@ def setupLogging(logFile):
 
 # extra execptions for CDO {{{
 
-
 class CDOException(Exception):
 
     def __init__(self, stdout, stderr, returncode):
@@ -120,7 +120,6 @@ class CDOException(Exception):
 # }}}
 
 # MAIN Cdo class {{{
-
 
 class Cdo(object):
 
@@ -191,22 +190,20 @@ class Cdo(object):
 
         # handling different exits from interactive sessions {{{
         # python3 has threading.main_thread(), but python2 doesn't
-        if (2 == sys.version_info[0]):  # check python major version
-            signal.signal(signal.SIGINT,  self.__catch__)
-            signal.signal(signal.SIGTERM, self.__catch__)
-            signal.signal(signal.SIGSEGV, self.__catch__)
+        if sys.version_info[0] == 2 \
+                or threading.current_thread() is threading.main_thread():
+            sigint_default = signal.getsignal(signal.SIGINT)
+            sigterm_default = signal.getsignal(signal.SIGTERM)
+            sigsegv_default = signal.getsignal(signal.SIGSEGV)
+            sigint = functools.partial(self.__catch__, default=sigint_default)
+            sigterm = functools.partial(self.__catch__, default=sigterm_default)
+            sigsegv = functools.partial(self.__catch__, default=sigsegv_default)
+            signal.signal(signal.SIGINT,  sigint)
+            signal.signal(signal.SIGTERM, sigterm)
+            signal.signal(signal.SIGSEGV, sigsegv)
             signal.siginterrupt(signal.SIGINT,  False)
             signal.siginterrupt(signal.SIGTERM, False)
             signal.siginterrupt(signal.SIGSEGV, False)
-        else:
-            #   remove tempfiles from those sessions
-            if threading.current_thread() is threading.main_thread():
-                signal.signal(signal.SIGINT,  self.__catch__)
-                signal.signal(signal.SIGTERM, self.__catch__)
-                signal.signal(signal.SIGSEGV, self.__catch__)
-                signal.siginterrupt(signal.SIGINT,  False)
-                signal.siginterrupt(signal.SIGTERM, False)
-                signal.siginterrupt(signal.SIGSEGV, False)
         # other left-overs can only be handled afterwards
         # might be good to use the tempdir keyword to ease this, but deletion can
         # be triggered using cleanTempDir() }}}
@@ -677,15 +674,19 @@ class Cdo(object):
         self.tempStore.cleanTempDir()
 
     # if a termination signal could be caught, remove tempfile
-    def __catch__(self, signum, frame):
+    def __catch__(self, signum, frame, default=None):
         self.tempStore.__del__()
-        print("caught signal", self, signum, frame)
+        if callable(default):
+            default()
+        else:
+            print("caught signal", self, signum, frame)
 
     # make use of internal documentation structure of python
     def __dir__(self):
         res = dir(type(self)) + list(self.__dict__.keys())
         res.extend(list(self.operators.keys()))
         return res
+
     # ==================================================================
     # Addional operators:
     # ------------------------------------------------------------------
@@ -809,7 +810,6 @@ class Cdo(object):
 # }}}
 
 # Helper module for easy temp file handling {{{
-
 
 class CdoTempfileStore(object):
 
