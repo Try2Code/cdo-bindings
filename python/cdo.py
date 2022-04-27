@@ -50,22 +50,6 @@ CDO_PY_VERSION = "1.5.3rc1"
 
 # build interactive documentation: help(cdo.sinfo) {{{
 
-
-def auto_doc(tool, path2cdo):
-    """
-    Generate the __doc__ string of the decorated function by calling the
-    cdo help command. Use as follows:
-
-        c = cdo.Cdo()
-        help(c.sinfov)
-    """
-    def desc(func):
-        func.__doc__ = operator_doc(tool, path2cdo)
-        return func
-    return desc
-# }}}
-
-
 def operator_doc(tool, path2cdo):
     proc = subprocess.Popen('%s -h %s ' % (path2cdo, tool),
                             shell=True,
@@ -73,20 +57,21 @@ def operator_doc(tool, path2cdo):
                             stdout=subprocess.PIPE)
     retvals = proc.communicate()
     return retvals[0].decode("utf-8")
+# }}}
 
-# some helper functions without side effects {{{
-
+# return the cdo version {{{
 
 def getCdoVersion(path2cdo, verbose=False):
     proc = subprocess.Popen(
-        [path2cdo, '-V'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    ret = proc.communicate()
-    cdo_help = ret[1].decode("utf-8")
+        [path2cdo, '-V'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    retvals = proc.communicate()
+    cdo_help = retvals[0].decode("utf-8")
     if verbose:
         return cdo_help
     match = re.search(r"Climate Data Operators version (\d.*) .*", cdo_help)
     return match.group(1)
 
+# helper function without side effects {{{
 
 def setupLogging(logFile):
     logger = pyLog.getLogger(__name__)
@@ -436,7 +421,7 @@ class Cdo(object):
             cmd += kwargs['options'].split()
 
         # 3. add operators
-        #   collect operator parameters and pad them to the operator name
+        # collect operator parameters and pad them to the operator name
         if len(args) != 0:
             self._cmd[-1] += ',' + ','.join(map(str, args))
         if self._cmd:
@@ -558,7 +543,6 @@ class Cdo(object):
                 return outputs
 
     def __getattr__(self, method_name):  # main method-call handling for Cdo-objects {{{
-
         if (method_name in self.__dict__) \
            or (method_name in list(self.operators.keys())) \
            or (method_name in self.AliasOperators):
@@ -567,10 +551,11 @@ class Cdo(object):
 
             # cache the method for later
             class Operator(self.__class__):
+                name = __name__ = method_name
 
-                __doc__ = operator_doc(method_name, self.CDO)
-
-                name = method_name
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    self.__doc__ = operator_doc(method_name, self.CDO)
 
             setattr(self.__class__, method_name, Operator())
             return getattr(self, method_name)
