@@ -572,12 +572,12 @@ class Cdo(object):
     def getSupportedLibs(self, force=False):
         proc = subprocess.Popen(self.CDO + ' -V',
                                 shell=True,
-                                stderr=subprocess.PIPE,
-                                stdout=subprocess.PIPE)
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
         retvals = proc.communicate()
-
         withs = list(re.findall('(with|Features): (.*)',
-                                retvals[1].decode("utf-8"))[0])[1].split(' ')
+                                retvals[0].decode("utf-8"))[0])[1].split(' ')
+
         # do an additional split if the entry has a /
         # and collect everything into a flatt list
         withs = list(map(lambda x: x.split('/') if re.search(r'\/', x) else x, withs))
@@ -591,7 +591,7 @@ class Cdo(object):
         withs = allWiths
 
         libs = re.findall(r'(\w+) library version : (\d+\.\S+) ',
-                          retvals[1].decode("utf-8"))
+                          retvals[0].decode("utf-8"))
         libraries = dict({})
         for w in withs:
             libraries[w.lower()] = True
@@ -619,12 +619,9 @@ class Cdo(object):
     def hasCdo(self, path=None):
         if path is None:
             path = self.CDO
-
-        cmd = [path, " -V", '>/dev/null 2>&1']
-
+        cmd = [path, ' -V', '>/dev/null 2>&1']
         executable = (0 == self.__call(cmd)["returncode"])
         fullpath = (os.path.isfile(path) and os.access(path, os.X_OK))
-
         return (executable or fullpath)
 
     # selfcheck for the current CDO binary
