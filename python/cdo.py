@@ -562,9 +562,11 @@ class Cdo(object):
         else:
             # given method might match part of know operators: autocompletion
             func = lambda x: re.search(method_name, x)
-            if (len(list(filter(func, list(self.operators.keys())))) == 0):
-                # If the method isn't in our dictionary, act normal.
-                raise AttributeError("Unknown method '" + method_name + "'!")
+            options = list(filter(func, self.operators.keys()))
+            message = "Unknown method '" + method_name + "'!"
+            if 0 != len(options):
+                message += " Did you mean: " + ", ".join(options) + "?"
+            raise AttributeError(message)
     # }}}
 
     def getSupportedLibs(self, force=False):
