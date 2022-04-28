@@ -180,9 +180,9 @@ class Cdo(object):
             sigint_default = signal.getsignal(signal.SIGINT)
             sigterm_default = signal.getsignal(signal.SIGTERM)
             sigsegv_default = signal.getsignal(signal.SIGSEGV)
-            sigint = functools.partial(self.__catch__, default=sigint_default)
-            sigterm = functools.partial(self.__catch__, default=sigterm_default)
-            sigsegv = functools.partial(self.__catch__, default=sigsegv_default)
+            sigint = functools.partial(self.__catch__, throw=sigint_default)
+            sigterm = functools.partial(self.__catch__, throw=sigterm_default)
+            sigsegv = functools.partial(self.__catch__, throw=sigsegv_default)
             signal.signal(signal.SIGINT,  sigint)
             signal.signal(signal.SIGTERM, sigterm)
             signal.signal(signal.SIGSEGV, sigsegv)
@@ -658,10 +658,10 @@ class Cdo(object):
         self.tempStore.cleanTempDir()
 
     # if a termination signal could be caught, remove tempfile
-    def __catch__(self, signum, frame, default=None, **kwargs):
+    def __catch__(self, signum, frame, throw=None, **kwargs):
         self.tempStore.__del__()
-        if callable(default):
-            default(signum, frame, **kwargs)
+        if callable(throw):
+            throw(signum, frame, **kwargs)
         else:
             print("caught signal", self, signum, frame)
 
