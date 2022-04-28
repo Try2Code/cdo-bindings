@@ -658,10 +658,10 @@ class Cdo(object):
         self.tempStore.cleanTempDir()
 
     # if a termination signal could be caught, remove tempfile
-    def __catch__(self, signum, frame, default=None):
+    def __catch__(self, signum, frame, default=None, **kwargs):
         self.tempStore.__del__()
         if callable(default):
-            default()
+            default(signum, frame, **kwargs)
         else:
             print("caught signal", self, signum, frame)
 
