@@ -201,7 +201,7 @@ class Cdo(object):
         # called with 'cdo.for()' because 'for' is a keyword in python. 'for' is
         # renamed to 'seq' in 1.9.7.
         # This workaround translates all calls of 'seq' into for in case of
-        # versions prior tp 1.9.7
+        # versions prior to 1.9.7
         if name in self.AliasOperators.keys() and \
                 (parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.7')):
             name = self.AliasOperators[name]
@@ -324,9 +324,9 @@ class Cdo(object):
 
         if self.debug:  # debug printing {{{
             print('# DEBUG - start =============================================================')
-#     if {} != env:
-#       for k,v in list(env.items()):
-#         print("ENV: " + k + " = " + v)
+            # if {} != env:
+            #     for k,v in list(env.items()):
+            #         print("ENV: " + k + " = " + v)
             print('CALL  :' + ' '.join(cmd))
             print('STDOUT:')
             if (0 != len(stdout.strip())):
@@ -551,7 +551,11 @@ class Cdo(object):
 
             # cache the method for later
             class Operator(self.__class__):
-                name = __name__ = method_name
+                name = method_name
+                __name__ = method_name
+                __qualname__ = getattr(  # __qualname__ is available in python 3.3+
+                    self.__class__, '__qualname__', self.__class__.__name__
+                ) + '.' + method_name
 
                 def __init__(self, *args, **kwargs):
                     super().__init__(*args, **kwargs)
@@ -563,7 +567,7 @@ class Cdo(object):
             # given method might match part of know operators: autocompletion
             func = lambda x: re.search(method_name, x)
             options = list(filter(func, self.operators.keys()))
-            message = "Unknown method '" + method_name + "'!"
+            message = "Unknown operator '" + method_name + "'!"
             if 0 != len(options):
                 message += " Did you mean: " + ", ".join(options) + "?"
             raise AttributeError(message)
