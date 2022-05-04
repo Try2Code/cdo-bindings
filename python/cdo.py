@@ -776,7 +776,6 @@ class Cdo(object):
 class CdoTempfileStore(object):
 
     __tempfiles = []
-    __tempdirs = []
 
     def __init__(self, dir):
         self.persistent_tempfile = False
@@ -797,14 +796,9 @@ class CdoTempfileStore(object):
 
     def __del__(self):
         # remove temporary files
-        try:
-            self.__tempdirs.remove(self.dir)
-        except ValueError:
-            pass
-        if self.dir not in self.__tempdirs:
-            for filename in self.__class__.__tempfiles:
-                if os.path.isfile(filename):
-                    os.remove(filename)
+        for filename in self.__class__.__tempfiles:
+            if os.path.isfile(filename):
+                os.remove(filename)
 
     def __catch__(self, signum, frame, throw=None, **kwargs):
         # if a termination signal could be caught, remove tempfile
