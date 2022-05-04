@@ -152,26 +152,25 @@ class Cdo(object):
         self._cmd = cmd
         self._options = options
 
-        self.operators         = self.__getOperators()
-        self.noOutputOperators = [
-            op for op in self.operators.keys() if 0 == self.operators[op]]
+        self.operators = self.__getOperators()
+        self.noOutputOperators = [op for op, num in self.operators.items() if 0 == num]
         self.returnNoneOnError = returnNoneOnError
-        self.tempStore         = tempStore or CdoTempfileStore(dir=tempdir)
-        self.forceOutput       = forceOutput
-        self.env               = env
-        self.debug             = True if 'DEBUG' in os.environ else debug
-        self.libs              = self.getSupportedLibs()
+        self.tempStore = tempStore or CdoTempfileStore(dir=tempdir)
+        self.forceOutput = forceOutput
+        self.env = env
+        self.debug = True if 'DEBUG' in os.environ else debug
+        self.libs = self.getSupportedLibs()
 
         # optional IO libraries for additional return types {{{
-        self.hasNetcdf         = False
-        self.hasXarray         = False
-        self.cdf               = None
-        self.xa_open           = None
+        self.hasNetcdf = False
+        self.hasXarray = False
+        self.cdf = None
+        self.xa_open = None
         self.__loadOptionalLibs()
 
         self.logging = logging  # internal logging {{{
         self.logFile = logFile
-        if (self.logging):
+        if self.logging:
             self.logger = setupLogging(self.logFile)  # }}}
 
     def __get__(self, instance, owner):
@@ -183,8 +182,8 @@ class Cdo(object):
         # renamed to 'seq' in 1.9.7.
         # This workaround translates all calls of 'seq' into for in case of
         # versions prior to 1.9.7
-        if name in self.AliasOperators.keys() and \
-                (parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.7')):
+        if name in self.AliasOperators and (
+                parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.7')):
             name = self.AliasOperators[name]
         return self.__class__(
             instance.CDO,
@@ -201,9 +200,9 @@ class Cdo(object):
 
     # from 1.9.6 onwards CDO returns 1 of diff* finds a difference
     def __exit_success(self, operatorName):
-        if (parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.6')):
+        if parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.6'):
             return 0
-        if ('diff' != operatorName[0:4]):
+        if 'diff' != operatorName[0:4]:
             return 0
         return 1
 
@@ -213,15 +212,15 @@ class Cdo(object):
         operators = {}
 
         version = parse_version(getCdoVersion(self.CDO))
-        if (version < parse_version('1.7.2')):
+        if version < parse_version('1.7.2'):
             proc = subprocess.Popen(
                 [self.CDO, '-h'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-            ret  = proc.communicate()
-            l    = ret[1].decode("utf-8").find("Operators:")
-            ops  = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
+            ret = proc.communicate()
+            l = ret[1].decode("utf-8").find("Operators:")
+            ops = ret[1].decode("utf-8")[l:-1].split(os.linesep)[1:-1]
             endI = ops.index('')
-            s    = ' '.join(ops[:endI]).strip()
-            s    = re.sub(r"\s+", " ", s)
+            s = ' '.join(ops[:endI]).strip()
+            s = re.sub(r"\s+", " ", s)
 
             for op in list(set(s.split(" "))):
                 operators[op] = 1
@@ -232,7 +231,7 @@ class Cdo(object):
                 if op in self.MoreOutputOperators:
                     operators[op] = -1
 
-        elif (version < parse_version('1.8.0') or parse_version('1.9.0') == version):
+        elif version < parse_version('1.8.0') or parse_version('1.9.0') == version:
             proc = subprocess.Popen([self.CDO, '--operators'],
                                     stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             ret = proc.communicate()
@@ -248,7 +247,7 @@ class Cdo(object):
                 if op in self.MoreOutputOperators:
                     operators[op] = -1
 
-        elif (version < parse_version('1.9.3')):
+        elif version < parse_version('1.9.3'):
             proc = subprocess.Popen([self.CDO, '--operators'],
                                     stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             ret = proc.communicate()
@@ -278,8 +277,8 @@ class Cdo(object):
             ret = proc.communicate()
             ops = list(map(lambda x: x.split(' ')[0], ret[0].decode(
                 "utf-8")[0:-1].split(os.linesep)))
-            ios = list(map(lambda x: x.split(' ')
-                       [-1], ret[0].decode("utf-8")[0:-1].split(os.linesep)))
+            ios = list(map(lambda x: x.split(' ')[-1], ret[0].decode(
+                "utf-8")[0:-1].split(os.linesep)))
 
             for i, op in enumerate(ops):
                 operators[op] = int(ios[i][1:len(ios[i]) - 1].split('|')[1])
@@ -311,10 +310,10 @@ class Cdo(object):
             #         print("ENV: " + k + " = " + v)
             print('CALL  :' + ' '.join(cmd))
             print('STDOUT:')
-            if (0 != len(stdout.strip())):
+            if 0 != len(stdout.strip()):
                 print(stdout)
             print('STDERR:')
-            if (0 != len(stderr.strip())):
+            if 0 != len(stderr.strip()):
                 print(stderr)
             # }}}
             print('# DEBUG - end ===============================================================')
@@ -323,9 +322,9 @@ class Cdo(object):
 
     # error handling for CDO calls
     def __hasError(self, method_name, cmd, retvals):  # {{{
-        if (self.debug):
+        if self.debug:
             print("RETURNCODE:" + retvals["returncode"].__str__())
-        if (self.__exit_success(method_name) < retvals["returncode"]):
+        if self.__exit_success(method_name) < retvals["returncode"]:
             print("Error in calling operator " + method_name + " with:")
             print(">>> " + ' '.join(cmd) + "<<<")
             print('STDOUT:' + retvals["stdout"])
@@ -349,10 +348,10 @@ class Cdo(object):
 
         try:
             from netCDF4 import Dataset as cdf
-            self.cdf       = cdf
-            self.hasNetcdf = True
             import numpy as np
-            self.np        = np
+            self.hasNetcdf = True
+            self.cdf = cdf
+            self.np = np
         except Exception:
             print("-->> Could not load netCDF4! <<--")  # }}}
 
@@ -362,7 +361,7 @@ class Cdo(object):
                 self._cmd.append(infile)
             elif self.hasXarray:
                 import xarray  # <<-- python2 workaround
-                if (type(infile) == xarray.core.dataset.Dataset):
+                if type(infile) == xarray.core.dataset.Dataset:
                     # create a temp nc file from input data
                     tmpfile = self.tempStore.newFile()
                     infile.to_netcdf(tmpfile)
@@ -417,7 +416,7 @@ class Cdo(object):
                 cmd.append(' '.join(kwargs["input"]))
             elif self.hasXarray:
                 import xarray  # <<-- python2 workaround
-                if (type(kwargs["input"]) == xarray.core.dataset.Dataset):
+                if type(kwargs["input"]) == xarray.core.dataset.Dataset:
                     # create a temp nc file from input data
                     tmpfile = self.tempStore.newFile()
                     kwargs["input"].to_netcdf(tmpfile)
@@ -452,12 +451,12 @@ class Cdo(object):
 
         if operatorPrintsOut:
             retvals = self.__call(cmd, envOfCall)
-            if (not self.__hasError(method_name, cmd, retvals)):
+            if not self.__hasError(method_name, cmd, retvals):
                 r = list(map(strip, retvals["stdout"].split(os.linesep)))
                 if "autoSplit" in kwargs:
                     splitString = kwargs["autoSplit"]
                     _output = [x.split(splitString) for x in r[:len(r) - 1]]
-                    if (1 == len(_output)):
+                    if 1 == len(_output):
                         return _output[0]
                     else:
                         return _output
@@ -514,22 +513,21 @@ class Cdo(object):
                 return [self.readXDataset(file) for file in outputs]
 
         # handle split-operator outputs
-        elif ('split' == method_name[0:5]):
+        elif 'split' == method_name[0:5]:
             return glob.glob(kwargs["output"] + '*')
 
         # default: return filename (given or tempfile)
         else:
-            if (1 == len(outputs)):
+            if 1 == len(outputs):
                 return outputs[0]
             else:
                 return outputs
 
     def __getattr__(self, method_name):  # main method-call handling for Cdo-objects {{{
-        if (method_name in self.__dict__) \
-           or (method_name in list(self.operators.keys())) \
-           or (method_name in self.AliasOperators):
+        if any(method_name in opts for opts in (
+               self.__dict__, self.operators, self.AliasOperators)):
             if self.debug:
-                print(("Found method:" + method_name))
+                print(("Found operator:" + method_name))
 
             # cache the method for later
             class Operator(self.__class__):
@@ -548,14 +546,14 @@ class Cdo(object):
         else:
             # given method might match part of know operators: autocompletion
             func = lambda x: re.search(method_name, x)
-            options = list(filter(func, self.operators.keys()))
+            options = list(filter(func, self.operators))
             message = "Unknown operator '" + method_name + "'!"
             if 0 != len(options):
                 message += " Did you mean: " + ", ".join(options) + "?"
             raise AttributeError(message)
     # }}}
 
-    def getSupportedLibs(self, force=False):
+    def getSupportedLibs(self):
         proc = subprocess.Popen(self.CDO + ' -V',
                                 shell=True,
                                 stdout=subprocess.PIPE,
@@ -628,7 +626,7 @@ class Cdo(object):
         return self.CDO
 
     def hasLib(self, lib):
-        return (lib in self.libs.keys())
+        return lib in self.libs
 
     def libsVersion(self, lib):
         if not self.hasLib(lib):
@@ -645,8 +643,8 @@ class Cdo(object):
 
     # make use of internal documentation structure of python
     def __dir__(self):
-        res = dir(type(self)) + list(self.__dict__.keys())
-        res.extend(list(self.operators.keys()))
+        res = dir(type(self)) + list(self.__dict__)
+        res.extend(list(self.operators))
         return res
 
     # ==================================================================
