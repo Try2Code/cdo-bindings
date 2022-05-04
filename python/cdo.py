@@ -138,6 +138,7 @@ class Cdo(object):
                  env=os.environ,
                  debug=False,
                  tempdir=tempfile.gettempdir(),
+                 tempStore=None,
                  logging=False,
                  logFile=StringIO(),
                  cmd=[],
@@ -155,7 +156,7 @@ class Cdo(object):
         self.noOutputOperators = [
             op for op in self.operators.keys() if 0 == self.operators[op]]
         self.returnNoneOnError = returnNoneOnError
-        self.tempStore         = CdoTempfileStore(dir=tempdir)
+        self.tempStore         = tempStore or CdoTempfileStore(dir=tempdir)
         self.forceOutput       = forceOutput
         self.env               = env
         self.debug             = True if 'DEBUG' in os.environ else debug
@@ -172,26 +173,6 @@ class Cdo(object):
         self.logFile = logFile
         if (self.logging):
             self.logger = setupLogging(self.logFile)  # }}}
-
-        # handling different exits from interactive sessions {{{
-        # python3 has threading.main_thread(), but python2 doesn't
-        if sys.version_info[0] == 2 \
-                or threading.current_thread() is threading.main_thread():
-            sigint_default = signal.getsignal(signal.SIGINT)
-            sigterm_default = signal.getsignal(signal.SIGTERM)
-            sigsegv_default = signal.getsignal(signal.SIGSEGV)
-            sigint = functools.partial(self.__catch__, throw=sigint_default)
-            sigterm = functools.partial(self.__catch__, throw=sigterm_default)
-            sigsegv = functools.partial(self.__catch__, throw=sigsegv_default)
-            signal.signal(signal.SIGINT,  sigint)
-            signal.signal(signal.SIGTERM, sigterm)
-            signal.signal(signal.SIGSEGV, sigsegv)
-            signal.siginterrupt(signal.SIGINT,  False)
-            signal.siginterrupt(signal.SIGTERM, False)
-            signal.siginterrupt(signal.SIGSEGV, False)
-        # other left-overs can only be handled afterwards
-        # might be good to use the tempdir keyword to ease this, but deletion can
-        # be triggered using cleanTempDir() }}}
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -212,6 +193,7 @@ class Cdo(object):
             instance.env,
             instance.debug,
             instance.tempStore.dir,
+            instance.tempStore,
             instance.logging,
             instance.logFile,
             instance._cmd + ['-' + name],
@@ -661,14 +643,6 @@ class Cdo(object):
     def cleanTempDir(self):
         self.tempStore.cleanTempDir()
 
-    # if a termination signal could be caught, remove tempfile
-    def __catch__(self, signum, frame, throw=None, **kwargs):
-        self.tempStore.__del__()
-        if callable(throw):
-            throw(signum, frame, **kwargs)
-        else:
-            print("caught signal", self, signum, frame)
-
     # make use of internal documentation structure of python
     def __dir__(self):
         res = dir(type(self)) + list(self.__dict__.keys())
@@ -802,7 +776,6 @@ class Cdo(object):
 class CdoTempfileStore(object):
 
     __tempfiles = []
-
     __tempdirs = []
 
     def __init__(self, dir):
@@ -812,6 +785,15 @@ class CdoTempfileStore(object):
         if not os.path.isdir(dir):
             os.makedirs(dir)
         self.__tempdirs.append(dir)
+        # handling different exits from interactive sessions
+        # python3 has threading.main_thread(), but python2 doesn't
+        if sys.version_info[0] == 2 \
+                or threading.current_thread() is threading.main_thread():
+            for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGSEGV):
+                sig_default = signal.getsignal(sig)
+                sig_wrapped = functools.partial(self.__catch__, throw=sig_default)
+                signal.signal(sig, sig_wrapped)
+                signal.siginterrupt(sig, False)
 
     def __del__(self):
         # remove temporary files
@@ -823,6 +805,14 @@ class CdoTempfileStore(object):
             for filename in self.__class__.__tempfiles:
                 if os.path.isfile(filename):
                     os.remove(filename)
+
+    def __catch__(self, signum, frame, throw=None, **kwargs):
+        # if a termination signal could be caught, remove tempfile
+        self.__del__()
+        if callable(throw):
+            throw(signum, frame, **kwargs)
+        else:
+            print("caught signal", signum, frame)
 
     def cleanTempDir(self):
         leftOvers = [os.path.join(self.dir, f) for f in os.listdir(self.dir)]
