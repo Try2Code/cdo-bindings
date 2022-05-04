@@ -781,7 +781,6 @@ class CdoTempfileStore(object):
         self.dir = dir
         if not os.path.isdir(dir):
             os.makedirs(dir)
-        self.__tempdirs.append(dir)
         # handling different exits from interactive sessions
         # python3 has threading.main_thread(), but python2 doesn't
         if sys.version_info[0] == 2 \
