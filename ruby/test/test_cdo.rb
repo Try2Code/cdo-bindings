@@ -685,5 +685,14 @@ proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
         puts "no tests for 'yeardiv' because operator is missing"
       end
     end
+    # input operator does not work straight forward. the input needs to be set as output
+    def test_input_chain
+      @cdo.debug = true
+      gridfile  = '/home/ram/Downloads/gridfile.txt'
+      inputfile = '/home/ram/Downloads/tmax.txt'
+      @cdo.settaxis('1979-01-01,00:12:00,1days',
+                    :options => ' -r -f nc',
+                    input: "-setname,tmax -setctomiss,-999.99 -input,#{gridfile} tmax.nc < ", output: inputfile)
+    end
   end
 end

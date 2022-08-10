@@ -283,8 +283,8 @@ class Cdo
                              ( not returnMaArray.nil?) \
                            )
 
-    # setup basic operator execution command
-    cmd = "#{@cdo} -O #{options} -#{operatorName}#{operatorParameters} #{input} "
+    # avoid verbose output when using autoSplit
+    options << ' -s' if ( not autoSplit.nil? or $stdout == output )
 
     # use an empty hash for non-given environment
     env = {} if env.nil?
@@ -294,6 +294,9 @@ class Cdo
 
     # just collect given output(s)
     outputs << output unless output.nil?
+
+    # setup basic operator execution command
+    cmd = "#{@cdo} -O #{options} -#{operatorName}#{operatorParameters} #{input} "
 
     case output
     when $stdout

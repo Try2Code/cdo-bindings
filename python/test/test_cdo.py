@@ -790,6 +790,7 @@ class CdoTest(testClass):
       cdo.cleanTempDir()
       self.assertEqual(0,len(os.listdir(tempPath)))
 
+
     if MAINTAINERMODE:
 
       def test_config(self):
@@ -938,6 +939,16 @@ class CdoTest(testClass):
         else:
           print("no tests for 'yeardiv': operator does not exist")
 
+      # input operator does not work straight forward. the input needs to be set as output
+      def test_input_chain(self):
+        cdo       = Cdo()
+        cdo.debug = True
+        gridfile  = '/home/ram/Downloads/gridfile.txt'
+        inputfile = '/home/ram/Downloads/tmax.txt'
+        cdo.settaxis('1979-01-01,00:12:00,1days',
+            options = ' -r -f nc',
+            input = "-setname,tmax -setctomiss,-999.99 -input,{} tmax.nc < ".format(gridfile),
+            output = inputfile)
 #===============================================================================
 if __name__ == '__main__':
     suite = testLoader.loadTestsFromTestCase(CdoTest)
