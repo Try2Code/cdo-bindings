@@ -731,6 +731,7 @@ class CdoTest(testClass):
       opCount = len(cdo.noOutputOperators)
       self.assertTrue(opCount > 50)
       self.assertTrue(opCount < 200)
+      self.assertTrue('verifygrid' in cdo.noOutputOperators)
 
     def test_operators_with_multiple_output_files(self):
       cdo = Cdo()
@@ -789,6 +790,22 @@ class CdoTest(testClass):
       self.assertEqual(5,len(os.listdir(tempPath)))
       cdo.cleanTempDir()
       self.assertEqual(0,len(os.listdir(tempPath)))
+
+    def testVerifyGrid(self):
+      cdo = Cdo()
+      output = cdo.verifygrid(input='-topo,global_10')
+      self.assertEqual([],output)
+
+      cdo.silent = False
+      output = cdo.verifygrid(input='-topo,global_10')
+      expectedOutput = ['cdo    verifygrid: Grid consists of 648 (36x18) cells (type: lonlat), of '
+                        'which',
+                        'cdo    verifygrid:       648 cells have 4 vertices',
+                        'cdo    verifygrid:        72 cells have duplicate vertices',
+                        'cdo    verifygrid:        lon : -175 to 175 degrees',
+                        'cdo    verifygrid:        lat : -85 to 85 degrees']
+      self.assertEqual(expectedOutput,output)
+      cdo.silent = True
 
 
     if MAINTAINERMODE:
@@ -931,7 +948,7 @@ class CdoTest(testClass):
         cdo = Cdo()
         cdo.debug = True
         if ('yeardiv' in cdo.operators):
-          input = "-expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
+          input = "-expr,'seq=seq*cyear()/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear()/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
           values = cdo.yeardiv(input=input,returnArray='seq')
           print(np.zeros(len(values))+1.0)
           print(np.ravel(values))

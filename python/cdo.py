@@ -159,6 +159,8 @@ class Cdo(object):
   # operators are now called with '-s' to ease the parsing process. diff* does
   # not print the errors when '-s' is given, so these operators need special
   # treatment
+  # avoiding '-s' can lead to errors when working with operators which write to
+  # stdout, but it can done with cdo.silent = False
   DiffOperators = 'diff diffc diffn diffv diffp'.split()
   #}}}
 
@@ -174,7 +176,8 @@ class Cdo(object):
                logging=False,
                logFile=StringIO(),
                cmd=[],
-               options=[]):
+               options=[],
+               silent=True):
 
     if 'CDO' in os.environ and os.path.isfile(os.environ['CDO']):
       self.CDO = which(os.environ['CDO'])
@@ -191,6 +194,7 @@ class Cdo(object):
     self.forceOutput       = forceOutput
     self.env               = env
     self.debug             = True if 'DEBUG' in os.environ else debug
+    self.silent            = silent
 
     # optional IO libraries for additional return types {{{
     self.hasNetcdf         = False
@@ -251,7 +255,8 @@ class Cdo(object):
         instance.logging,
         instance.logFile,
         instance._cmd + ['-' + name],
-        instance._options)
+        instance._options,
+        instance.silent)
 
   # from 1.9.6 onwards CDO returns 1 of diff* finds a difference
   def __exit_success(self,operatorName):
@@ -439,11 +444,13 @@ class Cdo(object):
 
     # 1. OVERWRITE EXISTING FILES
     cmd.append('-O')
-    if not method_name in self.DiffOperators:
-      cmd.append('-s')
-    cmd.extend(self._options)
 
     # 2. set the options
+    # show full output in case of diff-like operators
+    # or user requested the non-silent mode directly
+    if (not method_name in self.DiffOperators) and self.silent:
+      cmd.append('-s')
+    cmd.extend(self._options)
     # switch to netcdf output in case of numpy/xarray usage
     if (   None != kwargs.get('returnArray')
         or None != kwargs.get('returnMaArray')
