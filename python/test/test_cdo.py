@@ -798,12 +798,27 @@ class CdoTest(testClass):
 
       cdo.silent = False
       output = cdo.verifygrid(input='-topo,global_10')
-      expectedOutput = ['cdo    verifygrid: Grid consists of 648 (36x18) cells (type: lonlat), of '
-                        'which',
-                        'cdo    verifygrid:       648 cells have 4 vertices',
-                        'cdo    verifygrid:        72 cells have duplicate vertices',
-                        'cdo    verifygrid:        lon : -175 to 175 degrees',
-                        'cdo    verifygrid:        lat : -85 to 85 degrees']
+      if parse_version('2.0.6') == parse_version(cdo.version()):
+        expectedOutput = ['cdo    verifygrid: Grid consists of 648 (36x18) cells (type: lonlat), of which',
+                          'cdo    verifygrid:       648 cells have 4 vertices',
+                          'cdo    verifygrid:        72 cells have duplicate vertices',
+                          'cdo    verifygrid:        lon : -175 to 175 degrees',
+                          'cdo    verifygrid:        lat : -85 to 85 degrees']
+      elif parse_version('2.0.5') >= parse_version(cdo.version()) and parse_version('2.0.0') <= parse_version(cdo.version()):
+        expectedOutput = ['cdo(1) topo: Process started',
+                          'cdo    verifygrid: Grid consists of 648 (36x18) cells (type: lonlat), of which',
+                          'cdo    verifygrid:       648 cells have 4 vertices',
+                          'cdo    verifygrid:        72 cells have duplicate vertices',
+                          'cdo    verifygrid:        lon : -175 to 175 degrees',
+                          'cdo    verifygrid:        lat : -85 to 85 degrees',
+                          'cdo(1) topo:',
+                          'cdo    verifygrid: Processed 1 variable [0.00s 94MB].']
+      elif parse_version('2.0.0') > parse_version(cdo.version()):
+        # versions 1.9.x and earlier write to stderr and will not be tested
+        expectedOutput = []
+      else:
+        expectedOutput = []
+
       self.assertEqual(expectedOutput,output)
       cdo.silent = True
 
