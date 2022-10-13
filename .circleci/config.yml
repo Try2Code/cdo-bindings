@@ -13,7 +13,7 @@ jobs:
             sudo apt-get install libnetcdf-dev libhdf5-dev
             sudo apt-get install colorize
             sudo apt-get install cdo
-            sudo apt-get install rake ruby3.0-dev
+            sudo apt-get install rake
       - run:
           name: Install dependencies (testing)
           command: |
@@ -44,11 +44,3 @@ jobs:
             cd cdo-bindings
             pip uninstall -y xarray netcdf4
             rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
-      - run:
-          name: Run Tests Ruby 3.0
-          command: |
-            cdo -V
-            type -p cdo
-            ruby --version
-            cd cdo-bindings
-            cd ruby; ruby test/test_cdo.rb CDO=$(type -p cdo)
