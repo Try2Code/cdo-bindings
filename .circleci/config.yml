@@ -13,16 +13,13 @@ jobs:
             sudo apt-get install libnetcdf-dev libhdf5-dev
             sudo apt-get install colorize
             sudo apt-get install cdo
-            sudo apt-get install rake
+            sudo apt-get install rake ruby-dev
       - run:
           name: Install dependencies (testing)
           command: |
             pip install xarray netcdf4 six numpy unittest2
             gem install parallel --version '<= 1.12' --user -N
             gem install minitest colorize facets --user -N
-            gem install narray --user -N
-            gem install narray_miss --user -N
-            gem install ruby-netcdf --user -N
       - run:
           name: Checkout cdo-bindings
           command: |
