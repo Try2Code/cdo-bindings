@@ -798,7 +798,7 @@ class CdoTest(testClass):
 
       cdo.silent = False
       output = cdo.verifygrid(input='-topo,global_10')
-      if parse_version('2.0.6') == parse_version(cdo.version()):
+      if parse_version('2.0.6') <= parse_version(cdo.version()):
         expectedOutput = ['cdo    verifygrid: Grid consists of 648 (36x18) cells (type: lonlat), of which',
                           'cdo    verifygrid:       648 cells have 4 vertices',
                           'cdo    verifygrid:        72 cells have duplicate vertices',
