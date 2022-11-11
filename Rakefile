@@ -32,23 +32,29 @@ spackEnvCommand = lambda {|modhash|
   }
 }
 
-def getCdoPackagesFromSpack(hash: true)
+def getCdoPackagesFromSpack
   # list possible cdo modules provided by spack
-  cmd = (hash) \
-    ? [". #{SpackEnv}" , 'spack find -lp cdo | grep cdo | cut -d " " -f 1'].join(';') \
-    : [". #{SpackEnv}" , 'spack find -lp cdo | grep cdo'].join(';')
-  moduleHashes = IO.popen(cmd).readlines.map(&:chomp)
+  info = IO.popen([". #{SpackEnv}" ,
+                   'spack find -lp cdo | grep cdo'].join(';')).readlines.map(&:chomp).map(&:split).transpose
+
+  return {
+    hash:    info[0],
+    version: info[1],
+    path:    info[2],
+  }
 end
 
 desc "run each CDO binary from the regression tests"
 task :checkRegression do |t|
-  getCdoPackagesFromSpack.each {|spackHash|
+  info = getCdoPackagesFromSpack
+  info[:hash].each_with_index {|spackHash,i|
+    puts info[:version][i].colorize(:green)
     sh spackEnvCommand[spackHash]["cdo -V"]
   }
 end
 desc "list spack modules available for regression testing"
 task :listRegressionModules do |t|
-  getCdoPackagesFromSpack(hash: false).each {|mod| puts mod}
+  pp getCdoPackagesFromSpack[:version]
 end
 
 def pythonTest(name: nil,interpreter: PythonInterpreter)
@@ -109,9 +115,10 @@ end
   desc "run regresssion for multiple CDO releases in #{lang}"
   task "test#{lang}Regression".to_sym, :name do |t,args|
     runTests = args.name.nil? ? "rake test#{lang}" : "rake test#{lang}[#{args.name}]"
-    getCdoPackagesFromSpack.each {|spackModule|
+    spackInfo = getCdoPackagesFromSpack
+    spackInfo[:hash].each_with_index {|spackModule,i|
       cmd = spackEnvCommand[spackModule][runTests]
-      puts spackModule.colorize(:green)
+      puts "#{spackInfo[:version][i]}(#{spackModule.colorize(:green)})"
       sh cmd
     }
   end
