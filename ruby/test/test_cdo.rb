@@ -5,7 +5,7 @@ require 'minitest/autorun'
 
 
 #===============================================================================
-def rm(files); files.each {|f| FileUtils.rm(f) if File.exists?(f)};end
+def rm(files); files.each {|f| FileUtils.rm(f) if File.exist?(f)};end
 
 
 class TestCdo < Minitest::Test

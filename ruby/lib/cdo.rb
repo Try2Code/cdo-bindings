@@ -319,7 +319,7 @@ class Cdo
       # if operators was not called with output-forcing given, take the global switch
       force = @forceOutput if force.nil?
 
-      if force or not File.exists?(output.to_s)
+      if force or not File.exist?(output.to_s)
         # create tempfile(s) according to the number of output streams needed
         # if output argument is missing
         if output.nil? then
@@ -427,7 +427,7 @@ class Cdo
   # check if the CDO binary is present and works
   def hasCdo(path=@cdo)
     executable = system("#{path} -V >/dev/null 2>&1")
-    fullpath   = File.exists?(path) and File.executable?(path)
+    fullpath   = File.exist?(path) and File.executable?(path)
 
     return (executable or fullpath)
   end
@@ -536,7 +536,7 @@ class CdoTempfileStore
     @_tempfiles           = []
 
     # make sure the tempdir ie really there
-    Dir.mkdir(@dir) unless Dir.exists?(@dir)
+    Dir.mkdir(@dir) unless Dir.exist?(@dir)
   end
 
   def setPersist(value)
