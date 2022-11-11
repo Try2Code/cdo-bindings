@@ -689,7 +689,7 @@ proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
 
         input='-settaxis,2001-01-01,12:00:00,12hours -for,1,10000'
 
-        opChain = "-expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
+        opChain = "-expr,'seq=seq*cyear()/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear()/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
 
         values = @cdo.yeardiv(input: opChain, returnArray: 'seq').flatten
         assert(Array.new(values.size,1.0),values.to_a)
