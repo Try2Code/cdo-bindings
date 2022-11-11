@@ -87,14 +87,16 @@ class TestCdo < Minitest::Test
     values = @cdo.outputkey("value",:input => "-stdatm,0")
     assert_equal(["1013.25", "288"],values[-2..-1])
     values = @cdo.outputkey("value",:input => "-stdatm,0,10000")
-    assert_equal(["1013.25", "271.913", "288", "240.591"],values[-4..-1])
-    values = @cdo.outputkey("level",:input => "-stdatm,0,10000")
+    assert_equal(
+      ["1013.25", "271.9125", "288", "240.591"].map(&:to_f).map {|f| f.round(1)}.map(&:to_s),
+      values[-4..-1].map(&:to_f).map {|f| f.round(1)}.map(&:to_s))
+    values = @cdo.outputkey("lev",:input => "-stdatm,0,10000")
     assert_equal(["0", "10000","0", "10000"],values[-4..-1])
   end
   def test_CDO_version
-    assert("1.4.3.1" < @cdo.version,"Version too low: #{@cdo.version}")
-    assert("1.6.3" < @cdo.version,"Version too low: #{@cdo.version}")
-    assert("3.0" > @cdo.version,"Version too high: #{@cdo.version}")
+    assert(Mixlib::Versioning.parse("1.4.3.1") < @cdo.version,"Version too low: #{@cdo.version}")
+    assert(Mixlib::Versioning.parse("1.6.3") < @cdo.version,"Version too low: #{@cdo.version}")
+    assert(Mixlib::Versioning.parse("3.0") > @cdo.version,"Version too high: #{@cdo.version}")
   end
   def test_args
     ofile0 = @cdo.stdatm(0,20,40,80,200,230,400,600,1100)
