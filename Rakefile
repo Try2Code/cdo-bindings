@@ -111,7 +111,7 @@ end
     runTests = args.name.nil? ? "rake test#{lang}" : "rake test#{lang}[#{args.name}]"
     getCdoPackagesFromSpack.each {|spackModule|
       cmd = spackEnvCommand[spackModule][runTests]
-      puts spackModule.split.last.colorize(:green)
+      puts spackModule.colorize(:green)
       sh cmd
     }
   end
