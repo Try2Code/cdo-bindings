@@ -213,6 +213,8 @@ class TestCdo < Minitest::Test
 
    assert_equal(['P T'],@cdo.showname(input: "-stdatm,0"))
    assert_equal(['P','T'],@cdo.showname(input: "-stdatm,0",autoSplit: ' '))
+   expectestVerifyOutput = ["cdo(1) topo: Process started", "cdo    verifygrid: Grid consists of 4 (2x2) cells (type: lonlat), of which", "cdo    verifygrid:         4 cells have 4 vertices", "cdo    verifygrid:         4 cells have duplicate vertices", "cdo    verifygrid:         2 cells have their vertices arranged in a clockwise order", "cdo    verifygrid:        lon : 0 to 180 degrees", "cdo    verifygrid:        lat : -45 to 45 degrees", "cdo(1) topo:", "cdo    verifygrid: Processed 1 variable [0.00s 54MB]."]
+   assert_equal(expectestVerifyOutput,@cdo.verifygrid(input: '-topo,r2x2'))
   end
 
   def test_verticalLevels
@@ -286,7 +288,7 @@ class TestCdo < Minitest::Test
     %w[griddes griddes2 info infoc infon infop infos infov map
        outputarr outputbounds outputboundscpt outputcenter outputcenter2
        outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
-       outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab].each {|op|
+       outputtab outputtri outputts outputvector outputvrml outputxyz partab verifygrid verifyweights].each {|op|
       assert(operators.include?(op),"Operator '#{op}' cannot be found!")
       assert_equal(0,operators[op],"Operator '#{op}' has a non-zero output counter!")
     }

@@ -284,7 +284,9 @@ class Cdo
                            )
 
     # avoid verbose output when using autoSplit
-    options << ' -s' if ( not autoSplit.nil? or $stdout == output )
+    unless operatorName.match(/^verify/) or  false then
+      options << ' -s'
+    end
 
     # use an empty hash for non-given environment
     env = {} if env.nil?
@@ -520,6 +522,10 @@ class Cdo
 
   # }}}
 
+  # helper methods {{{
+  def getNoOutputOperators
+    return @noOutputOperators
+  end
 end
 #
 # Helper module for easy temp file handling {{{
