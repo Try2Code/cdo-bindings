@@ -76,6 +76,13 @@ class TestCdo < Minitest::Test
     end
   end
 
+  def test_ifNoOutfileOperator
+    noOutputOperators = @cdo.getNoOutputOperators
+    %w[verifygrid showlevel].each {|operator|
+      assert(noOutputOperators.include?(operator))
+      output = @cdo.send(operator.to_sym, input: '-topo')
+    }
+  end
   def test_outputOperators
     @cdo.debug = @@debug
     levels = @cdo.showlevel(:input => "-stdatm,0")
@@ -188,7 +195,7 @@ class TestCdo < Minitest::Test
     assert_equal(targetThicknesses, @cdo.thicknessOfLevels(:input => "-selname,T -stdatm,#{levels.join(',')}"))
   end
 
-  def test_outputOperators
+  def test_stdout_operators
     sourceLevels = %W{25 100 250 500 875 1400 2100 3000 4000 5000}
     assert_equal(sourceLevels,
                  @cdo.showlevel(:input => "-selname,T #{@cdo.stdatm(*sourceLevels,:options => '-f nc')}")[0].split)
@@ -316,7 +323,7 @@ class TestCdo < Minitest::Test
     pattern = 'sel'
     resultsFiles = @cdo.splitsel(1,input: '-for,0,9',output: pattern)
     assert_equal(10,resultsFiles.size)
-    (0..9).each {|var|
+    (1...10).each {|var|
       assert(resultsFiles.include?("#{pattern}00000#{var}.grb"))
     }
 
@@ -557,6 +564,7 @@ proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
     data = @cdo.remapnn(myTempfile,input: '-topo',returnArray: 'topo', options: '-f nc')
     assert_equal(-3190.0,data.flatten[0])
   end
+
   if @@maintainermode  then
     require 'unifiedPlot'
 
