@@ -10,7 +10,7 @@ class Hash
   alias :include? :has_key?
 end
 
-# Copyright 2011-2019 Ralf Mueller, ralf.mueller@dkrz.de
+# Copyright 2011-2022 Ralf Mueller, ralf.mueller@dkrz.de
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
