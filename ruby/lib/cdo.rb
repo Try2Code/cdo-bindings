@@ -4,6 +4,7 @@ require 'logger'
 require 'stringio'
 require 'json'
 require 'tempfile'
+require 'mixlib/versioning'
 
 class Hash
   alias :include? :has_key?
@@ -450,7 +451,7 @@ class Cdo
     if verbose then
       return info.join
     else
-      return info.first.split(/version/i).last.strip.split(' ').first
+      return Mixlib::Versioning.parse(info.first.split(/version/i).last.strip.split(' ').first)
     end
   end
 

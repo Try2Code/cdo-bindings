@@ -19,6 +19,7 @@ spec = Gem::Specification.new do |s|
   s.add_development_dependency('facets', '~> 3', '>= 3.0')
   s.add_development_dependency('colorize', '~> 0.8', '>= 0.8')
   s.add_development_dependency('rake', '~> 10', '>= 10')
+  s.add_development_dependency('mixlib-versioning', '~> 1.2', '>= 1.2.12')
   s.metadata = {
     "bug_tracker_uri"   => "https://github.com/Try2Code/cdo-bindings/issues",
     "changelog_uri"     => "https://github.com/Try2Code/cdo-bindings#changelog",
