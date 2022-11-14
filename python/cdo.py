@@ -69,12 +69,12 @@ def operator_doc(tool, path2cdo):
 
 # some helper functions without side effects {{{
 def getCdoVersion(path2cdo, verbose=False):
-  proc = subprocess.Popen([path2cdo, '-V'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+  proc = subprocess.Popen([path2cdo, '-V', '2>&1'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
   ret = proc.communicate()
-  cdo_help = ret[1].decode("utf-8")
+  cdo_help = ret[0].decode("utf-8")
   if verbose:
     return cdo_help
-  match = re.search("Climate Data Operators version (\d.*) .*", cdo_help)
+  match = re.search("Climate Data Operators version (\d+\.\d+(\.\d+)*) .*", cdo_help)
   return match.group(1)
 
 def setupLogging(logFile):
@@ -208,6 +208,7 @@ class Cdo(object):
     if name in self.AliasOperators.keys() and \
       ( parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.7') ):
       name = self.AliasOperators[name]
+
     return self.__class__(
         instance.CDO,
         instance.returnNoneOnError,
