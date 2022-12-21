@@ -177,7 +177,8 @@ class Cdo(object):
                logFile=StringIO(),
                cmd=[],
                options=[],
-               silent=True):
+               silent=True,
+               xarray_open_kwargs=None):
 
     if 'CDO' in os.environ and os.path.isfile(os.environ['CDO']):
       self.CDO = which(os.environ['CDO'])
@@ -187,20 +188,23 @@ class Cdo(object):
     self._cmd = cmd
     self._options = options
 
-    self.operators         = self.__getOperators()
-    self.noOutputOperators = [op for op in self.operators.keys() if 0 == self.operators[op]]
-    self.returnNoneOnError = returnNoneOnError
-    self.tempStore         = CdoTempfileStore(dir = tempdir)
-    self.forceOutput       = forceOutput
-    self.env               = env
-    self.debug             = True if 'DEBUG' in os.environ else debug
-    self.silent            = silent
+    self.operators          = self.__getOperators()
+    self.noOutputOperators  = [op for op in self.operators.keys() if 0 == self.operators[op]]
+    self.returnNoneOnError  = returnNoneOnError
+    self.tempStore          = CdoTempfileStore(dir = tempdir)
+    self.forceOutput        = forceOutput
+    self.env                = env
+    self.debug              = True if 'DEBUG' in os.environ else debug
+    self.silent             = silent
+    self.xarray_open_kwargs = xarray_open_kwargs
+    if self.xarray_open_kwargs is None:
+        self.xarray_open_kwargs = {}
 
     # optional IO libraries for additional return types {{{
-    self.hasNetcdf         = False
-    self.hasXarray         = False
-    self.cdf               = None
-    self.xa_open           = None
+    self.hasNetcdf          = False
+    self.hasXarray          = False
+    self.cdf                = None
+    self.xa_open            = None
     self.__loadOptionalLibs()
 
     self.logging = logging  # internal logging {{{
@@ -256,7 +260,8 @@ class Cdo(object):
         instance.logFile,
         instance._cmd + ['-' + name],
         instance._options,
-        instance.silent)
+        instance.silent,
+        instance.xarray_open_kwargs)
 
   # from 1.9.6 onwards CDO returns 1 of diff* finds a difference
   def __exit_success(self,operatorName):
@@ -598,7 +603,6 @@ class Cdo(object):
         return outputs
 
   def __getattr__(self, method_name):  # main method-call handling for Cdo-objects {{{
-
     if ((method_name in self.__dict__) or (method_name in list(self.operators.keys()))
         or (method_name in self.AliasOperators)):
       if self.debug:
@@ -768,7 +772,7 @@ class Cdo(object):
       print("Could not load XArray")
       six.raise_from(ImportError,None)
 
-    dataSet = self.xa_open(ifile)
+    dataSet = self.xa_open(ifile, **self.xarray_open_kwargs)
     try:
       return dataSet[varname]
     except:
@@ -782,7 +786,7 @@ class Cdo(object):
       print("Could not load XArray")
       six.raise_from(ImportError,None)
 
-    return self.xa_open(ifile)
+    return self.xa_open(ifile, **self.xarray_open_kwargs)
 
   # internal helper methods:
   # return internal cdo.py version
