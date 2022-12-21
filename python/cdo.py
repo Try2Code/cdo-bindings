@@ -603,6 +603,7 @@ class Cdo(object):
         return outputs
 
   def __getattr__(self, method_name):  # main method-call handling for Cdo-objects {{{
+
     if ((method_name in self.__dict__) or (method_name in list(self.operators.keys()))
         or (method_name in self.AliasOperators)):
       if self.debug:
