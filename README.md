@@ -1,6 +1,6 @@
 # Cdo.{rb,py} - Use Ruby/Python to access the power of CDO
 
-[![Python Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
+[![Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
 
 Welcome to the scripting interfaces of [CDO](https://code.mpimet.mpg.de/projects/cdo/wiki)!
 This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
@@ -31,6 +31,9 @@ Releases are distributed via [pypi](https://pypi.org/project/cdo) and [rubygems]
 ### Requirements
 
 Cdo.{rb,py} requires a working CDO binary and Ruby 2.x or Python 2.7/3.x
+
+**PLEASE NOTE: python-2.7 is unmaintained since January 2021**
+Many dependencies dropped support for 2.7 so I do manual testing with it,only.
 
 Multi-dimensional arrays (numpy for python, narray for ruby) require addtional
 netcdf-io modules. These are [scipy](https://docs.scipy.org/doc/scipy/reference/io.html) or [python-netcdf4](https://pypi.python.org/pypi/netCDF4) for python and
@@ -204,6 +207,11 @@ http://code.mpimet.mpg.de/projects/cdo
     - many of them just set return type, so they will go to the _run()_ method
     - options only has effect during run of the tool, so this can also go into _run()_
     - the different input types can be handled in something like _input()_ or
+* **1.5.6**:
+  - slight adoptions for CDO-2.0.0
+  - limitted support for python-2.7: many other libs dropped support for it so I can only do limitted testing
+  - new API: `cdo.config` holds a dictionary/hash with built-in CDO features (availble sind CDO-1.9.x), empty otherwise
+  - removed cdo.hasLib() and cdo.libsVersion(): relied on unstable output of `cdo -V`. use cdo.config instead
       _infiles()_. This should clean up the lengthy code, which does this
       currently
 * **1.5.4(python-only)**:

@@ -3,61 +3,41 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.8.0a4-stretch
+      - image: circleci/python:3.9
     steps:
       - run:
           name: Install dependencies (debian)
           command: |
             sudo apt-get update
-            sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev
+            sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev 
             sudo apt-get install libnetcdf-dev libhdf5-dev
-            sudo apt-get install ruby rake
-            sudo apt-get install python-dev libpython-dev
-            sudo apt-get install python-netcdf4
-            sudo apt-get install python-unittest2
+            sudo apt-get install colorize
+            sudo apt-get install cdo
+            sudo apt-get install rake ruby-dev
       - run:
-          name: Checkout cdo-bindings
+          name: Install dependencies (testing)
           command: |
-            git clone https://github.com/Try2Code/cdo-bindings.git
-      - run:
-          name: Install conda, CDO and environements for Python 2.7/3.7
-          command: |
-            wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && bash miniconda.sh -b -p $HOME/miniconda
-            export PATH="$HOME/miniconda/bin:$PATH"
-            hash -r
-            conda config --set always_yes yes --set changeps1 no
-            conda config --add channels conda-forge
-            conda update -q --all
-            conda info -a
-            cd cdo-bindings
-            conda env create --file .circleci/py2.7.yml
-            conda env create --file .circleci/py3.7.yml
-      - run:
-          name: Install dependencies (rake)
-          command: |
+            pip install xarray netcdf4 six numpy unittest2
             gem install parallel --version '<= 1.12' --user -N
             gem install minitest colorize facets --user -N
       - run:
-          name: Run Tests Python 2.7
+          name: Checkout cdo-bindings
           command: |
-            export PATH="$HOME/miniconda/bin:$PATH"
-            source activate test_env_py27
-            cdo -V
-            type -p cdo
-            python --version
-            cd cdo-bindings
-            rake testPython CDO=$(type -p cdo) NO_COLOR=1
-            conda remove -y netCDF4 xarray
-            rake testPython CDO=$(type -p cdo) NO_COLOR=1
+            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
       - run:
-          name: Run Tests Python 3.7
+          name: Run Tests Python 3.9
           command: |
-            export PATH="$HOME/miniconda/bin:$PATH"
-            source activate test_env_py37
             cdo -V
             type -p cdo
-            python --version
+            python3 --version
             cd cdo-bindings
-            rake testPython CDO=$(type -p cdo) NO_COLOR=1
-            conda remove -y netCDF4 xarray
-            rake testPython CDO=$(type -p cdo) NO_COLOR=1
+            rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
+      - run:
+          name: Run Tests Python 3.9 - no netCDF4/Xarray
+          command: |
+            cdo -V
+            type -p cdo
+            python3 --version
+            cd cdo-bindings
+            pip uninstall -y xarray netcdf4
+            rake testPython3 CDO=$(type -p cdo) NO_COLOR=1

@@ -11,6 +11,12 @@ from io import StringIO
 import logging as pyLog
 import six
 import sys
+import threading
+import json
+try:
+    from shutil import which, get_terminal_size
+except ImportError:
+    from backports.shutil_which import which
 
 # workaround for python2/3 string handling {{{
 try:
@@ -19,7 +25,7 @@ except ImportError:
   strip = str.strip
 #}}}
 
-# Copyright 2011-2019 Ralf Mueller, ralf.mueller@dkrz.de
+# Copyright 2011-2022 Ralf Mueller, ralf.mueller@dkrz.de {{{
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -44,8 +50,9 @@ except ImportError:
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+# }}}
 
-CDO_PY_VERSION = "1.5.3rc1"
+CDO_PY_VERSION = "1.5.7"
 
 # build interactive documentation: help(cdo.sinfo) {{{
 def auto_doc(tool, path2cdo):
@@ -96,12 +103,12 @@ def setupLogging(logFile):
 # extra execptions for CDO {{{
 class CDOException(Exception):
 
-  def __init__(self, stdout, stderr, returncode):
+  def __init__(self, stdout, stderr, returncode, msg=''):
     super(CDOException, self).__init__()
     self.stdout = stdout
     self.stderr = stderr
     self.returncode = returncode
-    self.msg = '(returncode:%s) %s' % (returncode, stderr)
+    self.msg = '(returncode:%s) %s :: %s' % (returncode, stderr,msg)
 
   def __str__(self):
     return self.msg
@@ -129,6 +136,18 @@ class Cdo(object):
   splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec \
   splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis'.split()
   AliasOperators = {'seq':'for'}
+
+  # the following operators introduce additional new lines in cdo-2.0.0 for
+  # increased readability in the therminal. This leads to inconsistens parsing
+  # behaviour here because before new lines indicated meta data for a new
+  # variable for all show* operators.
+  ShowTimeOperators = 'showdate showtime showtimestamp showyear showmon'.split()
+  # operators are now called with '-s' to ease the parsing process. diff* does
+  # not print the errors when '-s' is given, so these operators need special
+  # treatment
+  # avoiding '-s' can lead to errors when working with operators which write to
+  # stdout, but it can done with cdo.silent = False
+  DiffOperators = 'diff diffc diffn diffv diffp'.split()
   #}}}
 
   name = ''
@@ -143,12 +162,13 @@ class Cdo(object):
                logging=False,
                logFile=StringIO(),
                cmd=[],
-               options=[]):
+               options=[],
+               silent=True):
 
     if 'CDO' in os.environ and os.path.isfile(os.environ['CDO']):
-      self.CDO = os.environ['CDO']
+      self.CDO = which(os.environ['CDO'])
     else:
-      self.CDO = cdo
+      self.CDO = which(cdo)
 
     self._cmd = cmd
     self._options = options
@@ -160,7 +180,7 @@ class Cdo(object):
     self.forceOutput       = forceOutput
     self.env               = env
     self.debug             = True if 'DEBUG' in os.environ else debug
-    self.libs              = self.getSupportedLibs()
+    self.silent            = silent
 
     # optional IO libraries for additional return types {{{
     self.hasNetcdf         = False
@@ -173,6 +193,9 @@ class Cdo(object):
     self.logFile = logFile
     if (self.logging):
         self.logger = setupLogging(self.logFile)  # }}}
+
+    # CDO build configuration available since cdo-1.9x
+    self.config = self.__getConfig()
 
     # handling different exits from interactive sessions {{{
     # python3 has threading.main_thread(), but python2 doesn't
@@ -219,7 +242,8 @@ class Cdo(object):
         instance.logging,
         instance.logFile,
         instance._cmd + ['-' + name],
-        instance._options)
+        instance._options,
+        instance.silent)
 
   # from 1.9.6 onwards CDO returns 1 of diff* finds a difference
   def __exit_success(self,operatorName):
@@ -228,6 +252,15 @@ class Cdo(object):
     if ( 'diff' != operatorName[0:4] ):
       return 0
     return 1
+
+  # read json formatted output of 'cdo --config all'
+  def __getConfig(self):
+    proc = subprocess.Popen([self.CDO, '--config','all'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    ret  = proc.communicate()
+    try:
+      return json.loads(ret[0].decode('utf-8'))
+    except:
+      return {}
 
   # retrieve the list of operators from the CDO binary plus info out number of
   # output streams
@@ -315,7 +348,7 @@ class Cdo(object):
     stderr = retvals[1].decode("utf-8")
 
     if self.debug:  # debug printing {{{
-      print('# DEBUG - start =============================================================')
+      print('# DEBUG - start '.ljust(get_terminal_size().columns-10,'='))
 #     if {} != env:
 #       for k,v in list(env.items()):
 #         print("ENV: " + k + " = " + v)
@@ -326,7 +359,7 @@ class Cdo(object):
       print('STDERR:')
       if (0 != len(stderr.strip())):
         print(stderr)
-      print('# DEBUG - end ===============================================================')  # }}}
+      print('# DEBUG - end '.ljust(get_terminal_size().columns-10,'='))
 
     return {"stdout": stdout, "stderr": stderr, "returncode": proc.returncode}  # }}}
 
@@ -398,9 +431,13 @@ class Cdo(object):
 
     # 1. OVERWRITE EXISTING FILES
     cmd.append('-O')
-    cmd.extend(self._options)
 
     # 2. set the options
+    # show full output in case of diff-like operators
+    # or user requested the non-silent mode directly
+    if (not method_name in self.DiffOperators) and self.silent:
+      cmd.append('-s')
+    cmd.extend(self._options)
     # switch to netcdf output in case of numpy/xarray usage
     if (   None != kwargs.get('returnArray')
         or None != kwargs.get('returnMaArray')
@@ -464,15 +501,28 @@ class Cdo(object):
       retvals = self.__call(cmd, envOfCall)
       if (not self.__hasError(method_name, cmd, retvals)):
         r = list(map(strip, retvals["stdout"].split(os.linesep)))
+        # skip the last newline
+        r = r[:len(r) - 1]
+        # join the list into a single one in case we deal with time
+        # axis-related output. This output must me on a single line since CDO
+        # can handle only one time axis. cdo-2.0.0 introduced newlines for
+        # readability
+        if method_name in self.ShowTimeOperators:
+          r = ['  '.join(r)]
+        # starting with cdo-2.0.0 diff* operators print more warnings. those
+        # lines start with 'cdo' and must be removed
+        if method_name in self.DiffOperators:
+          r = [item for item in r if 'cdo' != item[0:3]]
+
         if "autoSplit" in kwargs:
           splitString = kwargs["autoSplit"]
-          _output = [x.split(splitString) for x in r[:len(r) - 1]]
+          _output = [x.split(splitString) for x in r]
           if (1 == len(_output)):
               return _output[0]
           else:
               return _output
         else:
-         return r[:len(r) - 1]
+         return r
       else:
         if self.returnNoneOnError:
           return None
@@ -557,39 +607,6 @@ class Cdo(object):
         raise AttributeError("Unknown method '" + method_name + "'!")
   # }}}
 
-
-  def getSupportedLibs(self, force=False):
-    proc = subprocess.Popen(self.CDO + ' -V',
-                            shell=True,
-                            stderr=subprocess.PIPE,
-                            stdout=subprocess.PIPE)
-    retvals = proc.communicate()
-
-    withs = list(re.findall('(with|Features): (.*)',
-                            retvals[1].decode("utf-8"))[0])[1].split(' ')
-    # do an additional split, if the entry has a / and collect everything into a flatt list
-    withs = list(map(lambda x: x.split('/') if re.search('\/', x) else x, withs))
-    allWiths = []
-    for _withs in withs:
-      if isinstance(_withs, list):
-        for __withs in _withs:
-          allWiths.append(__withs)
-      else:
-        allWiths.append(_withs)
-    withs = allWiths
-
-    libs = re.findall('(\w+) library version : (\d+\.\S+) ',
-                      retvals[1].decode("utf-8"))
-    libraries = dict({})
-    for w in withs:
-      libraries[w.lower()] = True
-
-    for lib in libs:
-      l, v = lib
-      libraries[l.lower()] = v
-
-    return libraries
-
   def collectLogs(self):
     if isinstance(self.logFile, six.string_types):
       content = []
@@ -631,19 +648,6 @@ class Cdo(object):
   # return the path to the CDO binary currently used
   def getCdo(self):
     return self.CDO
-
-  def hasLib(self, lib):
-    return (lib in self.libs.keys())
-
-  def libsVersion(self, lib):
-    if not self.hasLib(lib):
-      raise AttributeError("Cdo does NOT have support for '#{lib}'")
-    else:
-      if True != self.libs[lib]:
-        return self.libs[lib]
-      else:
-        print("No version information available about '" + lib + "'")
-        return False
 
   def cleanTempDir(self):
     self.tempStore.cleanTempDir()

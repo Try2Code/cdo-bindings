@@ -5,7 +5,7 @@ require 'minitest/autorun'
 
 
 #===============================================================================
-def rm(files); files.each {|f| FileUtils.rm(f) if File.exists?(f)};end
+def rm(files); files.each {|f| FileUtils.rm(f) if File.exist?(f)};end
 
 
 class TestCdo < Minitest::Test
@@ -28,8 +28,8 @@ class TestCdo < Minitest::Test
     if ENV['CDO']
       assert_equal(ENV['CDO'],@cdo.cdo)
     else
-      pp DEFAULT_CDO_PATH
-      pp @cdo.cdo
+      pp DEFAULT_CDO_PATH if @@debug
+      pp @cdo.cdo if @@debug
       assert_equal(DEFAULT_CDO_PATH,@cdo.cdo)
     end
     newCDO="#{ENV['HOME']}/local/bin/cdo-dev"
@@ -74,6 +74,13 @@ class TestCdo < Minitest::Test
     end
   end
 
+  def test_ifNoOutfileOperator
+    noOutputOperators = @cdo.getNoOutputOperators
+    %w[verifygrid showlevel].each {|operator|
+      assert(noOutputOperators.include?(operator))
+      output = @cdo.send(operator.to_sym, input: '-topo')
+    }
+  end
   def test_outputOperators
     @cdo.debug = @@debug
     levels = @cdo.showlevel(:input => "-stdatm,0")
@@ -85,8 +92,10 @@ class TestCdo < Minitest::Test
     values = @cdo.outputkey("value",:input => "-stdatm,0")
     assert_equal(["1013.25", "288"],values[-2..-1])
     values = @cdo.outputkey("value",:input => "-stdatm,0,10000")
-    assert_equal(["1013.25", "271.913", "288", "240.591"],values[-4..-1])
-    values = @cdo.outputkey("level",:input => "-stdatm,0,10000")
+    assert_equal(
+      ["1013.25", "271.9125", "288", "240.591"].map(&:to_f).map {|f| f.round(1)}.map(&:to_s),
+      values[-4..-1].map(&:to_f).map {|f| f.round(1)}.map(&:to_s))
+    values = @cdo.outputkey("lev",:input => "-stdatm,0,10000")
     assert_equal(["0", "10000","0", "10000"],values[-4..-1])
   end
   def test_CDO_version
@@ -184,11 +193,11 @@ class TestCdo < Minitest::Test
     assert_equal(targetThicknesses, @cdo.thicknessOfLevels(:input => "-selname,T -stdatm,#{levels.join(',')}"))
   end
 
-  def test_outputOperators
+  def test_stdout_operators
     sourceLevels = %W{25 100 250 500 875 1400 2100 3000 4000 5000}
     assert_equal(sourceLevels,
                  @cdo.showlevel(:input => "-selname,T #{@cdo.stdatm(*sourceLevels,:options => '-f nc')}")[0].split)
-    
+
    # test autoSplit usage
    levels = @cdo.showlevel(input: "-stdatm,0,10,20",autoSplit: ' ')
    assert_equal([['0','10','20'],['0','10','20']],levels)
@@ -211,6 +220,26 @@ class TestCdo < Minitest::Test
 
    assert_equal(['P T'],@cdo.showname(input: "-stdatm,0"))
    assert_equal(['P','T'],@cdo.showname(input: "-stdatm,0",autoSplit: ' '))
+  end
+
+  def test_verifygrid_output
+    return if @cdo.version < Cdo.version('1.9.0')
+    actualOutput = @cdo.verifygrid(input: '-topo,r2x2')
+    if @cdo.version < Cdo.version('2.0.0') then
+      assert_empty(actualOutput)
+    else
+      expectedVerifyOutput = [
+        "cdo    verifygrid: Grid consists of 4 (2x2) cells (type: lonlat), of which",
+        "cdo    verifygrid:         4 cells have 4 vertices",
+        "cdo    verifygrid:         4 cells have duplicate vertices",
+        "cdo    verifygrid:         2 cells have their vertices arranged in a clockwise order",
+        "cdo    verifygrid:        lon : 0 to 180 degrees",
+        "cdo    verifygrid:        lat : -45 to 45 degrees",
+      ]
+      actualOutput = @cdo.verifygrid(input: '-topo,r2x2')
+      pp actualOutput if @@debug
+      expectedVerifyOutput.each {|line| assert(actualOutput.include?(line),"'#{line}' is missing in output") }
+    end
   end
 
   def test_verticalLevels
@@ -284,7 +313,7 @@ class TestCdo < Minitest::Test
     %w[griddes griddes2 info infoc infon infop infos infov map
        outputarr outputbounds outputboundscpt outputcenter outputcenter2
        outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
-       outputtab outputtri outputts outputvector outputvrml outputxyz pardes partab].each {|op|
+       outputtab outputtri outputts outputvector outputvrml outputxyz partab verifygrid verifyweights].each {|op|
       assert(operators.include?(op),"Operator '#{op}' cannot be found!")
       assert_equal(0,operators[op],"Operator '#{op}' has a non-zero output counter!")
     }
@@ -310,7 +339,7 @@ class TestCdo < Minitest::Test
     pattern = 'sel'
     resultsFiles = @cdo.splitsel(1,input: '-for,0,9',output: pattern)
     assert_equal(10,resultsFiles.size)
-    (0..9).each {|var|
+    (1...10).each {|var|
       assert(resultsFiles.include?("#{pattern}00000#{var}.grb"))
     }
 
@@ -356,6 +385,7 @@ class TestCdo < Minitest::Test
     # manual set path
     tag = 'tempRb'
     tempPath = Dir.pwd+'/'+tag
+    pp Dir.glob("#{tempPath}/*")
     pp Dir.glob("#{tempPath}/*").size
     assert_equal(0,Dir.glob("#{tempPath}/*").size)
     cdo = Cdo.new(tempdir: tempPath)
@@ -551,6 +581,7 @@ proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
     data = @cdo.remapnn(myTempfile,input: '-topo',returnArray: 'topo', options: '-f nc')
     assert_equal(-3190.0,data.flatten[0])
   end
+
   if @@maintainermode  then
     require 'unifiedPlot'
 
@@ -560,6 +591,7 @@ proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
       tag = 'Cdorb'
       pattern = "#{tempPath}/#{tag}*"
       cdo = Cdo.new
+      pp Dir.glob(pattern) if @@debug
       assert_equal(0,Dir.glob(pattern).size)
       cdo.topo('r10x10')
       assert_equal(1,Dir.glob(pattern).size)
@@ -575,6 +607,7 @@ proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
       cdo.topo('r10x10',options: '-f nc')
       cdo.topo('r10x10')
       cdo.topo('r10x10',options: '-f nc')
+      pp Dir.glob(pattern) if @@debug
       assert_equal(12,Dir.glob(pattern).size)
       cdo.cleanTempDir()
       assert_equal(0,Dir.glob(pattern).size)
@@ -675,13 +708,22 @@ proj_params = "+proj=stere +lon_0=-45 +lat_ts=70 +lat_0=90 +x_0=0 +y_0=0"
 
         input='-settaxis,2001-01-01,12:00:00,12hours -for,1,10000'
 
-        opChain = "-expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
+        opChain = "-expr,'seq=seq*cyear()/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear()/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
 
         values = @cdo.yeardiv(input: opChain, returnArray: 'seq').flatten
         assert(Array.new(values.size,1.0),values.to_a)
       else
         puts "no tests for 'yeardiv' because operator is missing"
       end
+    end
+    # input operator does not work straight forward. the input needs to be set as output
+    def test_input_chain
+      @cdo.debug = true
+      gridfile  = '/home/ram/Downloads/gridfile.txt'
+      inputfile = '/home/ram/Downloads/tmax.txt'
+      @cdo.settaxis('1979-01-01,00:12:00,1days',
+                    :options => ' -r -f nc',
+                    input: "-setname,tmax -setctomiss,-999.99 -input,#{gridfile} tmax.nc < ", output: inputfile)
     end
   end
 end

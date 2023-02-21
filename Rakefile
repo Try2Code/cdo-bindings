@@ -8,6 +8,8 @@ CLEAN.include("**/*.log")
 CLEAN.include("**/*.log.[0-9]*")
 CLEAN.include("{ruby,python}/*.{grb,nc,png,svg}")
 CLEAN.include("python/tempPy*")
+CLEAN.include("ruby/tempRb*")
+CLEAN.include("/tmp/Cdorb*")
 CLEAN.include("python/test/tempPy*")
 CLEAN.include("python/__pycache__")
 CLEAN.include("python/test/__pycache__")
@@ -24,28 +26,37 @@ String.disable_colorization = (ENV.has_key?('NO_COLOR'))
 # following test should not be run in parallel with other tests
 SERIAL_TESTS = %w[test_system_tempdir]
 
+spackEnvCommand = lambda {|modhash|
+  lambda {|command| [". #{SpackEnv}" ,
+                     "spack load /#{modhash}",
+                     command,
+                     "spack unload /#{modhash}"].join(';')
+  }
+}
 
 def getCdoPackagesFromSpack
   # list possible cdo modules provided by spack
-  cmd = [". #{SpackEnv}" , 'spack module tcl loads cdo | grep module'].join(';')
-  modules = IO.popen(cmd).readlines.map(&:chomp)
+  info = IO.popen([". #{SpackEnv}" ,
+                   'spack find -lp cdo | grep cdo'].join(';')).readlines.map(&:chomp).map(&:split).transpose
+
+  return {
+    hash:    info[0],
+    version: info[1],
+    path:    info[2],
+  }
 end
 
 desc "run each CDO binary from the regression tests"
 task :checkRegression do |t|
-  getCdoPackagesFromSpack.each {|spackModule|
-    cmd = [". #{SpackEnv}" ,
-           "module purge",
-           spackModule,
-           "cdo -V",
-           "module purge"].join(';')
-
-    sh cmd
+  info = getCdoPackagesFromSpack
+  info[:hash].each_with_index {|spackHash,i|
+    puts info[:version][i].colorize(:green)
+    sh spackEnvCommand[spackHash]["cdo -V"]
   }
 end
 desc "list spack modules available for regression testing"
 task :listRegressionModules do |t|
-  getCdoPackagesFromSpack.each {|mod| puts mod}
+  pp getCdoPackagesFromSpack[:version]
 end
 
 def pythonTest(name: nil,interpreter: PythonInterpreter)
@@ -89,7 +100,7 @@ end
 
   desc "test for correct tempfile deletion (#{lang})"
   task "test#{lang}_tempfiles".to_sym do |t|
-    # make sure no other testing process has already created cdo-tempfile 
+    # make sure no other testing process has already created cdo-tempfile
     unless Dir.glob("/tmp/Cdo*").empty? then
       warn "Cannot run temp file test - target dir /tmp is no empty"
       exit(1)
@@ -106,13 +117,10 @@ end
   desc "run regresssion for multiple CDO releases in #{lang}"
   task "test#{lang}Regression".to_sym, :name do |t,args|
     runTests = args.name.nil? ? "rake test#{lang}" : "rake test#{lang}[#{args.name}]"
-    getCdoPackagesFromSpack.each {|spackModule|
-      cmd = [". #{SpackEnv}" ,
-             "module purge",
-             spackModule,
-             runTests,
-             "module purge"].join(';')
-      puts spackModule.split.last.colorize(:green)
+    spackInfo = getCdoPackagesFromSpack
+    spackInfo[:hash].each_with_index {|spackModule,i|
+      cmd = spackEnvCommand[spackModule][runTests]
+      puts "#{spackInfo[:version][i]}(#{spackModule.colorize(:green)})"
       sh cmd
     }
   end
@@ -123,18 +131,14 @@ end
         ? "rake test#{lang}#{pythonRelease}" \
         : "rake test#{lang}#{pythonRelease}[#{args.name}]"
       getCdoPackagesFromSpack.each {|spackModule|
-        cmd = [". #{SpackEnv}" ,
-               "module purge",
-               spackModule,
-               runTests,
-               "module purge"].join(';')
+        cmd = spackEnvCommand[spackModule][runTests]
         puts spackModule.split.last.colorize(:green)
         sh cmd
       }
     end
     desc "test for correct tempfile deletion (#{lang}#{pythonRelease})"
     task "test#{lang}#{pythonRelease}_tempfiles".to_sym do |t|
-      # make sure no other testing process has already created cdo-tempfile 
+      # make sure no other testing process has already created cdo-tempfile
       unless Dir.glob("/tmp/Cdo*").empty? then
         warn "Cannot run temp file test - target dir /tmp is no empty"
         exit(1)

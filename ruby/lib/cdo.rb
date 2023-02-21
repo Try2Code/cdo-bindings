@@ -10,7 +10,7 @@ class Hash
   alias :include? :has_key?
 end
 
-# Copyright 2011-2019 Ralf Mueller, ralf.mueller@dkrz.de
+# Copyright 2011-2022 Ralf Mueller, ralf.mueller@dkrz.de
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -293,8 +293,10 @@ class Cdo
                              ( not returnMaArray.nil?) \
                            )
 
-    # setup basic operator execution command
-    cmd = "#{@cdo} -O #{options} -#{operatorName}#{operatorParameters} #{input} "
+    # avoid verbose output when using autoSplit
+    unless operatorName.match(/^verify/) or  false then
+      options << ' -s'
+    end
 
     # use an empty hash for non-given environment
     env = {} if env.nil?
@@ -304,6 +306,9 @@ class Cdo
 
     # just collect given output(s)
     outputs << output unless output.nil?
+
+    # setup basic operator execution command
+    cmd = "#{@cdo} -O #{options} -#{operatorName}#{operatorParameters} #{input} "
 
     case output
     when $stdout
@@ -326,7 +331,7 @@ class Cdo
       # if operators was not called with output-forcing given, take the global switch
       force = @forceOutput if force.nil?
 
-      if force or not File.exists?(output.to_s)
+      if force or not File.exist?(output.to_s)
         # create tempfile(s) according to the number of output streams needed
         # if output argument is missing
         if output.nil? then
@@ -434,7 +439,7 @@ class Cdo
   # check if the CDO binary is present and works
   def hasCdo(path=@cdo)
     executable = system("#{path} -V >/dev/null 2>&1")
-    fullpath   = File.exists?(path) and File.executable?(path)
+    fullpath   = File.exist?(path) and File.executable?(path)
 
     return (executable or fullpath)
   end
@@ -518,6 +523,10 @@ class Cdo
 
   # }}}
 
+  # helper methods {{{
+  def getNoOutputOperators
+    return @noOutputOperators
+  end
 end
 #
 # Helper module for easy temp file handling {{{
@@ -534,7 +543,7 @@ class CdoTempfileStore
     @_tempfiles           = []
 
     # make sure the tempdir ie really there
-    Dir.mkdir(@dir) unless Dir.exists?(@dir)
+    Dir.mkdir(@dir) unless Dir.exist?(@dir)
   end
 
   def setPersist(value)

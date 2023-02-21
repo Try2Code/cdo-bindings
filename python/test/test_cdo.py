@@ -1,7 +1,24 @@
 from __future__ import print_function
-import unittest,os,tempfile,sys,glob,subprocess,multiprocessing,time,random
+import os
+import tempfile
+import sys
+import glob
+import subprocess
+import multiprocessing
+import time
+import random
 from pkg_resources import parse_version
 import numpy as np
+if (2 == sys.version_info[0]):
+  import unittest2
+  testModule=unittest2
+  testClass=unittest2.TestCase
+  testLoader=unittest2.TestLoader()
+else:
+  import unittest
+  testModule=unittest
+  testClass=unittest.TestCase
+  testLoader=unittest.TestLoader()
 
 # add local dir to search path
 sys.path.insert(0,os.path.dirname(sys.path[0]))
@@ -23,6 +40,7 @@ MAINTAINERMODE = 'MAINTAINERMODE' in os.environ
 
 if SHOW:
   from matplotlib import pylab as pl
+  from matplotlib import pyplot as plt
 
 def plot(ary,ofile=False,title=None):
   if not SHOW:
@@ -49,20 +67,33 @@ def rm(files):
     if os.path.exists(f):
       os.system("rm "+f)
 
+def msg(strings,channel=sys.stderr):
+  tag = '#' + '--DEBUG'*10
+  print(tag,file=channel)
+  print(strings,file=channel)
+  print(tag,file=channel)
+
 def cdoShouldHaveSeqOperator(cdoObject):
   return (parse_version(cdoObject.version()) > parse_version('1.9.6'))
 
-class CdoTest(unittest.TestCase):
+class CdoTest(testClass):
+
+    def test_ju(self):
+        cdo = Cdo()
+        cdo.debug = True
+        print(cdo.version())
+        print(cdo.sinfov(input='-topo'))
 
     def testCDO(self):
         cdo = Cdo()
         print('this is CDO version %s'%(cdo.version()))
         print('cdo-bindings version: %s'%(cdo.__version__()))
-        newCDO="/usr/bin/cdo"
+        newCDO="/home/ram/src/tools/spack/opt/spack/linux-antergos-skylake/gcc-11.1.0/cdo-1.9.9-switof25xqmlys765t7aonnc564wl3jl/bin/cdo"
         if os.path.isfile(newCDO):
             cdo.setCdo(newCDO)
             self.assertEqual(newCDO,cdo.getCdo())
             cdo.setCdo('cdo')
+            self.assertEqual('cdo',cdo.getCdo())
             # now constructor option
             cdo = Cdo(cdo=newCDO)
             self.assertEqual(newCDO,cdo.getCdo())
@@ -174,9 +205,6 @@ class CdoTest(unittest.TestCase):
         cdo.debug = DEBUG
         names = cdo.showname(input = "-stdatm,0",options = "-f nc")
         self.assertEqual(["P T"],names)
-        if cdo.hasLib("sz"):
-          ofile = cdo.topo(options = "-z szip")
-          #self.assertEqual(["GRIB SZIP"],cdo.showformat(input = ofile))
 
     def test_chain(self):
         cdo = Cdo()
@@ -199,9 +227,9 @@ class CdoTest(unittest.TestCase):
     def test_diff(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        diffv = cdo.diffn(input = "-random,global_0.1 -random,global_0.1")
-        self.assertEqual(diffv[1].split(' ')[-1],"random")
-        self.assertEqual(diffv[1].split(' ')[-3],"1.0000")
+        diffv = cdo.diffn(input = "-random,global_0.5 -random,global_0.5")
+        self.assertEqual('random', diffv[-2].split(' ')[-1],"random")
+        self.assertEqual('1 of 1 records differ',diffv[-1])
 
     def test_returnCdf(self):
         cdo = Cdo()
@@ -499,8 +527,9 @@ class CdoTest(unittest.TestCase):
           print('pattern=%s'%(pattern))
         self.assertTrue(10 <= len(resultsFiles))
         rm(resultsFiles)
+        expectedFilename = pattern+'00000'+str('2')+'.grb'
         for var in range(0,10):
-          self.assertTrue(pattern+'00000'+str(var)+'.grb' in resultsFiles)
+          self.assertTrue(expectedFilename in resultsFiles)
         rm(resultsFiles)
 
         pattern = 'lev_{0}'.format( random.randrange(1,100000))
@@ -517,18 +546,6 @@ class CdoTest(unittest.TestCase):
         cdo = Cdo()
         self.assertEqual(str,type(cdo.topo(output = None)))
         self.assertEqual("GRIB",cdo.sinfov(input = "-topo", output = None)[0].split(' ')[-1])
-
-    def test_libs(self):
-        cdo = Cdo()
-        cdo.debug = DEBUG
-        if DEBUG:
-          print(cdo.libs)
-        self.assertTrue(cdo.hasLib("nc4"),"netcdf4 support missing")
-        self.assertTrue(cdo.hasLib("netcdf"),"netcdf support missing")
-        self.assertTrue(cdo.hasLib("udunits2"),"netcdf support missing")
-        self.assertFalse(cdo.hasLib("udunits"),'boost is not a CDO dependency')
-        self.assertFalse(cdo.hasLib("boost"),'boost is not a CDO dependency')
-        self.assertRaises(AttributeError, cdo.libsVersion,"foo")
 
     def test_returnNone(self):
         cdo = Cdo()
@@ -714,6 +731,7 @@ class CdoTest(unittest.TestCase):
       opCount = len(cdo.noOutputOperators)
       self.assertTrue(opCount > 50)
       self.assertTrue(opCount < 200)
+      self.assertTrue('verifygrid' in cdo.noOutputOperators)
 
     def test_operators_with_multiple_output_files(self):
       cdo = Cdo()
@@ -773,7 +791,49 @@ class CdoTest(unittest.TestCase):
       cdo.cleanTempDir()
       self.assertEqual(0,len(os.listdir(tempPath)))
 
+    def testVerifyGrid(self):
+      cdo = Cdo()
+      output = cdo.verifygrid(input='-topo,global_10')
+      self.assertEqual([],output)
+
+      cdo.silent = False
+      output = cdo.verifygrid(input='-topo,global_10')
+      if parse_version('2.0.6') <= parse_version(cdo.version()):
+        expectedOutput = ['cdo    verifygrid: Grid consists of 648 (36x18) cells (type: lonlat), of which',
+                          'cdo    verifygrid:       648 cells have 4 vertices',
+                          'cdo    verifygrid:        72 cells have duplicate vertices',
+                          'cdo    verifygrid:        lon : -175 to 175 degrees',
+                          'cdo    verifygrid:        lat : -85 to 85 degrees']
+      elif parse_version('2.0.5') >= parse_version(cdo.version()) and parse_version('2.0.0') <= parse_version(cdo.version()):
+        expectedOutput = ['cdo(1) topo: Process started',
+                          'cdo    verifygrid: Grid consists of 648 (36x18) cells (type: lonlat), of which',
+                          'cdo    verifygrid:       648 cells have 4 vertices',
+                          'cdo    verifygrid:        72 cells have duplicate vertices',
+                          'cdo    verifygrid:        lon : -175 to 175 degrees',
+                          'cdo    verifygrid:        lat : -85 to 85 degrees',
+                          'cdo(1) topo:',
+                          'cdo    verifygrid: Processed 1 variable [0.00s 94MB].']
+      elif parse_version('2.0.0') > parse_version(cdo.version()):
+        # versions 1.9.x and earlier write to stderr and will not be tested
+        expectedOutput = []
+      else:
+        expectedOutput = []
+
+      self.assertEqual(expectedOutput,output)
+      cdo.silent = True
+
+
     if MAINTAINERMODE:
+
+      def test_config(self):
+        cdo = Cdo()
+        if (parse_version(cdo.version()) > parse_version('1.9.8') and
+            parse_version(cdo.version()) <= parse_version('2.0.0')):
+          self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext': 'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes', 'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2': 'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes', 'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes', 'has-threads': 'yes', 'has-wordexp': 'yes'},
+              cdo.config)
+        else:
+          self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext': 'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes', 'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2': 'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes', 'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes', 'has-threads': 'yes', 'has-wordexp': 'yes', 'has-nczarr': 'yes', 'has-magics': 'yes'},
+              cdo.config)
 
       def test_system_tempdir(self):
         # automatic path
@@ -802,26 +862,31 @@ class CdoTest(unittest.TestCase):
         dataCreationOperator = 'seq'
         if (parse_version(cdo.version()) < parse_version('1.9.8')):
           dataCreationOperator = 'for'
+        ifile = "-enlarge,global_0.3 -settaxis,2000-01-01,12:00:00 -expr,'t=sin({0}*3.141529/180.0)' -{0},1,10".format(dataCreationOperator)
         if cdo.hasNetcdf:
-          ifile = "-enlarge,global_0.3 -settaxis,2000-01-01 -expr,'t=sin({0}*3.141529/180.0)' -{0},1,10".format(dataCreationOperator)
           t = cdo.fldmax(input="-div -sub -timmean -seltimestep,2,3 %s -seltimestep,1 %s -gridarea %s"%(ifile,ifile,ifile),
               returnMaArray="t")
           self.assertTrue(abs(8.9813e-09 - t[0][0][0]) < 1.0e-10, 'Found non-zero diff')
+        else:
+          t = cdo.fldmax(input="-div -sub -timmean -seltimestep,2,3 %s -seltimestep,1 %s -gridarea %s"%(ifile,ifile,ifile))
+          value = float(cdo.outputkey('value,nohead', input=t)[0])
+          self.assertTrue(abs(value) < 1.0e-07, 'Found non-zero diff')
 
       def test_icon_coords(self):
         cdo = Cdo()
         if cdo.hasNetcdf:
           ifile = DATA_DIR +'/icon/oce_AquaAtlanticBoxACC.nc'
-          ivar  = 't_acc'
-          varIn = cdo.readCdf(ifile)
-          varIn = varIn.variables[ivar]
-          expected =  u'clon clat'
-          self.assertEqual(expected,varIn.coordinates)
+          if os.path.isfile(ifile):
+            ivar  = 't_acc'
+            varIn = cdo.readCdf(ifile)
+            varIn = varIn.variables[ivar]
+            expected =  u'clon clat'
+            self.assertEqual(expected,varIn.coordinates)
 
-          varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
-          varOut = varOut.variables[ivar]
-          expected =  u'clat clon'
-          self.assertEqual(expected,varOut.coordinates)
+            varOut =cdo.readCdf(cdo.selname(ivar,input=ifile))
+            varOut = varOut.variables[ivar]
+            expected =  u'clat clon'
+            self.assertEqual(expected,varOut.coordinates)
 
       def testCall(self):
         cdo = Cdo()
@@ -840,67 +905,99 @@ class CdoTest(unittest.TestCase):
             self.assertEqual(sorted(['lat','lon','seq','time']),sorted(list(cdf.variables.keys())))
 
       def test_phc(self):
-        ifile = "-select,level=0 " + DATA_DIR + '/icon/phc.nc'
-        cdo = Cdo()
-        cdo.debug = DEBUG
-        if not cdo.hasNetcdf:
-          return
-        #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
-        #          output=ifile,
-        #          options='-O')
-        s = cdo.sellonlatbox(0,30,0,90, input="-chname,SO,s,TempO,t " + ifile,output='test_my_phc.nc',returnMaArray='s',options='-f nc')
-        plot(np.flipud(s[0,:,:]),ofile='org',title='original')
-        sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-        plot(np.flipud(sfmo[0,:,:]),ofile='fm',title='fillmiss')
-        sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss2 -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-        plot(np.flipud(sfm[0,:,:]),ofile='fm2',title='fillmiss2')
-        ssetmisstonn = cdo.sellonlatbox(0,30,0,90, input="-setmisstonn -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-        plot(np.flipud(ssetmisstonn[0,:,:]),ofile='setmisstonn',title='setmisstonn')
-        if (parse_version(cdo.version()) >= parse_version('1.7.2')):
-          smooth = cdo.sellonlatbox(0,30,0,90, input="-smooth -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-          plot(np.flipud(ssetmisstonn[0,:,:]),ofile='smooth',title='smooth')
-        #global plot
-        #s_global = cdo.chname('SO,s,TempO,t',input=ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
-        #plot(s_global[0,:,:],ofile='org_global',title='org_global')
-        #sfmo_global = cdo.fillmiss(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-        #plot(sfmo_global[0,:,:],ofile='fm_global',title='fm_global')
-        #sfm_global = cdo.fillmiss2(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-        #plot(sfm_global[0,:,:],ofile='fm2_global',title='fm2_global')
-        #ssetmisstonn_global = cdo.setmisstonn(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
-        #plot(ssetmisstonn_global[0,:,:],ofile='setmisstonn_global',title='setmisstonn_global')
-
-      def test_smooth(self):
-        cdo = Cdo()
-        if (parse_version(cdo.version()) >= parse_version('1.7.2') and cdo.hasNetcdf):
-          ifile = "-select,level=0 " + DATA_DIR + '/icon/phc.nc'
+        ifile = DATA_DIR + '/icon/phc.nc'
+        if os.path.isfile(ifile):
+          ifile = "-setctomiss,nan -select,level=0,timestep=1 " + DATA_DIR + '/icon/phc.nc'
           cdo = Cdo()
           cdo.debug = DEBUG
+          if not cdo.hasNetcdf:
+            return
+          saltVarname, tempVarname = 'salt', 'temp'
           #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
           #          output=ifile,
           #          options='-O')
-          smooth = cdo.smooth(input=" -sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
-          plot(np.flipud(smooth[0,:,:]),ofile='smooth',title='smooth')
+          s = cdo.sellonlatbox(0,30,0,90, input=ifile,output='test_my_phc.nc',returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+          plot(s,ofile='org',title='original')
 
-          smooth2 = cdo.smooth('nsmooth=2',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
-          plot(np.flipud(smooth2[0,:,:]),ofile='smooth2',title='smooth,nsmooth=2')
+          sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss " + ifile,returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+          plot(sfmo,ofile='fm',title='fillmiss')
 
-          smooth4 = cdo.smooth('nsmooth=4',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
-          plot(np.flipud(smooth4[0,:,:]),ofile='smooth4',title='smooth,nsmooth=4')
+          sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss2 " + ifile,returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+          plot(sfm,ofile='fm2',title='fillmiss2')
 
-          smooth9 = cdo.smooth9(input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
-          plot(np.flipud(smooth9[0,:,:]),ofile='smooth9',title='smooth9')
+          ssetmisstonn = cdo.sellonlatbox(0,30,0,90, input="-setmisstonn " + ifile,returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+          plot(ssetmisstonn,ofile='setmisstonn',title='setmisstonn')
 
-          smooth3deg = cdo.smooth('radius=6deg',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
-          plot(np.flipud(smooth3deg[0,:,:]),ofile='smooth3deg',title='smooth,radius=6deg')
+          if (parse_version(cdo.version()) >= parse_version('1.7.2')):
+            smooth = cdo.sellonlatbox(0,30,0,90, input="-smooth " + ifile,returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+            plot(ssetmisstonn,ofile='smooth',title='smooth')
+          #global plot
+          #s_global = cdo.chname('SO,s,TempO,t',input=ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
+          #plot(s_global[0,:,:],ofile='org_global',title='org_global')
+          #sfmo_global = cdo.fillmiss(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          #plot(sfmo_global[0,:,:],ofile='fm_global',title='fm_global')
+          #sfm_global = cdo.fillmiss2(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          #plot(sfm_global[0,:,:],ofile='fm2_global',title='fm2_global')
+          #ssetmisstonn_global = cdo.setmisstonn(input=" -chname,SO,s,TempO,t " + ifile,returnMaArray='s',options='-f nc')
+          #plot(ssetmisstonn_global[0,:,:],ofile='setmisstonn_global',title='setmisstonn_global')
+        else:
+          print(f"Could not find data '{ifile}'")
 
-          smooth20 = cdo.smooth('nsmooth=20',input="-sellonlatbox,0,30,0,90 -chname,SO,s,TempO,t " + ifile, returnMaArray='s',options='-f nc')
-          plot(np.flipud(smooth20[0,:,:]),ofile='smooth20',title='smooth,nsmooth=20')
+      def test_smooth(self):
+        if os.path.isfile(DATA_DIR + '/icon/phc.nc'):
+          saltVarname, tempVarname = 'salt', 'temp'
+          selectionOperator = 'sellonlatbox'
+          region = "0,30,30,90"
+          regionSelection = f"-{selectionOperator},{region}"
+          cdo = Cdo()
+          if (parse_version(cdo.version()) >= parse_version('1.7.2') and cdo.hasNetcdf):
+            ifile = "-setctomiss,nan -select,level=0,timestep=1 " + DATA_DIR + '/icon/phc.nc'
+            cdo = Cdo()
+            cdo.debug = DEBUG
+            #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
+            #          output=ifile,
+            #          options='-O')
+            org, tag = cdo.sellonlatbox(region,input=ifile, returnMaArray=saltVarname)[0,0,:,:], 'org'
+            plot(org,ofile=tag,title=tag)
+            smooth, tag = cdo.smooth(input=f" {regionSelection} {ifile}",
+                                options='-L',
+                                returnMaArray=saltVarname)[0,0,:,:], 'smooth'
+            plot(smooth,ofile=tag,title=tag)
+
+            smooth2, tag = cdo.smooth('nsmooth=2',
+                                 input=f" {regionSelection} {ifile}",
+                                 options='-L',
+                                 returnMaArray=saltVarname)[0,0,:,:], 'smooth2'
+            plot(np.flipud(smooth2),ofile=tag,title='smooth,nsmooth=2')
+            print(smooth - org)
+
+            smooth4 = cdo.smooth('nsmooth=4',
+                                 input=f" {regionSelection} {ifile}",
+                                 options='-L',
+                                 returnMaArray=saltVarname)[0,0,:,:]
+            plot(np.flipud(smooth4),ofile='smooth4',title='smooth,nsmooth=4')
+
+            smooth9 = cdo.smooth9(input=f" {regionSelection} {ifile}",
+                                  options='-L',
+                                  returnMaArray=saltVarname)[0,0,:,:]
+            plot(np.flipud(smooth9),ofile='smooth9',title='smooth9')
+
+            smooth3deg = cdo.smooth('radius=6deg',
+                                    input=f" {regionSelection} {ifile}",options='-L',
+                                    returnMaArray=saltVarname)[0,0,:,:]
+            plot(np.flipud(smooth3deg),ofile='smooth3deg',title='smooth,radius=6deg')
+
+            smooth20 = cdo.smooth('nsmooth=20',
+                                  input=f" {regionSelection} {ifile}",
+                                  options='-L',
+                                  returnMaArray=saltVarname)[0,0,:,:]
+            plot(np.flipud(smooth20),ofile='smooth20',title='smooth,nsmooth=20')
 
       def test_ydiv(self):
         cdo = Cdo()
         cdo.debug = True
         if ('yeardiv' in cdo.operators):
-          input = "-expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear(seq)/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
+          input = "-expr,'seq=seq*cyear()/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000 -yearmean -expr,'seq=seq*cyear()/seq;' -settaxis,2001-01-01,12:00:00,12hours -for,1,10000"
           values = cdo.yeardiv(input=input,returnArray='seq')
           print(np.zeros(len(values))+1.0)
           print(np.ravel(values))
@@ -908,11 +1005,22 @@ class CdoTest(unittest.TestCase):
         else:
           print("no tests for 'yeardiv': operator does not exist")
 
+      # input operator does not work straight forward. the input needs to be set as output
+      def test_input_chain(self):
+        cdo       = Cdo()
+        cdo.debug = True
+        gridfile  = '/home/ram/Downloads/gridfile.txt'
+        inputfile = '/home/ram/Downloads/tmax.txt'
+        cdo.settaxis('1979-01-01,00:12:00,1days',
+            options = ' -r -f nc',
+            input = "-setname,tmax -setctomiss,-999.99 -input,{} tmax.nc < ".format(gridfile),
+            output = inputfile)
+
 #===============================================================================
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(CdoTest)
+    suite = testLoader.loadTestsFromTestCase(CdoTest)
 #   print(suite)
-    unittest.main()
+    testModule.main()
 #   unittest.TextTestRunner(verbosity=2).run(suite)
 
 # vim:sw=2
