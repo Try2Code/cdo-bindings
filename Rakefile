@@ -38,12 +38,12 @@ def getCdoPackagesFromSpack
   # list possible cdo modules provided by spack
   info = IO.popen([". #{SpackEnv}" ,
                    'spack find -lp cdo | grep cdo'].join(';')).readlines.map(&:chomp).map(&:split).transpose
-
-  return {
+  retval = {
     hash:    info[0],
     version: info[1],
     path:    info[2],
   }
+  return retval
 end
 
 desc "run each CDO binary from the regression tests"
@@ -130,7 +130,7 @@ end
       runTests = args.name.nil? \
         ? "rake test#{lang}#{pythonRelease}" \
         : "rake test#{lang}#{pythonRelease}[#{args.name}]"
-      getCdoPackagesFromSpack.each {|spackModule|
+      getCdoPackagesFromSpack[:hash].each {|spackModule|
         cmd = spackEnvCommand[spackModule][runTests]
         puts spackModule.split.last.colorize(:green)
         sh cmd
