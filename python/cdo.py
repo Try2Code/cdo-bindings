@@ -161,7 +161,8 @@ class Cdo(object):
                  logging=False,
                  logFile=StringIO(),
                  cmd=[],
-                 options=[]):
+                 options=[],
+                 silent=True):
 
         if 'CDO' in os.environ and os.path.isfile(os.environ['CDO']):
             self.CDO = os.environ['CDO']
@@ -178,6 +179,7 @@ class Cdo(object):
         self.forceOutput = forceOutput
         self.env = env
         self.debug = True if 'DEBUG' in os.environ else debug
+        self.silent = silent
         self.libs = self.getSupportedLibs()
 
         # optional IO libraries for additional return types {{{
@@ -218,7 +220,8 @@ class Cdo(object):
             instance.logging,
             instance.logFile,
             instance._cmd + ['-' + name],
-            instance._options)
+            instance._options,
+            instance.silent)
 
     # from 1.9.6 onwards CDO returns 1 of diff* finds a difference
     def __exit_success(self, operatorName):
