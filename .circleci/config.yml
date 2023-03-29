@@ -57,6 +57,7 @@ jobs:
       - run:
           name: Install dependencies (testing)
           command: |
+            gem install semverse --user -N
             gem install narray --user -N
             gem install narray_miss --user -N
             gem install ruby-netcdf --user -N
