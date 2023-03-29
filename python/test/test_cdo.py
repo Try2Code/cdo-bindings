@@ -832,13 +832,19 @@ class CdoTest(testClass):
           self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext': 'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes', 'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2': 'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes', 'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes', 'has-threads': 'yes', 'has-wordexp': 'yes'},
               cdo.config)
         else:
-          self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext': 'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes', 'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2': 'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes', 'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes', 'has-threads': 'yes', 'has-wordexp': 'yes', 'has-nczarr': 'yes', 'has-magics': 'yes'},
+          self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext': 'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes', 'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2': 'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes', 'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes', 'has-threads': 'yes', 'has-wordexp': 'yes', 'has-nczarr': 'yes', 'has-magics': 'yes', 'has-hirlam_extensions': 'no'},
               cdo.config)
 
       def test_system_tempdir(self):
-        # automatic path
-        tempPath = tempfile.gettempdir()
-        cdo = Cdo()
+        # system tempdir migh be cluttered with other stuff, so lets use a
+        # private directory
+        import tempfile
+        tempfile.tempdir = os.path.abspath('.')
+
+        # create and use local tempdir
+        tempPath = tempfile.mkdtemp()
+        cdo = Cdo(tempdir=tempPath)
+
         cdo.topo('r10x10',options = '-f nc')
         self.assertEqual(1,len([ f for f in os.listdir(tempPath) if 'cdoPy' in f]))
         cdo.topo('r10x10',options = '-f nc')
