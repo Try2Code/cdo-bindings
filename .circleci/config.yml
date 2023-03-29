@@ -43,7 +43,7 @@ jobs:
             rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
   ruby:
     docker:
-      - image: cimg/miniconda:3
+      - image: miniconda:3
     steps:
       - run:
           name: Install dependencies (debian)
