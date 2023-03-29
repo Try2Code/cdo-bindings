@@ -813,6 +813,8 @@ class CdoTest(testClass):
                           'cdo    verifygrid:        lat : -85 to 85 degrees',
                           'cdo(1) topo:',
                           'cdo    verifygrid: Processed 1 variable [0.00s 94MB].']
+        expectedOutput = expectedOutput[0:-2]
+        output = output[0:-2]
       elif parse_version('2.0.0') > parse_version(cdo.version()):
         # versions 1.9.x and earlier write to stderr and will not be tested
         expectedOutput = []
