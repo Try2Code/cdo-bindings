@@ -43,7 +43,7 @@ jobs:
             rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
   ruby:
     docker:
-      - image: miniconda:3
+      - image: archlinux:base-devel
     steps:
       - run:
           name: Install dependencies (debian)
