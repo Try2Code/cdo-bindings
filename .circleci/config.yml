@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  build:
+  python:
     docker:
       - image: cimg/python:3.9
     steps:
@@ -41,3 +41,36 @@ jobs:
             cd cdo-bindings
             pip uninstall -y xarray netcdf4
             rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
+  ruby:
+    docker:
+      - image: cimg/ruby:3.0
+    steps:
+      - run:
+          name: Install dependencies (debian)
+          command: |
+            sudo apt-get update
+            sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev 
+            sudo apt-get install libnetcdf-dev libhdf5-dev
+            sudo apt-get install colorize
+            sudo apt-get install cdo
+            sudo apt-get install rake ruby-dev
+      - run:
+          name: Install dependencies (testing)
+          command: |
+            gem install narray --user -N
+            gem install narray_miss --user -N
+            gem install ruby-netcdf --user -N
+            gem install parallel --version '<= 1.12' --user -N
+            gem install minitest colorize facets --user -N
+      - run:
+          name: Checkout cdo-bindings
+          command: |
+            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
+      - run:
+          name: Run Tests Ruby 3
+          command: |
+            cdo -V
+            type -p cdo
+            ruby --version
+            cd cdo-bindings
+            rake testRuby CDO=$(type -p cdo) NO_COLOR=1
