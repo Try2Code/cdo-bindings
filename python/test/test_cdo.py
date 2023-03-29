@@ -186,8 +186,14 @@ class CdoTest(testClass):
           '2001-01-01T19:00:00',
           '2001-01-01T20:00:00',
           '2001-01-01T21:00:00']
-        self.assertEqual(timesExpected,
-                         cdo.showtimestamp(input="-settaxis,2001-01-01,12:00,1hour -for,1,10", autoSplit='  '))
+        if (parse_version(cdo.version()) == parse_version('2.0.0')):
+          # cdo-2.0.0 does not put output on a single line with '-s' like previous and later versions'
+          timesExpected = [['2001-01-01T12:00:00', '2001-01-01T13:00:00', '2001-01-01T14:00:00', '2001-01-01T15:00:00'],
+                           ['2001-01-01T16:00:00', '2001-01-01T17:00:00', '2001-01-01T18:00:00', '2001-01-01T19:00:00'],
+                           ['2001-01-01T20:00:00', '2001-01-01T21:00:00']]
+
+        actualOutput = cdo.showtimestamp(input="-settaxis,2001-01-01,12:00,1hour -for,1,10", autoSplit='  ')
+        self.assertEqual(timesExpected, actualOutput)
 
         self.assertEqual(['P T'],cdo.showname(input="-stdatm,0"))
         self.assertEqual(['P','T'],cdo.showname(input="-stdatm,0",autoSplit=' '))
@@ -221,15 +227,20 @@ class CdoTest(testClass):
         ofile1 = cdo.setname("veloc").copy.random("r1x1").add_option("-f nc").run()
         cdo = Cdo()
         ofile2 = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")
-        diff = cdo.diff(input=[ofile1, ofile2])
+        diff = cdo.diff(input=[ofile1, ofile2], options='-s')
         self.assertFalse(diff, msg=diff)
 
     def test_diff(self):
         cdo = Cdo()
         cdo.debug = DEBUG
         diffv = cdo.diffn(input = "-random,global_0.5 -random,global_0.5")
-        self.assertEqual('random', diffv[-2].split(' ')[-1],"random")
-        self.assertEqual('1 of 1 records differ',diffv[-1])
+        thisVersion = parse_version(cdo.version())
+        if (thisVersion >= parse_version('2.0.0') and thisVersion <= parse_version('2.0.5')):
+          self.assertEqual('random', diffv[-5].split(' ')[-1],"random")
+          self.assertEqual('1 of 1 records differ',diffv[-4])
+        else:
+          self.assertEqual('random', diffv[-2].split(' ')[-1],"random")
+          self.assertEqual('1 of 1 records differ',diffv[-1])
 
     def test_returnCdf(self):
         cdo = Cdo()
@@ -491,16 +502,17 @@ class CdoTest(testClass):
     def test_inputArray(self):
         cdo = Cdo()
         cdo.debug = DEBUG
+        cdo.silent = True
         # check for file input
         fileA = cdo.stdatm(0,output='A_{0}'.format( random.randrange(1,100000)))
         fileB = cdo.stdatm(0,output='B_{0}'.format( random.randrange(1,100000)))
         files = [fileA,fileB]
-        self.assertEqual(cdo.diffv(input = ' '.join(files)), cdo.diffv(input = files))
-        self.assertEqual([],cdo.diffv(input = files))
+        self.assertEqual(cdo.diffv(input = ' '.join(files), options='-s'), cdo.diffv(input = files, options='-s'))
+        self.assertEqual([],cdo.diffv(input = files, options='-s'))
         # check for operator input
-        self.assertEqual([],cdo.diffv(input = ["-stdatm,0","-stdatm,0"]))
+        self.assertEqual([],cdo.diffv(input = ["-stdatm,0","-stdatm,0"], options='-s'))
         # check for operator input and files
-        self.assertEqual([],cdo.diffv(input = ["-stdatm,0",fileB]))
+        self.assertEqual([],cdo.diffv(input = ["-stdatm,0",fileB], options='-s'))
         rm([fileA, fileB])
 
     def test_splitOps(self):
@@ -795,6 +807,8 @@ class CdoTest(testClass):
       cdo = Cdo()
       output = cdo.verifygrid(input='-topo,global_10')
       self.assertEqual([],output)
+
+      self.assertEqual(True,cdo.silent)
 
       cdo.silent = False
       output = cdo.verifygrid(input='-topo,global_10')
