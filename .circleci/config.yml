@@ -74,3 +74,9 @@ jobs:
             ruby --version
             cd cdo-bindings
             rake testRuby CDO=$(type -p cdo) NO_COLOR=1
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - python
+      - ruby
