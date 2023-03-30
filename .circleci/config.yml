@@ -43,7 +43,7 @@ jobs:
             rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
   ruby:
     docker:
-      - image: archlinux:base-devel
+      - image: cimd/ruby:3.0
     steps:
       - run:
           name: Install dependencies (debian)
@@ -52,11 +52,16 @@ jobs:
             sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev 
             sudo apt-get install libnetcdf-dev libhdf5-dev
             sudo apt-get install colorize
-            sudo apt-get install cdo
             sudo apt-get install rake ruby-dev
       - run:
-          name: Install dependencies (testing)
+          name: Install cdo via conda and testing tools
           command: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-py310_23.1.0-1-Linux-x86_64.sh
+            bash Miniconda3-py310_23.1.0-1-Linux-x86_64.sh -b -p $HOME/miniconda3-3.10
+            $HOME/miniconda3-3.10/bin/conda create -n new -y
+            source $HOME/miniconda3-3.10/bin/activate new
+            conda install mamba -c conda-forge
+            mamba install cdo -c conda-forge
             gem install semverse --user -N
             gem install narray --user -N
             gem install narray_miss --user -N
