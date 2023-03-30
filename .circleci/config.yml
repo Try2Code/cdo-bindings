@@ -75,6 +75,7 @@ jobs:
       - run:
           name: Run Tests Ruby 3
           command: |
+            source $HOME/miniconda3-3.10/bin/activate new
             cdo -V
             type -p cdo
             ruby --version
