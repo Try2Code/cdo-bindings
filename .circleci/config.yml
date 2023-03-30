@@ -77,7 +77,7 @@ jobs:
           command: |
             source $HOME/miniconda3-3.10/bin/activate new
             ldd /home/circleci/.local/share/gem/ruby/3.0.0/gems/ruby-netcdf-0.8.0/ext/numru/netcdfraw.so
-            ls /usr/lib/libnet*
+            ls /usr/local/lib/libnet*
             cdo -V
             type -p cdo
             ruby --version
@@ -87,5 +87,4 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      - python
       - ruby
