@@ -22,7 +22,7 @@ else:
 
 # add local dir to search path
 sys.path.insert(0,os.path.dirname(sys.path[0]))
-from cdo import Cdo,CDOException,CdoTempfileStore
+from cdo import Cdo, CDOException
 
 
 if 'CDF_MOD' in os.environ:
