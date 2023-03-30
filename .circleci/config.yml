@@ -76,8 +76,8 @@ jobs:
           name: Run Tests Ruby 3
           command: |
             source $HOME/miniconda3-3.10/bin/activate new
-            find /home/circleci/.local/share/gem/ruby  -name netcdfraw.so
-            ls /usr/local/lib/libnet*
+            find /home/circleci/.local/share/gem/ruby/3.2.0/extensions/x86_64-linux/3.2.0/ruby-netcdf-0.8.0/numru/netcdfraw.so
+            find /usr -name "libnetcdf.s*"
             cdo -V
             type -p cdo
             ruby --version
