@@ -66,8 +66,8 @@ jobs:
             bash Miniconda3-py310_23.1.0-1-Linux-x86_64.sh -b -p $HOME/miniconda3-3.10
             $HOME/miniconda3-3.10/bin/conda create -n new -y
             source $HOME/miniconda3-3.10/bin/activate new
-            conda install mamba -c conda-forge
-            mamba install cdo -c conda-forge
+            conda install -y mamba -c conda-forge
+            mamba install -y cdo -c conda-forge
       - run:
           name: Checkout cdo-bindings
           command: |
