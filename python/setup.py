@@ -20,7 +20,7 @@ URL = 'https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D'
 EMAIL = 'stark.dreamdetective@gmail.com'
 AUTHOR = 'Ralf Mueller'
 REQUIRES_PYTHON = '>=2.7.0'
-VERSION = '1.5.7'
+VERSION = '1.6'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -106,7 +106,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    py_modules  = ["cdo"],
+    packages  = ["cdo"],
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
