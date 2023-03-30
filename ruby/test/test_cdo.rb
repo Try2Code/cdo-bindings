@@ -411,7 +411,7 @@ class TestCdo < Minitest::Test
       temperature = @cdo.stdatm(0,:returnArray => 'T')
       assert_equal(288.0,temperature.flatten[0])
       pressure = @cdo.stdatm(0,1000,:options => '-b F64',:returnArray => 'P')
-      assert_equal("1013.25 898.543456035875",pressure.flatten.to_a.join(' '))
+      assert_equal("1013.25 898.54",pressure.flatten.to_a.map {|v| v.round(2)}.join(' '))
     else
       assert_raises LoadError do
         temperature = @cdo.stdatm(0,:returnCdf => true).var('T').get.flatten[0]

@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  build:
+  python-3.9:
     docker:
       - image: cimg/python:3.9
     steps:
@@ -41,3 +41,131 @@ jobs:
             cd cdo-bindings
             pip uninstall -y xarray netcdf4
             rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
+  python-3.11:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - run:
+          name: Install dependencies (debian)
+          command: |
+            sudo apt-get update
+            sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev 
+            sudo apt-get install libnetcdf-dev libhdf5-dev
+            sudo apt-get install colorize
+            sudo apt-get install cdo
+            sudo apt-get install rake ruby-dev
+      - run:
+          name: Install dependencies (testing)
+          command: |
+            pip install xarray netcdf4 six numpy unittest2
+            gem install parallel --version '<= 1.12' --user -N
+            gem install minitest colorize facets --user -N
+      - run:
+          name: Checkout cdo-bindings
+          command: |
+            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
+      - run:
+          name: Run Tests Python 3.9
+          command: |
+            cdo -V
+            type -p cdo
+            python3 --version
+            cd cdo-bindings
+            rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
+      - run:
+          name: Run Tests Python 3.9 - no netCDF4/Xarray
+          command: |
+            cdo -V
+            type -p cdo
+            python3 --version
+            cd cdo-bindings
+            pip uninstall -y xarray netcdf4
+            rake testPython3 CDO=$(type -p cdo) NO_COLOR=1
+  ruby-3.2:
+    docker:
+      - image: cimg/ruby:3.2
+    steps:
+      - run:
+          name: Install dependencies (debian)
+          command: |
+            sudo apt-get update
+            sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev 
+            sudo apt-get install libnetcdf-dev libhdf5-dev
+            sudo apt-get install colorize
+            sudo apt-get install rake ruby-dev
+      - run:
+          name: Install cdo via conda and testing tools
+          command: |
+            gem install semverse --user -N
+            gem install narray --user -N
+            gem install narray_miss --user -N
+            gem install ruby-netcdf --development --user -N
+            gem install parallel --version '<= 1.12' --user -N
+            gem install minitest colorize facets --user -N
+            wget https://repo.anaconda.com/miniconda/Miniconda3-py310_23.1.0-1-Linux-x86_64.sh
+            bash Miniconda3-py310_23.1.0-1-Linux-x86_64.sh -b -p $HOME/miniconda3-3.10
+            $HOME/miniconda3-3.10/bin/conda create -n new -y
+            source $HOME/miniconda3-3.10/bin/activate new
+            conda install -y mamba -c conda-forge
+            mamba install -y cdo -c conda-forge
+      - run:
+          name: Checkout cdo-bindings
+          command: |
+            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
+      - run:
+          name: Run Tests Ruby 3
+          command: |
+            source $HOME/miniconda3-3.10/bin/activate new
+            cdo -V
+            type -p cdo
+            ruby --version
+            cd cdo-bindings
+            rake testRuby CDO=$(type -p cdo) NO_COLOR=1
+  ruby-3.0:
+    docker:
+      - image: cimg/ruby:3.0
+    steps:
+      - run:
+          name: Install dependencies (debian)
+          command: |
+            sudo apt-get update
+            sudo apt-get install gcc gfortran make binutils binutils-dev libc6-dev libbsd-dev 
+            sudo apt-get install libnetcdf-dev libhdf5-dev
+            sudo apt-get install colorize
+            sudo apt-get install rake ruby-dev
+      - run:
+          name: Install cdo via conda and testing tools
+          command: |
+            gem install semverse --user -N
+            gem install narray --user -N
+            gem install narray_miss --user -N
+            gem install ruby-netcdf --development --user -N
+            gem install parallel --version '<= 1.12' --user -N
+            gem install minitest colorize facets --user -N
+            wget https://repo.anaconda.com/miniconda/Miniconda3-py310_23.1.0-1-Linux-x86_64.sh
+            bash Miniconda3-py310_23.1.0-1-Linux-x86_64.sh -b -p $HOME/miniconda3-3.10
+            $HOME/miniconda3-3.10/bin/conda create -n new -y
+            source $HOME/miniconda3-3.10/bin/activate new
+            conda install -y mamba -c conda-forge
+            mamba install -y cdo -c conda-forge
+      - run:
+          name: Checkout cdo-bindings
+          command: |
+            git clone -b ${CIRCLE_BRANCH} https://github.com/Try2Code/cdo-bindings.git
+      - run:
+          name: Run Tests Ruby 3
+          command: |
+            source $HOME/miniconda3-3.10/bin/activate new
+            cdo -V
+            type -p cdo
+            ruby --version
+            cd cdo-bindings
+            rake testRuby CDO=$(type -p cdo) NO_COLOR=1
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - ruby-3.2
+      - ruby-3.0
+      - python-3.9
+      - python-3.11
