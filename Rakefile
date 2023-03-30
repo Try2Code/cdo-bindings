@@ -9,12 +9,17 @@ CLEAN.include("**/*.log.[0-9]*")
 CLEAN.include("{ruby,python}/*.{grb,nc,png,svg}")
 CLEAN.include("python/tempPy*")
 CLEAN.include("ruby/tempRb*")
+CLEAN.include("ruby/doc")
 CLEAN.include("/tmp/Cdorb*")
 CLEAN.include("python/test/tempPy*")
 CLEAN.include("python/__pycache__")
 CLEAN.include("python/test/__pycache__")
 CLEAN.include("python/test/*bla")
+CLEAN.include("python/{A,B}_*")
 CLEAN.include("doc")
+CLEAN.include("**/*.orig")
+CLEAN.include("python/dist")
+CLEAN.include("python/cdo.egg-info")
 
 PythonInterpreter = ENV.has_key?('PYTHON') ? ENV['PYTHON'] : 'python'
 RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
