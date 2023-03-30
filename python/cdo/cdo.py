@@ -53,8 +53,6 @@ except ImportError:
 # POSSIBILITY OF SUCH DAMAGE.
 # }}}
 
-CDO_PY_VERSION = "1.6"
-
 # build interactive documentation: help(cdo.sinfo) {{{
 
 def operator_doc(tool, path2cdo):
@@ -794,11 +792,6 @@ class Cdo(object):
             six.raise_from(ImportError, None)
 
         return self.xa_open(ifile)
-
-    # internal helper methods:
-    # return internal cdo.py version
-    def __version__(self):
-        return CDO_PY_VERSION
 
     def __print__(self, context=''):
         if '' != context:

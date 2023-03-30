@@ -23,7 +23,7 @@ else:
 # add local dir to search path
 sys.path.insert(0,os.path.dirname(sys.path[0]))
 from cdo import Cdo, CDOException
-
+import cdo as cdoPkg
 
 if 'CDF_MOD' in os.environ:
   CDF_MOD = os.environ['CDF_MOD']
@@ -85,9 +85,9 @@ class CdoTest(testClass):
         print(cdo.sinfov(input='-topo'))
 
     def testCDO(self):
+        self.assertTrue(parse_version(cdoPkg.__version__) >= parse_version('1.6.0'))
         cdo = Cdo()
         print('this is CDO version %s'%(cdo.version()))
-        print('cdo-bindings version: %s'%(cdo.__version__()))
         newCDO="/home/ram/src/tools/spack/opt/spack/linux-antergos-skylake/gcc-11.1.0/cdo-1.9.9-switof25xqmlys765t7aonnc564wl3jl/bin/cdo"
         if os.path.isfile(newCDO):
             cdo.setCdo(newCDO)
