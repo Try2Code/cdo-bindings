@@ -53,7 +53,7 @@ except ImportError:
 # POSSIBILITY OF SUCH DAMAGE.
 # }}}
 
-CDO_PY_VERSION = "1.5.7"
+CDO_PY_VERSION = "1.6"
 
 # build interactive documentation: help(cdo.sinfo) {{{
 
