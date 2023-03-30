@@ -65,7 +65,7 @@ jobs:
             gem install semverse --user -N
             gem install narray --user -N
             gem install narray_miss --user -N
-            gem install ruby-netcdf --user -N
+            gem install ruby-netcdf -V --development --user -N
             gem install parallel --version '<= 1.12' --user -N
             gem install minitest colorize facets --user -N
       - run:
@@ -76,6 +76,8 @@ jobs:
           name: Run Tests Ruby 3
           command: |
             source $HOME/miniconda3-3.10/bin/activate new
+            ldd /home/circleci/.local/share/gem/ruby/3.0.0/gems/ruby-netcdf-0.8.0/ext/numru/netcdfraw.so
+            ls /usr/lib/libnet*
             cdo -V
             type -p cdo
             ruby --version
