@@ -26,4 +26,10 @@ class TestCdo < Minitest::Test
   def test_cdo
     assert_equal(true,@cdo.run)
   end
+
+  def test_operator_missing
+    assert_raises ArgumentError do
+      @cdo.noexistent(:input => '-for,d')
+    end
+  end
 end

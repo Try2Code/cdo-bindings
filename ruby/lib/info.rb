@@ -1,5 +1,8 @@
 require 'semverse'
 require 'json'
+require 'open3'
+
+# Support module that should encapsulate basic operations with the binary
 module CdoInfo
   # hardcoded fallback list of output operators - from 1.8.0 there is an
   # options for this: --operators_no_output
@@ -21,11 +24,14 @@ module CdoInfo
   MoreOutputOperators = %w[distgrid eofcoeff eofcoeff3d intyear scatter splitcode
   splitday splitgrid splithour splitlevel splitmon splitname splitparam splitrec
   splitseas splitsel splittabnum splitvar splityear splityearmon splitzaxis]
+
+  "return CDI versio as string"
   def CdoInfo.version(executable)
     info = IO.popen(executable+' -V 2>&1').readlines.first
     info.split(' ').grep(%r{\d+\.\d+.*})[0].to_s
   end
-  " get the CDO version "
+
+  "return semantiv version of CDO"
   def CdoInfo.semversion(executable)
     Semverse::Version.new(CdoInfo.version(executable))
   end
@@ -45,46 +51,37 @@ module CdoInfo
     config
   end
 
+  "Check if the --operators is present"
+  def CdoInfo.hasOperatorsOption(executable)
+    log, status  = Open3.capture2e("#{executable} --operators")
+    return (0 == status)
+  end
+
   " get an infentory for the operators provided by the executable "
+  " this depends on the availability of the --operators option "
   def CdoInfo.operators(executable) #{{{
     operators = {}
+
+    unless CdoInfo.hasOperatorsOption(executable) then
+      warn "Cannot create database of operators!"
+      exit(1)
+    end
 
     version = CdoInfo.semversion(executable)
 
     # little side note: the option --operators_no_output works in 1.8.0 and
     # 1.8.2, but not in 1.9.0, from 1.9.1 it works again
     case
-    when version < Semverse::Version.new('1.7.2') then
-      cmd       = executable + ' 2>&1'
-      help      = IO.popen(cmd).readlines.map {|l| l.chomp.lstrip}
-      if 5 >= help.size
-        warn "Operators could not get listed by running the CDO binary (#{executable})"
-        pp help if @debug
-        exit
-      end
-
-      _operators = help[(help.index("Operators:")+1)..help.index(help.find {|v|
-        v =~ /CDO version/
-      }) - 2].join(' ').split
-
-      # build up operator inventory
-      # default is 1 output stream
-      _operators.each {|op| operators[op] = 1 }
-      operators.each {|op,_|
-        operators[op] = 0  if NoOutputOperators.include?(op)
-        operators[op] = 2  if TwoOutputOperators.include?(op)
-        operators[op] = -1 if MoreOutputOperators.include?(op)
-      }
-
     when (version < Semverse::Version.new('1.8.0')  or Semverse::Version.new('1.9.0') == version) then
       cmd                = "#{executable} --operators"
       _operators         = IO.popen(cmd).readlines.map {|l| l.split(' ').first }
 
       _operators.each {|op| operators[op] = 1 }
       operators.each {|op,_|
-        operators[op] = 0  if NoOutputOperators.include?(op)
-        operators[op] = 2  if TwoOutputOperators.include?(op)
-        operators[op] = -1 if MoreOutputOperators.include?(op)
+        oCounter = 0  if NoOutputOperators.include?(op)
+        oCounter = 2  if TwoOutputOperators.include?(op)
+        oCounter = -1 if MoreOutputOperators.include?(op)
+        operators[op] = {:in => 1, :out => oCounter}
       }
 
 
@@ -98,9 +95,10 @@ module CdoInfo
       _operators.each {|op| operators[op] = 1 }
       _operatorsNoOutput.each {|op| operators[op] = 0}
       operators.each {|op,_|
-        operators[op] = 0  if _operatorsNoOutput.include?(op)
-        operators[op] = 2  if TwoOutputOperators.include?(op)
-        operators[op] = -1 if MoreOutputOperators.include?(op)
+        oCounter = 0  if _operatorsNoOutput.include?(op)
+        oCounter = 2  if TwoOutputOperators.include?(op)
+        oCounter = -1 if MoreOutputOperators.include?(op)
+        operators[op] = {:in => 1, :out => oCounter}
       }
 
     else
@@ -110,9 +108,15 @@ module CdoInfo
         lineContent        = line.chomp.split(' ')
         name               = lineContent[0]
         iCounter, oCounter = lineContent[-1][1..-1].split('|')
-        operators[name]    = oCounter.to_i
+        operators[name]    = {:in => iCounter.to_i , :out => oCounter.to_i}
       }
     end
     return operators
+  end
+  # check if the CDO binary is present and works
+  def CdoInfo.works?(executable)
+    status = system("#{executable} -V >/dev/null 2>&1")
+    fullpath   = File.exist?(executable) and File.executable?(executable)
+    return (status or fullpath)
   end
 end
