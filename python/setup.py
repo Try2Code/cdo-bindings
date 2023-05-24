@@ -20,7 +20,7 @@ URL = 'https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D'
 EMAIL = 'stark.dreamdetective@gmail.com'
 AUTHOR = 'Ralf Mueller'
 REQUIRES_PYTHON = '>=2.7.0'
-VERSION = '1.6'
+VERSION = '1.6.0'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -117,7 +117,6 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy'

@@ -207,6 +207,9 @@ http://code.mpimet.mpg.de/projects/cdo
     - many of them just set return type, so they will go to the _run()_ method
     - options only has effect during run of the tool, so this can also go into _run()_
     - the different input types can be handled in something like _input()_ or
+* **1.6.0**:
+  - merged pull requests regarding threading, signal and tempfile handling
+  - added support for xarray/xdataset input AND output at the same time (request by Pauline Millet)
 * **1.5.6**:
   - slight adoptions for CDO-2.0.0
   - limitted support for python-2.7: many other libs dropped support for it so I can only do limitted testing
