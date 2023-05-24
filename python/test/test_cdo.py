@@ -1047,6 +1047,18 @@ class CdoTest(testClass):
             input = "-setname,tmax -setctomiss,-999.99 -input,{} tmax.nc < ".format(gridfile),
             output = inputfile)
 
+      def test_pauline(self):
+        ifile='/home/ram/local/data/cdo/pauline.nc'
+        cdo = Cdo()
+        (var,) = cdo.showname(input=ifile)
+        x = cdo.selyear('1985/2100', input=ifile, returnXArray=var)
+        print(x)
+        self.assertEqual((4018, 7, 5),x[:,:,:].shape)
+        y = cdo.yearsum(input=x, returnXArray=var)
+        print(y)
+        self.assertEqual((11, 7, 5),y[:,:,:].shape)
+
+
 #===============================================================================
 if __name__ == '__main__':
     suite = testLoader.loadTestsFromTestCase(CdoTest)
