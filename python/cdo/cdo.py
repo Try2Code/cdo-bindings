@@ -94,7 +94,7 @@ def setupLogging(logFile):
     return logger
 # }}}
 
-# extra execptions for CDO {{{
+# extra exceptions for CDO {{{
 
 class CDOException(Exception):
 
@@ -452,7 +452,7 @@ class Cdo(object):
                 cmd.append(' '.join(kwargs["input"]))
             elif self.hasXarray:
                 import xarray  # <<-- python2 workaround
-                if type(kwargs["input"]) == xarray.core.dataset.Dataset:
+                if type(kwargs["input"]) in [xarray.core.dataset.Dataset,xarray.core.dataarray.DataArray]:
                     # create a temp nc file from input data
                     tmpfile = self.tempStore.newFile()
                     kwargs["input"].to_netcdf(tmpfile)

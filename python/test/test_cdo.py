@@ -460,6 +460,15 @@ class CdoTest(testClass):
 
       xarrayFile.close()
 
+    def test_xarray_input_and_output(self):
+      cdo = Cdo()
+      ifile = cdo.setcalendar('360_day', input=' -settaxis,1800-01-01,12:00:00,1months -seq,1,10000',options='-f nc -r')
+      (var,) = cdo.showname(input=ifile)
+      self.assertEqual('seq',var)
+      x = cdo.selyear('1985/2100', input=ifile, returnXArray=var)
+      y = cdo.yearsum(input=x, returnXArray=var)
+      self.assertEqual(4059768.0,float(y[:,0,0].sum()))
+
     def test_xarray_output(self):
       cdo = Cdo()
       try:
