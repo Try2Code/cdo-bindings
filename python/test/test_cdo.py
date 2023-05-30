@@ -214,7 +214,9 @@ class CdoTest(testClass):
 
     def test_chain(self):
         cdo = Cdo()
-        self.assertEqual(["veloc"],cdo.showname(input = cdo.setname("veloc", input=" -copy -random,r1x1",options = "-f nc")))
+        self.assertEqual(["veloc"],cdo.showname(input = cdo.setname("veloc",
+                                                                    input=" -copy -random,r1x1",
+                                                                    options = "-f nc")))
 
     def test_pychain(self):
         cdo = Cdo()
@@ -851,6 +853,44 @@ class CdoTest(testClass):
       self.assertEqual(expectedOutput,output)
       cdo.silent = True
 
+    def test_chain_return_values(self):
+      """
+        this declaire the current situation who different ways to call chains
+        lead to different return values:
+
+        - a file name
+        - a callable operator
+      """
+      cdo       = Cdo()
+      cdo.debug = True
+
+      r = cdo.const('1,r1x1').run()
+      self.assertEqual(type('str'),type(r))
+      self.assertTrue(os.path.isfile(r))
+      print(f'type(r)={type(r)}')
+
+      r = cdo.const('1,r1x1',input='')
+      self.assertEqual(type('str'),type(r))
+      self.assertTrue(os.path.isfile(r))
+      print(f'type(r)={type(r)}')
+
+      r = cdo.const('1,r1x1',compute=True)
+      self.assertEqual(type('str'),type(r))
+      self.assertTrue(os.path.isfile(r))
+      print(f'type(r)={type(r)}')
+
+      r = cdo.const('1,r1x1',output='const.grb')
+      self.assertEqual('const.grb',r)
+      self.assertTrue(os.path.isfile(r))
+
+      r = cdo.mul(input=' -const,1,global_10 -const,11,global_10')
+      self.assertEqual(str,type(r))
+      self.assertTrue(os.path.isfile(r))
+
+      r = cdo.mul.const('1,global_10').const('11,global_10').run()
+      self.assertEqual(type('str'),type(r))
+      r = cdo.mul.const('1,global_10').const('11,global_10')
+      self.assertTrue(callable(r))
 
     if MAINTAINERMODE:
 
