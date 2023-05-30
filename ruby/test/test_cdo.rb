@@ -310,7 +310,7 @@ class TestCdo < Minitest::Test
 
   def test_noOutputOps
     operators = @cdo.operators
-    %w[griddes griddes2 info infoc infon infop infos infov map
+    %w[griddes griddes2 info infoc infon infop infov map
        outputarr outputbounds outputboundscpt outputcenter outputcenter2
        outputcentercpt outputext outputf outputfld outputint outputkey outputsrv
        outputtab outputtri outputts outputvector outputvrml outputxyz partab verifygrid verifyweights].each {|op|
