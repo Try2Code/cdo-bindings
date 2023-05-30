@@ -241,7 +241,7 @@ class Cdo(object):
 
     # retrieve the list of operators from the CDO binary plus info out number of {{{
     # output streams
-    def __getOperators(self)
+    def __getOperators(self):
         operators = {}
 
         version = parse_version(getCdoVersion(self.CDO))
