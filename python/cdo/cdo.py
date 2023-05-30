@@ -180,7 +180,7 @@ class Cdo(object):
         self.silent = silent
         self.libs = self.getSupportedLibs()
 
-        # optional IO libraries for additional return types {{{
+        # optional IO libraries for additional return types
         self.hasNetcdf = False
         self.hasXarray = False
         self.cdf = None
@@ -229,14 +229,14 @@ class Cdo(object):
             return 0
         return 1
 
-    # read json formatted output of 'cdo --config all'
+    # read json formatted output of 'cdo --config all' {{{
     def __getConfig(self):
       proc = subprocess.Popen([self.CDO, '--config','all'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
       ret  = proc.communicate()
       try:
         return json.loads(ret[0].decode('utf-8'))
       except:
-        return {}
+        return {} #}}}
 
     # retrieve the list of operators from the CDO binary plus info out number of
     # output streams
@@ -589,6 +589,8 @@ class Cdo(object):
             raise AttributeError(message)
     # }}}
 
+    # try to find out the possible output formats {{{
+    # This can be replaces by the parsing of the --config option output in 2.x releases
     def getSupportedLibs(self):
         proc = subprocess.Popen(self.CDO + ' -V',
                                 shell=True,
@@ -620,7 +622,7 @@ class Cdo(object):
             l, v = lib
             libraries[l.lower()] = v
 
-        return libraries
+        return libraries #}}}
 
     def collectLogs(self):
         if isinstance(self.logFile, six.string_types):
