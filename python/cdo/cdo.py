@@ -148,7 +148,7 @@ class Cdo(object):
 
     name = ''
 
-    def __init__(self,
+    def __init__(self, #{{{
                  cdo='cdo',
                  returnNoneOnError=False,
                  forceOutput=True,
@@ -194,6 +194,7 @@ class Cdo(object):
 
         # CDO build configuration available since cdo-1.9x
         self.config = self.__getConfig()
+        #}}}
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -221,13 +222,13 @@ class Cdo(object):
             instance._options,
             instance.silent)
 
-    # from 1.9.6 onwards CDO returns 1 of diff* finds a difference
+    # from 1.9.6 onwards CDO returns 1 of diff* finds a difference {{{
     def __exit_success(self, operatorName):
         if parse_version(getCdoVersion(self.CDO)) < parse_version('1.9.6'):
             return 0
         if 'diff' != operatorName[0:4]:
             return 0
-        return 1
+        return 1 #}}}
 
     # read json formatted output of 'cdo --config all' {{{
     def __getConfig(self):
@@ -238,9 +239,9 @@ class Cdo(object):
       except:
         return {} #}}}
 
-    # retrieve the list of operators from the CDO binary plus info out number of
+    # retrieve the list of operators from the CDO binary plus info out number of {{{
     # output streams
-    def __getOperators(self):  # {{{
+    def __getOperators(self)
         operators = {}
 
         version = parse_version(getCdoVersion(self.CDO))
@@ -352,8 +353,8 @@ class Cdo(object):
 
         return {"stdout": stdout, "stderr": stderr, "returncode": proc.returncode}  # }}}
 
-    # error handling for CDO calls
-    def __hasError(self, method_name, cmd, retvals):  # {{{
+    # error handling for CDO calls {{{
+    def __hasError(self, method_name, cmd, retvals):
         if self.debug:
             print("RETURNCODE:" + retvals["returncode"].__str__())
         if self.__exit_success(method_name) < retvals["returncode"]:
@@ -387,7 +388,7 @@ class Cdo(object):
         except Exception:
             print("-->> Could not load netCDF4! <<--")  # }}}
 
-    def infile(self, *infiles):
+    def infile(self, *infiles): #{{{
         for infile in infiles:
             if isinstance(infile, six.string_types):
                 self._cmd.append(infile)
@@ -398,11 +399,11 @@ class Cdo(object):
                     tmpfile = self.tempStore.newFile()
                     infile.to_netcdf(tmpfile)
                     self._cmd.append(tmpfile)
-        return self
+        return self #}}}
 
-    def add_option(self, *options):
+    def add_option(self, *options): #{{{
         self._options = self._options + list(options)
-        return self
+        return self #}}}
 
     def __call__(self, *args, **kwargs):
         user_kwargs = kwargs.copy()
