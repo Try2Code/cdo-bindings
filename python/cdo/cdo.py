@@ -314,7 +314,9 @@ class Cdo(object):
                 "utf-8")[0:-1].split(os.linesep)))
 
             for i, op in enumerate(ops):
-                operators[op] = int(ios[i][1:len(ios[i]) - 1].split('|')[1])
+                _ios_splitted = ios[i][1:len(ios[i]) - 1].split('|')
+                if len(_ios_splitted) > 1 : 
+                    operators[op] = int(_ios_splitted[1])
 
         return operators  # }}}
 
