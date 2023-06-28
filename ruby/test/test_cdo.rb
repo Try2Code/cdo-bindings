@@ -53,6 +53,7 @@ class TestCdo < Minitest::Test
     assert(@cdo.hasCdo) if File.exist?(@cdo.cdo)
   end
   def test_getOperators
+    pp @cdo.operators
     %w[seq random stdatm info showlevel sinfo remap geopotheight mask topo thicknessOfLevels].each {|op|
       if ["thicknessOfLevels"].include?(op)
         assert(@cdo.respond_to?(op),"Operator '#{op}' not found")
