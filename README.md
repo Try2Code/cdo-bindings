@@ -3,12 +3,12 @@
 [![Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
 
 Welcome to the scripting interfaces of [CDO](https://code.mpimet.mpg.de/projects/cdo/wiki)!
-This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
+This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, whether this is useful or not, please have a look at:
 [Why the .... should I use this???](https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
 
 ## What's going on
 
-Currently this package is in a re-design phase. The target is a 2.0 release that will **not be compatible** with the exising release 1.5.x:
+Currently this package is in a re-design phase. The target is a 2.0 release that will **not be compatible** with the existing release 1.5.x:
 * Write operator chains like methods chains with ```.``` as much as possible
 * hopefully reduce the number of ```kwargs``` keys
 * keep the Ruby and Python interface similar
@@ -162,7 +162,7 @@ Alternatively you can use environment variables to set this. Python's and Ruby's
     cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
 ```
 
-#### Return multi-dimension arrrays
+#### Return multi-dimension arrays
 ```ruby
     t = cdo.fldmin(:input => ifile,:returnArray => true).var('T').get  #rb, version <  1.2.0
     t = cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    #rb, version >= 1.2.0
