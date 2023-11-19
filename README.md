@@ -3,7 +3,7 @@
 [![Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
 
 Welcome to the scripting interfaces of [CDO](https://code.mpimet.mpg.de/projects/cdo/wiki)!
-This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, whether this is useful or not, please have a look at:
+This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure whether this is useful or not, please have a look at:
 [Why the .... should I use this???](https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
 
 ## What's going on
