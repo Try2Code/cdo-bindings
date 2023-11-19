@@ -123,7 +123,7 @@ The bindings offer two ways to cope with that
    cdo.cleanTempDir   #ruby
 ```
 Alternatively you can use environment variables to set this. Python's and Ruby's ```tempfile``` libraries support the variables 'TMPDIR', 'TEMP' and 'TMP' in their current versions (python-3.8.2, ruby-2.7.0). This feature might be used by administrators to keep users from filling up system directories.
-   
+
 #### Operators with parameter
 ```ruby
     cdo.remap([gridfile,weightfile],input:   ifile, output: ofile)   #ruby
@@ -157,7 +157,7 @@ Alternatively you can use environment variables to set this. Python's and Ruby's
 ```
 ```python
     cdo.splitname(input = ' '.join(ifiles),
-                  output =  'splitTag', 
+                  output =  'splitTag',
                   env={"CDO_FILE_SUFFIX": ".nc"})   #or
     cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
 ```
@@ -234,7 +234,7 @@ http://code.mpimet.mpg.de/projects/cdo
   - the ```operators``` atribute is no longer a list, but a dict (python) or hash (ruby) holding the number of output streams as value
   - finally fix #16 (missing tempfile generation for more than one output streams)
   - fix #19 (thx @pgierz for the input)
-* **1.3.6**: 
+* **1.3.6**:
   - bugfix for non-finding the CDO binary on some systems
   - fix hasCdo (py)
   - add hasCdo (rb)
