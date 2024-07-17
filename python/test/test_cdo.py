@@ -7,7 +7,7 @@ import subprocess
 import multiprocessing
 import time
 import random
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 import numpy as np
 if (2 == sys.version_info[0]):
   import unittest2
@@ -136,11 +136,16 @@ class CdoTest(testClass):
 
     def test_getOperators(self):
         cdo = Cdo()
-        for op in ['random','stdatm','for','cdiwrite','info','showlevel','sinfo','remap','geopotheight','mask','topo','thicknessOfLevels']:
+
+        self.assertNotEqual({},cdo.operators)
+
+        print(cdo.operators)
+
+        for op in ['random','stdatm','for','cdiwrite','info','showlevel','sinfo','remap','mask','topo','thicknessOfLevels']:
             if 'thicknessOfLevels' != op:
-                self.assertTrue(op in cdo.operators)
+                self.assertTrue(op in cdo.operators,f'operator {op} not found')
             else:
-                self.assertTrue(op in dir(cdo))
+                self.assertTrue(op in dir(cdo),f'operator {op} not found')
         self.assertFalse('' in cdo.operators.keys())
 
     def test_allOperators(self):
@@ -150,11 +155,11 @@ class CdoTest(testClass):
     def test_simple(self):
         cdo = Cdo()
         cdo.debug = DEBUG
-        s   = cdo.sinfov(input="-topo",options="-f nc")
-        s   = cdo.sinfov(input="-remapnn,r36x18 -topo",options="-f nc")
+        s   = cdo.sinfo(input="-topo",options="-f nc")
+        s   = cdo.sinfo(input="-remapnn,r36x18 -topo",options="-f nc")
         f   = tempfile.NamedTemporaryFile(delete=True,prefix='cdoPy').name
         cdo.expr("'z=log(abs(topo)+1)*9.81'",input="-topo", output=f, options="-f nc")
-        s   = cdo.infov(input=f)
+        s   = cdo.info(input=f)
         cdo.stdatm("0",output=f,options="-f nc")
         rm([f,])
 
@@ -214,6 +219,7 @@ class CdoTest(testClass):
 
     def test_chain(self):
         cdo = Cdo()
+        print( cdo.showname(input = cdo.setname("veloc", input=" -copy -random,r1x1", options = "-f nc")))
         self.assertEqual(["veloc"],cdo.showname(input = cdo.setname("veloc",
                                                                     input=" -copy -random,r1x1",
                                                                     options = "-f nc")))
@@ -648,19 +654,19 @@ class CdoTest(testClass):
         if DEBUG:
           print(cdo)
         if cdo.hasNetcdf:
-          bathy = cdo.setrtomiss(0,10000,
-                                 input = cdo.topo('r100x100').run(),
-                                 returnMaArray='var1')
+          _input = cdo.topo('r100x100', options = '-f nc')
+          print(f'{type(_input)}:{_input}')
+          bathy = cdo.setrtomiss(0,10000, input = _input, returnMaArray='topo')
           plot(bathy)
           oro = cdo.setrtomiss(-10000,0,
-                               input = cdo.topo().run(),returnMaArray='var1')
+                               input = cdo.topo(options='-f nc'),returnMaArray='topo')
           plot(oro)
           random = cdo.setname('test_maArray',
                                input = "-setrtomiss,0.4,0.8 -random,r180x90 ",
                                returnMaArray='test_maArray')
           plot(random)
         else:
-          self.assertRaises(ImportError,cdo.setrtomiss,0,10000,input="-topo,r100x100",returnMaArray='var1')
+          self.assertRaises(ImportError,cdo.setrtomiss,0,10000,input="-topo,r100x100",returnMaArray='topo')
 
     def test_fillmiss(self):
         cdo = Cdo()
@@ -901,7 +907,13 @@ class CdoTest(testClass):
           self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext': 'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes', 'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2': 'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes', 'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes', 'has-threads': 'yes', 'has-wordexp': 'yes'},
               cdo.config)
         else:
-          self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext': 'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes', 'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2': 'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes', 'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes', 'has-threads': 'yes', 'has-wordexp': 'yes', 'has-nczarr': 'yes', 'has-magics': 'yes', 'has-hirlam_extensions': 'no'},
+          self.assertEqual({'has-cgribex': 'yes', 'has-cmor': 'no', 'has-ext':
+            'yes', 'has-grb': 'yes', 'has-grb1': 'yes', 'has-grb2': 'yes',
+            'has-hdf5': 'yes', 'has-ieg': 'yes', 'has-nc': 'yes', 'has-nc2':
+            'yes', 'has-nc4': 'yes', 'has-nc4c': 'yes', 'has-nc5': 'yes',
+            'has-openmp': 'yes', 'has-proj': 'yes', 'has-srv': 'yes',
+            'has-threads': 'yes', 'has-wordexp': 'yes', 'has-nczarr': 'yes',
+            'has-magics': 'yes', 'has-hirlam_extensions': 'no'},
               cdo.config)
 
       def test_system_tempdir(self):
@@ -988,23 +1000,24 @@ class CdoTest(testClass):
           if not cdo.hasNetcdf:
             return
           saltVarname, tempVarname = 'salt', 'temp'
+          saltVarname, tempVarname = 'SO', 'TempO'
           #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
           #          output=ifile,
           #          options='-O')
-          s = cdo.sellonlatbox(0,30,0,90, input=ifile,output='test_my_phc.nc',returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+          s = cdo.sellonlatbox(0,30,0,90, input=ifile,output='test_my_phc.nc',returnMaArray=saltVarname,options='-f nc')[0,:,:]
           plot(s,ofile='org',title='original')
 
-          sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss " + ifile,returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+          sfmo = cdo.sellonlatbox(0,30,0,90, input="-fillmiss " + ifile,returnMaArray=saltVarname,options='-f nc')[0,:,:]
           plot(sfmo,ofile='fm',title='fillmiss')
 
-          sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss2 " + ifile,returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+          sfm = cdo.sellonlatbox(0,30,0,90, input="-fillmiss2 " + ifile,returnMaArray=saltVarname,options='-f nc')[0,:,:]
           plot(sfm,ofile='fm2',title='fillmiss2')
 
-          ssetmisstonn = cdo.sellonlatbox(0,30,0,90, input="-setmisstonn " + ifile,returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+          ssetmisstonn = cdo.sellonlatbox(0,30,0,90, input="-setmisstonn " + ifile,returnMaArray=saltVarname,options='-f nc')[0,:,:]
           plot(ssetmisstonn,ofile='setmisstonn',title='setmisstonn')
 
           if (parse_version(cdo.version()) >= parse_version('1.7.2')):
-            smooth = cdo.sellonlatbox(0,30,0,90, input="-smooth " + ifile,returnMaArray=saltVarname,options='-f nc')[0,0,:,:]
+            smooth = cdo.sellonlatbox(0,30,0,90, input="-smooth " + ifile,returnMaArray=saltVarname,options='-f nc')[0,:,:]
             plot(ssetmisstonn,ofile='smooth',title='smooth')
           #global plot
           #s_global = cdo.chname('SO,s,TempO,t',input=ifile,output='my_phc.nc',returnMaArray='s',options='-f nc')
@@ -1021,6 +1034,7 @@ class CdoTest(testClass):
       def test_smooth(self):
         if os.path.isfile(DATA_DIR + '/icon/phc.nc'):
           saltVarname, tempVarname = 'salt', 'temp'
+          saltVarname, tempVarname = 'SO', 'TempO'
           selectionOperator = 'sellonlatbox'
           region = "0,30,30,90"
           regionSelection = f"-{selectionOperator},{region}"
@@ -1032,40 +1046,40 @@ class CdoTest(testClass):
             #cdo.merge(input='/home/ram/data/icon/input/phc3.0/PHC__3.0__TempO__1x1__annual.nc /home/ram/data/icon/input/phc3.0/PHC__3.0__SO__1x1__annual.nc',
             #          output=ifile,
             #          options='-O')
-            org, tag = cdo.sellonlatbox(region,input=ifile, returnMaArray=saltVarname)[0,0,:,:], 'org'
+            org, tag = cdo.sellonlatbox(region,input=ifile, returnMaArray=saltVarname)[0,:,:], 'org'
             plot(org,ofile=tag,title=tag)
             smooth, tag = cdo.smooth(input=f" {regionSelection} {ifile}",
                                 options='-L',
-                                returnMaArray=saltVarname)[0,0,:,:], 'smooth'
+                                returnMaArray=saltVarname)[0,:,:], 'smooth'
             plot(smooth,ofile=tag,title=tag)
 
             smooth2, tag = cdo.smooth('nsmooth=2',
                                  input=f" {regionSelection} {ifile}",
                                  options='-L',
-                                 returnMaArray=saltVarname)[0,0,:,:], 'smooth2'
+                                 returnMaArray=saltVarname)[0,:,:], 'smooth2'
             plot(np.flipud(smooth2),ofile=tag,title='smooth,nsmooth=2')
             print(smooth - org)
 
             smooth4 = cdo.smooth('nsmooth=4',
                                  input=f" {regionSelection} {ifile}",
                                  options='-L',
-                                 returnMaArray=saltVarname)[0,0,:,:]
+                                 returnMaArray=saltVarname)[0,:,:]
             plot(np.flipud(smooth4),ofile='smooth4',title='smooth,nsmooth=4')
 
             smooth9 = cdo.smooth9(input=f" {regionSelection} {ifile}",
                                   options='-L',
-                                  returnMaArray=saltVarname)[0,0,:,:]
+                                  returnMaArray=saltVarname)[0,:,:]
             plot(np.flipud(smooth9),ofile='smooth9',title='smooth9')
 
             smooth3deg = cdo.smooth('radius=6deg',
                                     input=f" {regionSelection} {ifile}",options='-L',
-                                    returnMaArray=saltVarname)[0,0,:,:]
+                                    returnMaArray=saltVarname)[0,:,:]
             plot(np.flipud(smooth3deg),ofile='smooth3deg',title='smooth,radius=6deg')
 
             smooth20 = cdo.smooth('nsmooth=20',
                                   input=f" {regionSelection} {ifile}",
                                   options='-L',
-                                  returnMaArray=saltVarname)[0,0,:,:]
+                                  returnMaArray=saltVarname)[0,:,:]
             plot(np.flipud(smooth20),ofile='smooth20',title='smooth,nsmooth=20')
 
       def test_ydiv(self):

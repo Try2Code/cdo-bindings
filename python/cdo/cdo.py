@@ -7,7 +7,7 @@ import glob
 import signal
 import threading
 import functools
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 from io import StringIO
 import logging as pyLog
 import six
@@ -308,13 +308,17 @@ class Cdo(object):
             proc = subprocess.Popen([self.CDO, '--operators'],
                                     stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             ret = proc.communicate()
-            ops = list(map(lambda x: x.split(' ')[0], ret[0].decode(
-                "utf-8")[0:-1].split(os.linesep)))
-            ios = list(map(lambda x: x.split(' ')[-1], ret[0].decode(
-                "utf-8")[0:-1].split(os.linesep)))
 
-            for i, op in enumerate(ops):
-                operators[op] = int(ios[i][1:len(ios[i]) - 1].split('|')[1])
+            operator_streams_pattern = re.compile(r"^(\w+\d?\w?).*\((-?\d+)\|(-?\d+)\)$")
+
+            # walk through stdout
+            for line in ret[0].decode("utf-8")[0:-1].split(os.linesep):
+                # try to match op: some binaries may show weird debug information
+                m = operator_streams_pattern.match(line)
+                if (m):
+                    _values = m.groups()
+                    name, nInputs, nOutputs = str(_values[0]), int(_values[1]), int(_values[2])
+                    operators[name] = nOutputs
 
         return operators  # }}}
 
