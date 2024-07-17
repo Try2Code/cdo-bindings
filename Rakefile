@@ -12,6 +12,7 @@ CLEAN.include("ruby/tempRb*")
 CLEAN.include("ruby/doc")
 CLEAN.include("/tmp/Cdorb*")
 CLEAN.include("python/test/tempPy*")
+CLEAN.include("python/tempPy_*")
 CLEAN.include("python/__pycache__")
 CLEAN.include("python/test/__pycache__")
 CLEAN.include("python/test/*bla")
@@ -20,10 +21,12 @@ CLEAN.include("doc")
 CLEAN.include("**/*.orig")
 CLEAN.include("python/dist")
 CLEAN.include("python/cdo.egg-info")
+CLEAN.include("*.bla")
+CLEAN.include("const.grb")
 
 PythonInterpreter = ENV.has_key?('PYTHON') ? ENV['PYTHON'] : 'python'
 RubyInterpreter   = ENV.has_key?('RUBY')   ? ENV['RUBY']   : 'ruby'
-SpackEnv          = "$HOME/src/tools/spack/share/spack/setup-env.sh"
+SpackEnv          = "$HOME/src/spack/share/spack/setup-env.sh"
 
 String.disable_colorization = (ENV.has_key?('NO_COLOR'))
 @debug                      = (ENV.has_key?('DEBUG'))
@@ -42,13 +45,14 @@ spackEnvCommand = lambda {|modhash|
 def getCdoPackagesFromSpack
   # list possible cdo modules provided by spack
   info = IO.popen([". #{SpackEnv}" ,
-                   'spack find -lp cdo | grep cdo'].join(';')).readlines.map(&:chomp).map(&:split).transpose
-  retval = {
-    hash:    info[0],
-    version: info[1],
-    path:    info[2],
-  }
-  return retval
+                   'spack find -lp cdo | grep cdo'].join(';')).readlines#.map(&:chomp).map(&:split).transpose
+  puts info
+# retval = {
+#   hash:    info[0],
+#   version: info[1],
+#   path:    info[2],
+# }
+  return info #retval
 end
 
 desc "run each CDO binary from the regression tests"
