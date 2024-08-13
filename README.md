@@ -3,12 +3,12 @@
 [![Tests](https://circleci.com/gh/Try2Code/cdo-bindings/tree/master.svg?style=shield)](https://circleci.com/gh/Try2Code/cdo-bindings)
 
 Welcome to the scripting interfaces of [CDO](https://code.mpimet.mpg.de/projects/cdo/wiki)!
-This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure, wether this is useful or not, please have a look at:
+This repository contains interfaces for [Ruby](http://www.ruby-lang.org) and [Python](https://www.python.org). If you are not sure whether this is useful or not, please have a look at:
 [Why the .... should I use this???](https://code.mpimet.mpg.de/projects/cdo/wiki/Cdo%7Brbpy%7D#Why-the-)
 
 ## What's going on
 
-Currently this package is in a re-design phase. The target is a 2.0 release that will **not be compatible** with the exising release 1.5.x:
+Currently this package is in a re-design phase. The target is a 2.0 release that will **not be compatible** with the existing release 1.5.x:
 * Write operator chains like methods chains with ```.``` as much as possible
 * hopefully reduce the number of ```kwargs``` keys
 * keep the Ruby and Python interface similar
@@ -123,7 +123,7 @@ The bindings offer two ways to cope with that
    cdo.cleanTempDir   #ruby
 ```
 Alternatively you can use environment variables to set this. Python's and Ruby's ```tempfile``` libraries support the variables 'TMPDIR', 'TEMP' and 'TMP' in their current versions (python-3.8.2, ruby-2.7.0). This feature might be used by administrators to keep users from filling up system directories.
-   
+
 #### Operators with parameter
 ```ruby
     cdo.remap([gridfile,weightfile],input:   ifile, output: ofile)   #ruby
@@ -157,12 +157,12 @@ Alternatively you can use environment variables to set this. Python's and Ruby's
 ```
 ```python
     cdo.splitname(input = ' '.join(ifiles),
-                  output =  'splitTag', 
+                  output =  'splitTag',
                   env={"CDO_FILE_SUFFIX": ".nc"})   #or
     cdo.env = {'CDO_FILE_SUFFIX': '.nc'}
 ```
 
-#### Return multi-dimension arrrays
+#### Return multi-dimension arrays
 ```ruby
     t = cdo.fldmin(:input => ifile,:returnArray => true).var('T').get  #rb, version <  1.2.0
     t = cdo.fldmin(:input => ifile,:returnCdf => true).var('T').get    #rb, version >= 1.2.0
@@ -236,7 +236,7 @@ http://code.mpimet.mpg.de/projects/cdo
   - the ```operators``` atribute is no longer a list, but a dict (python) or hash (ruby) holding the number of output streams as value
   - finally fix #16 (missing tempfile generation for more than one output streams)
   - fix #19 (thx @pgierz for the input)
-* **1.3.6**: 
+* **1.3.6**:
   - bugfix for non-finding the CDO binary on some systems
   - fix hasCdo (py)
   - add hasCdo (rb)
